@@ -190,23 +190,35 @@
         document.getElementById('createModal').style.display = 'none';
     }
 
-    async function createD1sc() {
-        const title = document.getElementById('modal-title').value.trim();
-        const content = document.getElementById('modal-content').value.trim();
+async function createD1sc() {
+    const title = document.getElementById('modal-title').value.trim();
+    const content = document.getElementById('modal-content').value.trim();
 
-        if (!title || !content) {
-            return showNotification("Title and content required", "#ff4444");
-        }
+    if (!title || !content) {
+        return showNotification("Title and content required", "#ff4444");
+    }
 
-        const res = await fetch(`/api/forums/${forumId}/threads`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                title,
-                content,
-                user_id: username
-            })
-        });
+    const res = await fetch(`/api/threads`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            title,
+            content,
+            forum_id: forumId,
+            username: username
+        })
+    });
+
+    const data = await res.json();
+    showNotification(data.message, data.success ? "#00cc66" : "#ff4444");
+
+    if (data.success) {
+        closeCreateModal();
+        document.getElementById('modal-title').value = "";
+        document.getElementById('modal-content').value = "";
+        loadThreads();
+    }
+}
 
         const data = await res.json();
         showNotification(data.message, data.success ? "#00cc66" : "#ff4444");
