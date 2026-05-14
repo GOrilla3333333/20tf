@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Reports - 20Thousand Forums</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #444; }
+        th { background: #0165fc; color: white; }
+        .modal {
+            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: #1e2f4f; padding: 25px; border: 3px solid #0165fc; border-radius: 12px;
+            z-index: 20000; width: 90%; max-width: 400px; color: white;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <img src="https://i.imgur.com/oJCfWc8.png" alt="Logo" class="logo">
+        <h1>Reports Management</h1>
+    </header>
+
+    <nav><a href="/admin.html">← Back to Admin Panel</a></nav>
+    <hr>
+
+    <h2>All Reports (Newest First)</h2>
+    <div id="reportsList">Loading reports...</div>
+
+    <!-- Clear Confirmation Modal -->
+    <div id="clearModal" class="modal">
+        <h3>Clear Report?</h3>
+        <p>This will remove the report from the list.</p>
+        <button onclick="confirmClear()">Yes, Clear Report</button>
+        <button onclick="closeClearModal()" style="margin-left:10px; background:#555;">Cancel</button>
+    </div>
+
+    <script>
+        let reportToClear = null;
+
+        async function loadReports() {
+            const res = await fetch('/api/reports?username=20k');
+            let reports = await res.json();
+
+            // Sort newest first
+            reports.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+            let html = `<table>
+                <tr>
+                    <th>Post ID</th>
+                    <th>Reported By</th>
+                    <th>Reason</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                </tr>`;
+
+            reports.forEach(r => {
+                html += `
+                    <tr>
+                        <td>${r.post_id}</td>
+                        <td>${r.reported_by}</td>
+                        <td>${r.reason}</td>
+                        <td>${r.status}</td>
+                        <td>${new Date(r.created_at).toLocaleString()}</td>
+                        <td>
+                            <button onclick="promptClear('${r.id}')">Clear Report</button>
+                        </td>
+                    </tr>`;
+            });
+
+            html += '</table>';
+            document.getElementById('reportsList').innerHTML = html || "<p>No reports yet.</p>";
+        }
+
+        function promptClear(reportId) {
+            reportToClear = reportId;
+            document.getElementById('clearModal').style.display = 'block';
+        }
+
+        function closeClearModal() {
+            document.getElementById('clearModal').style.display = 'none';
+            reportToClear = null;
+        }
+
+        async function confirmClear() {
+            if (!reportToClear) return;
+
+            const res = await fetch(`/api/reports/${reportToClear}/clear`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: "20k" })
+            });
+
+            const data = await res.json();
+            showNotification(data.message, data.success ? "#00cc66" : "#ff4444");
+            closeClearModal();
+            loadReports();
+        }
+
+        function showNotification(text, color = "#0165fc") {
+            const notif = document.createElement('div');
+            notif.style.position = 'fixed';
+            notif.style.top = '20px';
+            notif.style.left = '50%';
+            notif.style.transform = 'translateX(-50%)';
+            notif.style.padding = '15px 25px';
+            notif.style.borderRadius = '6px';
+            notif.style.background = color;
+            notif.style.color = 'white';
+            notif.style.zIndex = '20000';
+            notif.textContent = text;
+            document.body.appendChild(notif);
+            setTimeout(() => notif.remove(), 3000);
+        }
+
+        loadReports();
+    </script>
+</body>
+</html>

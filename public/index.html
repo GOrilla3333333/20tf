@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>20Thousand Forums</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header>
+        <img src="https://i.imgur.com/oJCfWc8.png" alt="Logo" class="logo">
+        <h1>20Thousand Forums</h1>
+    </header>
+
+    <nav>
+        <a href="/">Home</a> |
+        <a href="/forums">Boards</a> |
+        <span id="user-nav"></span>
+    </nav>
+
+    <!-- Global Banner -->
+    <div id="global-banner" style="display:none; background:#fffd01; color:#162437; padding:12px; text-align:center; font-weight:bold;"></div>
+
+    <div class="container">
+        <h2>Welcome to 20Thousand Forums</h2>
+        <p><strong>Made by 20k</strong> — A chaotic but fun place to post anything.</p>
+        <p>Current boards: s1k/general, s1k/gaming, s1k/questions, s1k/random, etc.</p>
+        
+        <div class="board">
+            <h3>Quick Links</h3>
+            <p><a href="/forums">→ Browse all Boards</a></p>
+        </div>
+    </div>
+
+    <footer style="text-align:center; margin-top:50px; color:#666; font-size:14px;">
+        Art by Cheesedude
+    </footer>
+
+    <script>
+        const username = localStorage.getItem('username');
+        const nav = document.getElementById('user-nav');
+
+        if (username) {
+            nav.innerHTML = `Logged in as: <strong>${username}</strong> | <a href="#" onclick="showLogoutModal()">Logout</a>`;
+        } else {
+            nav.innerHTML = `<a href="/register">Register</a> | <a href="/login">Login</a>`;
+        }
+
+        // Global Banner
+        async function loadGlobalBanner() {
+            try {
+                const res = await fetch('/api/global-banner');
+                const banner = await res.json();
+                const el = document.getElementById('global-banner');
+                if (banner.active && (banner.text || banner.imageUrl)) {
+                    el.innerHTML = banner.text || "Announcement";
+                    if (banner.imageUrl) {
+                        el.innerHTML += `<br><img src="${banner.imageUrl}" style="max-width:100%; margin-top:8px;">`;
+                    }
+                    el.style.display = 'block';
+                } else {
+                    el.style.display = 'none';
+                }
+            } catch(e) {}
+        }
+
+        loadGlobalBanner();
+
+        function showLogoutModal() {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.display = 'flex';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <h3>Logout?</h3>
+                    <p>Are you sure you want to logout?</p>
+                    <button class="button" onclick="doLogout()" style="background:#ff4444;">Yes, Logout</button>
+                    <button onclick="this.parentElement.parentElement.remove()">Cancel</button>
+                </div>`;
+            document.body.appendChild(modal);
+        }
+
+        function doLogout() {
+            localStorage.removeItem('username');
+            window.location.href = '/';
+        }
+
+        // Ban Check
+async function checkBan() {
+    const username = localStorage.getItem('username');
+    if (!username) return;
+
+    try {
+        const res = await fetch(`/api/check-ban/${username}`);
+        const data = await res.json();
+        if (data.banned) {
+            const type = data.type || "permanent";
+            window.location.href = `/banned.html?reason=${encodeURIComponent(data.reason)}&type=${type}`;
+        }
+    } catch(e) {}
+}
+
+checkBan();
+
+    </script>
+</body>
+</html>

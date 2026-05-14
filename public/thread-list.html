@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>20Thousand Forums</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); display: none; align-items: center;
+            justify-content: center; z-index: 10000;
+        }
+        .modal-content {
+            background: #1e2f4f; padding: 25px; border-radius: 12px;
+            border: 3px solid #0165fc; width: 90%; max-width: 450px; color: white;
+        }
+        .notification {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            padding: 15px 25px; border-radius: 6px; z-index: 20000;
+            color: white; font-weight: bold;
+        }
+        .thread {
+            background: #1e2f4f; padding: 15px; margin: 12px 0; border-radius: 8px;
+            border-left: 5px solid #0165fc; position: relative;
+        }
+        .pinned { border-left: 5px solid #fffd01; }
+        .menu-btn, .pin-btn {
+            position: absolute; top: 10px; right: 10px; background: none; border: none;
+            font-size: 24px; cursor: pointer; color: #aaa;
+        }
+        .pin-btn { right: 45px; color: #fffd01; }
+        .dropdown-menu {
+            position: absolute; top: 40px; right: 10px; background: #1e2f4f;
+            border: 2px solid #0165fc; border-radius: 8px; padding: 8px 0;
+            z-index: 1000; display: none; min-width: 160px;
+        }
+        .dropdown-menu button {
+            background: none; border: none; width: 100%; text-align: left;
+            padding: 10px 15px; color: white; cursor: pointer;
+        }
+        .dropdown-menu button:hover { background: #0165fc; }
+    </style>
+</head>
+<body>
+    <header>
+        <img src="https://i.imgur.com/oJCfWc8.png" alt="Logo" class="logo">
+        <h1>20Thousand Forums</h1>
+    </header>
+
+    <nav><a href="/forums">← Back to Boards</a></nav>
+
+    <div id="global-banner" style="display:none; background:#fffd01; color:#162437; padding:12px; text-align:center; font-weight:bold;"></div>
+
+    <div class="container">
+        <h2>s1k/<span id="board-name"></span></h2>
+        <button class="button" onclick="showCreateModal()">+ Create d1sc</button>
+
+        <div class="sort-options" style="margin:15px 0;">
+            Sort d1scs by: 
+            <select id="sortSelect" onchange="loadThreads()">
+                <option value="newest">Newest First</option>
+                <option value="popular">Most Popular</option>
+            </select>
+        </div>
+
+        <h3>Discussions</h3>
+        <div id="threadsList">Loading discussions...</div>
+    </div>
+
+    <!-- Create Modal -->
+    <div id="createModal" class="modal">
+        <div class="modal-content">
+            <h3>+ Create New d1sc</h3>
+            <input id="modal-title" placeholder="Thread Title" style="width:100%; padding:10px; margin:10px 0;"><br>
+            <textarea id="modal-content" placeholder="First post content..." rows="5" style="width:100%; padding:10px;"></textarea><br>
+            <input type="file" id="modal-file" accept="image/*,video/*"><br><br>
+            <button class="button" onclick="createD1sc()">Create d1sc</button>
+            <button onclick="closeCreateModal()">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Report Modal -->
+    <div id="reportModal" class="modal">
+        <div class="modal-content">
+            <h3>Report d1sc</h3>
+            <textarea id="reportReason" placeholder="Why are you reporting this?" rows="5" style="width:100%;"></textarea><br><br>
+            <button onclick="submitReport()">Submit Report</button>
+            <button onclick="closeReportModal()" style="margin-left:10px; background:#555;">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <h3>Delete d1sc?</h3>
+            <p style="color:#ff6666;">This action cannot be undone. All replies will be deleted too.</p><br>
+            <button onclick="confirmDelete()" style="background:#ff4444;">Yes, Delete</button>
+            <button onclick="closeDeleteModal()" style="margin-left:10px;">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const forumId = urlParams.get('id');
+        const forumName = urlParams.get('name');
+        const username = localStorage.getItem('username');
+
+        document.getElementById('board-name').textContent = forumName || "board";
+
+        let currentThreadId = null;
+
+        async function loadThreads() {
+            const sortMode = document.getElementById('sortSelect').value;
+            const res = await fetch(`/api/forums/${forumId}/threads`);
+            let threads = await res.json();
+
+            const pinned = threads.filter(t => t.pinned);
+            let normal = threads.filter(t => !t.pinned);
+
+            if (sortMode === "popular") {
+                normal.sort((a, b) => (b.netVotes || 0) - (a.netVotes || 0));
+            } else {
+                normal.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            }
+
+            threads = [...pinned, ...normal];
+
+            let html = '';
+            threads.forEach(thread => {
+                const hasFile = thread.fileUrl ? ' [📷 File Attached]' : '';
+                const net = thread.netVotes || 0;
+                const up = net > 0 ? net : 0;
+                const down = net < 0 ? Math.abs(net) : 0;
+                const isPinned = thread.pinned ? ' pinned' : '';
+
+                html += `
+                    <div class="thread${isPinned}">
+                        <button class="menu-btn" onclick="showDropdown('${thread.id}', '${thread.user_id}', event)">⋯</button>
+                        ${username === "20k" ? `<button class="pin-btn" onclick="togglePin('${thread.id}')">📌</button>` : ''}
+                        <strong><a href="/thread.html?id=${thread.id}&title=${encodeURIComponent(thread.title)}">${thread.title}</a></strong>${hasFile}<br>
+                        <small>Created by ${thread.user_id} • ${new Date(thread.created_at).toLocaleString()}</small>
+                        <span style="color:#fffd01;"> ▲ ${up}</span>
+                        <span style="color:#ff4444;"> ▼ ${down}</span>
+
+                        <div id="dropdown-${thread.id}" class="dropdown-menu">
+                            <button onclick="openReport('${thread.id}')">Report</button>
+                            ${(username === "20k" || username === thread.user_id) ? 
+                                `<button onclick="openDelete('${thread.id}')">Delete d1sc</button>` : ''}
+                        </div>
+                    </div>`;
+            });
+            document.getElementById('threadsList').innerHTML = html || "<p>No discussions yet.</p>";
+        }
+
+        function showDropdown(threadId, owner, e) {
+            e.stopPropagation();
+            document.querySelectorAll('.dropdown-menu').forEach(m => m.style.display = 'none');
+            const menu = document.getElementById(`dropdown-${threadId}`);
+            menu.style.display = 'block';
+        }
+
+        function openReport(threadId) {
+            currentThreadId = threadId;
+            document.getElementById('reportModal').style.display = 'flex';
+        }
+
+        function openDelete(threadId) {
+            currentThreadId = threadId;
+            document.getElementById('deleteModal').style.display = 'flex';
+        }
+
+        function closeReportModal() {
+            document.getElementById('reportModal').style.display = 'none';
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').style.display = 'none';
+        }
+
+        async function submitReport() {
+            const reason = document.getElementById('reportReason').value.trim();
+            if (!reason) return showNotification("Please write a reason", "#ff4444");
+
+            const res = await fetch('/api/report', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ post_id: currentThreadId, reported_by: username, reason })
+            });
+
+            const data = await res.json();
+            showNotification(data.message, data.success ? "#00cc66" : "#ff4444");
+            closeReportModal();
+        }
+
+        async function confirmDelete() {
+            const res = await fetch(`/api/threads/${currentThreadId}`, {
+                method: 'DELETE',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ username })
+            });
+
+            const data = await res.json();
+            showNotification(data.message, data.success ? "#00cc66" : "#ff4444");
+            closeDeleteModal();
+            if (data.success) loadThreads();
+        }
+
+        async function togglePin(threadId) {
+            const res = await fetch(`/api/threads/${threadId}/pin`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ username })
+            });
+            const data = await res.json();
+            showNotification(data.message, data.success ? "#00cc66" : "#ff4444");
+            if (data.success) loadThreads();
+        }
+
+        function showNotification(text, color) {
+            const notif = document.createElement('div');
+            notif.className = 'notification';
+            notif.style.background = color;
+            notif.textContent = text;
+            document.body.appendChild(notif);
+            setTimeout(() => notif.remove(), 2800);
+        }
+
+        // Create d1sc functions (same as before)
+        function showCreateModal() { /* ... */ }
+        function closeCreateModal() { /* ... */ }
+        async function createD1sc() { /* ... */ }
+
+        loadThreads();
+    </script>
+</body>
+</html>

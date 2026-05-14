@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>20Thousand Forums</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); display: none; align-items: center;
+            justify-content: center; z-index: 10000;
+        }
+        .modal-content {
+            background: #1e2f4f; padding: 25px; border-radius: 12px;
+            border: 3px solid #0165fc; width: 90%; max-width: 400px; color: white;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <img src="https://i.imgur.com/oJCfWc8.png" alt="Logo" class="logo">
+        <h1>20Thousand Forums</h1>
+    </header>
+
+    <nav>
+        <a href="/">Home</a> |
+        <a href="/forums">Boards</a> |
+        <span id="user-nav"></span>
+    </nav>
+
+    <!-- Global Banner -->
+    <div id="global-banner" style="display:none; background:#fffd01; color:#162437; padding:12px; text-align:center; font-weight:bold;"></div>
+
+    <div class="container">
+        <h2>Boards (s1k/)</h2>
+        <div id="create-area"></div>
+        <h3>Existing Boards</h3>
+        <div id="forumsList">Loading...</div>
+    </div>
+
+    <!-- Create s1k Modal -->
+    <div id="createS1kModal" class="modal">
+        <div class="modal-content">
+            <h3>+ Create New s1k</h3>
+            <input id="s1k-name" placeholder="Board name (e.g. gaming)" style="width:100%; padding:10px; margin:10px 0;"><br>
+            <textarea id="s1k-desc" placeholder="Description" rows="3" style="width:100%; padding:10px;"></textarea><br><br>
+            <button class="button" onclick="createS1k()">Create s1k</button>
+            <button onclick="closeModal('createS1kModal')">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        const username = localStorage.getItem('username');
+
+        if (username) {
+            document.getElementById('user-nav').innerHTML = `Logged in as: <strong>${username}</strong> | <a href="#" onclick="showLogoutModal()">Logout</a>`;
+            if (username === "20k") {
+                document.getElementById('create-area').innerHTML = `<button class="button" onclick="showCreateS1kModal()">+ Create New s1k</button><br><br>`;
+            }
+        } else {
+            document.getElementById('user-nav').innerHTML = `<a href="/register">Register</a> | <a href="/login">Login</a>`;
+        }
+
+        // Global Banner
+       async function loadGlobalBanner() {
+    try {
+        const res = await fetch('/api/global-banner');
+        const banner = await res.json();
+        const el = document.getElementById('global-banner');
+        
+        if (banner.active && (banner.text || banner.imageUrl)) {
+            el.innerHTML = banner.text || "";
+            if (banner.imageUrl) {
+                el.innerHTML += `<br><img src="${banner.imageUrl}" style="max-width:100%; margin-top:8px;">`;
+            }
+            el.style.display = 'block';
+        } else {
+            el.style.display = 'none';   // Completely hide when cleared
+        }
+    } catch(e) {}
+}
+
+        loadGlobalBanner();
+
+        function showCreateS1kModal() {
+            document.getElementById('createS1kModal').style.display = 'flex';
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        async function createS1k() {
+            const name = document.getElementById('s1k-name').value.trim();
+            const desc = document.getElementById('s1k-desc').value.trim();
+            if (!name) return;
+
+            const res = await fetch('/api/forums', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name, description: desc})
+            });
+            const data = await res.json();
+            alert(data.message);
+            if (data.success) {
+                closeModal('createS1kModal');
+                loadForums();
+            }
+        }
+
+        function showLogoutModal() {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.display = 'flex';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <h3>Logout?</h3>
+                    <p>Are you sure you want to logout?</p>
+                    <button class="button" onclick="doLogout()" style="background:#ff4444;">Yes, Logout</button>
+                    <button onclick="this.parentElement.parentElement.remove()">Cancel</button>
+                </div>`;
+            document.body.appendChild(modal);
+        }
+
+        function doLogout() {
+            localStorage.removeItem('username');
+            window.location.href = '/';
+        }
+
+        async function loadForums() {
+            const res = await fetch('/api/forums');
+            const forums = await res.json();
+            const container = document.getElementById('forumsList');
+            if (forums.length === 0) {
+                container.innerHTML = "<p>No boards yet.</p>";
+                return;
+            }
+            let html = '';
+            forums.forEach(f => {
+                html += `<div class="board"><strong><a href="/thread-list.html?id=${f.id}&name=${encodeURIComponent(f.name)}">s1k/${f.name}</a></strong><br><small>${f.description||''}</small></div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        loadForums();
+
+        // Ban Check
+async function checkBan() {
+    const username = localStorage.getItem('username');
+    if (!username) return;
+
+    try {
+        const res = await fetch(`/api/check-ban/${username}`);
+        const data = await res.json();
+        if (data.banned) {
+            const type = data.type || "permanent";
+            window.location.href = `/banned.html?reason=${encodeURIComponent(data.reason)}&type=${type}`;
+        }
+    } catch(e) {}
+}
+
+checkBan();
+
+    </script>
+</body>
+</html>

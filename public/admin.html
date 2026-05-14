@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel - 20Thousand Forums</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header>
+        <img src="https://i.imgur.com/oJCfWc8.png" alt="Logo" class="logo">
+        <h1>Admin Panel</h1>
+    </header>
+
+    <nav><a href="/forums">← Back to Forums</a></nav>
+    <hr>
+
+    <div id="content">
+        <!-- Will be filled by JS -->
+    </div>
+
+    <script>
+        const username = localStorage.getItem('username');
+
+        if (username !== "20k") {
+            document.getElementById('content').innerHTML = `
+                <h2 style="color:red; text-align:center; margin-top:100px;">
+                    Access Denied.<br><br>
+                    This area is restricted to the owner only.
+                </h2>`;
+        } else {
+            document.getElementById('content').innerHTML = `
+                <h2>Global Banner</h2>
+                <input id="bannerText" placeholder="Banner text" style="width:70%"><br><br>
+                <input id="bannerImage" placeholder="Image URL (optional)" style="width:70%"><br><br>
+                <button onclick="updateBanner()">Update Banner</button>
+                <button onclick="clearBanner()">Clear Banner</button>
+
+                <hr>
+
+                <h2>Ban User</h2>
+                <input id="banUsername" placeholder="Username"><br>
+                <input id="banReason" placeholder="Reason"><br>
+                <select id="banType">
+                    <option value="temporary">Temporary (7 days)</option>
+                    <option value="permanent">Permanent</option>
+                </select><br><br>
+                <button onclick="banUser()">Ban User</button>
+
+                <hr>
+
+                <h2>Delete Thread</h2>
+                <input id="deleteThreadId" placeholder="Thread ID"><br><br>
+                <button onclick="deleteThread()">Delete Thread</button>
+
+                <hr>
+
+                <h2>Reports</h2>
+                <p><a href="/reports.html">📋 View All Reports</a></p>
+            `;
+        }
+
+        // Banner functions
+        async function updateBanner() {
+            const text = document.getElementById('bannerText').value.trim();
+            const imageUrl = document.getElementById('bannerImage').value.trim();
+
+            const res = await fetch('/api/admin/banner', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: "20k", text, imageUrl })
+            });
+            const data = await res.json();
+            alert(data.message);
+        }
+
+        async function clearBanner() {
+            const res = await fetch('/api/admin/banner', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: "20k", text: "", imageUrl: "" })
+            });
+            const data = await res.json();
+            alert(data.message);
+        }
+
+        async function banUser() {
+            const target = document.getElementById('banUsername').value.trim();
+            const reason = document.getElementById('banReason').value.trim();
+            const type = document.getElementById('banType').value;
+
+            if (!target) return alert("Enter username");
+
+            const res = await fetch('/api/admin/ban', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ admin: "20k", targetUsername: target, reason, type })
+            });
+            const data = await res.json();
+            alert(data.message);
+        }
+
+        async function deleteThread() {
+            const threadId = document.getElementById('deleteThreadId').value.trim();
+            if (!threadId) return alert("Enter Thread ID");
+
+            const res = await fetch(`/api/admin/thread/${threadId}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: "20k" })
+            });
+            const data = await res.json();
+            alert(data.message);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Register - 20Thousand Forums</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .form-container {
+            max-width: 400px;
+            margin: 80px auto;
+            background: #1e2f4f;
+            padding: 40px;
+            border-radius: 12px;
+            border: 2px solid #0165fc;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h1>Register</h1>
+        <form id="registerForm">
+            <input type="text" id="username" placeholder="Username" required><br><br>
+            <input type="password" id="password" placeholder="Password" required><br><br>
+            <button type="submit" class="button">Register</button>
+        </form>
+        <p id="message"></p>
+        <p><a href="/login">Already have an account? Login</a></p>
+    </div>
+
+    <script>
+        function showMessage(text, success) {
+            const msg = document.getElementById('message');
+            msg.textContent = text;
+            msg.style.color = success ? '#00ff88' : '#ff6666';
+        }
+
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+
+            try {
+                const res = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+                showMessage(data.message, data.success);
+
+                if (data.success) {
+                    setTimeout(() => window.location.href = '/login', 1500);
+                }
+            } catch (err) {
+                showMessage("Cannot connect to server", false);
+            }
+        });
+    </script>
+</body>
+</html>
