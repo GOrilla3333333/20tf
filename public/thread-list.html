@@ -20,10 +20,17 @@
             color: white; font-weight: bold;
         }
         .thread {
-            background: #1e2f4f; padding: 15px; margin: 12px 0; border-radius: 8px;
-            border-left: 5px solid #0165fc; position: relative;
+            background: #1e2f4f;
+            padding: 15px;
+            margin: 12px 0;
+            border-radius: 8px;
+            border-left: 5px solid #0165fc;
+            position: relative;
         }
-        .pinned { border-left: 5px solid #fffd01; }
+        .pinned { 
+            border-left: 5px solid #fffd01; 
+            background: #2a3f5f; 
+        }
         .menu-btn, .pin-btn {
             position: absolute; top: 10px; right: 10px; background: none; border: none;
             font-size: 24px; cursor: pointer; color: #aaa;
@@ -53,6 +60,7 @@
 
     <div class="container">
         <h2>s1k/<span id="board-name"></span></h2>
+
         <button class="button" onclick="showCreateModal()">+ Create d1sc</button>
 
         <div class="sort-options" style="margin:15px 0;">
@@ -93,187 +101,183 @@
     <div id="deleteModal" class="modal">
         <div class="modal-content">
             <h3>Delete d1sc?</h3>
-            <p style="color:#ff6666;">This action cannot be undone. All replies will be deleted too.</p><br>
+            <p style="color:#ff6666;">This cannot be undone. All replies will also be deleted.</p><br>
             <button onclick="confirmDelete()" style="background:#ff4444;">Yes, Delete</button>
-            <button onclick="closeDeleteModal()" style="margin-left:10px;">Cancel</button>
+            <button onclick="closeDeleteModal()">Cancel</button>
         </div>
     </div>
 
     <script>
-const urlParams = new URLSearchParams(window.location.search);
-const forumId = urlParams.get('id');
-const forumName = urlParams.get('name');
-const username = localStorage.getItem('username');
+        const urlParams = new URLSearchParams(window.location.search);
+        const forumId = urlParams.get('id');
+        const forumName = urlParams.get('name');
+        const username = localStorage.getItem('username');
 
-document.getElementById('board-name').textContent = forumName || "board";
+        document.getElementById('board-name').textContent = forumName || "board";
 
-let currentThreadId = null;
+        let currentThreadId = null;
 
-async function loadThreads() {
-    if (!forumId) {
-        document.getElementById('threadsList').innerHTML =
-            "<p style='color:red;'>Missing forum ID in URL</p>";
-        return;
-    }
+        async function loadThreads() {
+            const sortMode = document.getElementById('sortSelect').value;
+            const res = await fetch(`/api/forums/${forumId}/threads`);
+            let threads = await res.json();
 
-    const sortMode = document.getElementById('sortSelect').value;
-    const res = await fetch(`/api/forums/${forumId}/threads`);
-    let threads = await res.json();
+            const pinned = threads.filter(t => t.pinned);
+            let normal = threads.filter(t => !t.pinned);
 
-    const pinned = threads.filter(t => t.pinned);
-    let normal = threads.filter(t => !t.pinned);
+            if (sortMode === "popular") {
+                normal.sort((a, b) => (b.netVotes || 0) - (a.netVotes || 0));
+            } else {
+                normal.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            }
 
-    if (sortMode === "popular") {
-        normal.sort((a, b) => (b.netVotes || 0) - (a.netVotes || 0));
-    } else {
-        normal.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-    }
+            threads = [...pinned, ...normal];
 
-    threads = [...pinned, ...normal];
+            let html = '';
+            threads.forEach(thread => {
+                const hasFile = thread.fileUrl ? ' [📷 File Attached]' : '';
+                const net = thread.netVotes || 0;
+                const up = net > 0 ? net : 0;
+                const down = net < 0 ? Math.abs(net) : 0;
+                const isPinned = thread.pinned ? ' pinned' : '';
 
-    let html = '';
-    threads.forEach(thread => {
-        const hasFile = thread.fileUrl ? ' [📷 File Attached]' : '';
-        const net = thread.netVotes || 0;
-        const up = net > 0 ? net : 0;
-        const down = net < 0 ? Math.abs(net) : 0;
-        const isPinned = thread.pinned ? ' pinned' : '';
+                html += `
+                    <div class="thread${isPinned}">
+                        <button class="menu-btn" onclick="showDropdown('${thread.id}', '${thread.user_id}', event)">⋯</button>
+                        ${username === "20k" ? `<button class="pin-btn" onclick="togglePin('${thread.id}')">📌</button>` : ''}
+                        <strong><a href="/thread.html?id=${thread.id}&title=${encodeURIComponent(thread.title)}">${thread.title}</a></strong>${hasFile}<br>
+                        <small>Created by ${thread.user_id} • ${new Date(thread.created_at).toLocaleString()}</small>
+                        <span style="color:#fffd01;"> ▲ ${up}</span>
+                        <span style="color:#ff4444;"> ▼ ${down}</span>
 
-        html += `
-            <div class="thread${isPinned}">
-                <button class="menu-btn" onclick="showDropdown('${thread.id}', '${thread.user_id}', event)">⋯</button>
-                ${username === "20k" ? `<button class="pin-btn" onclick="togglePin('${thread.id}')">📌</button>` : ''}
-                <strong>
-                    <a href="/thread.html?id=${thread.id}&title=${encodeURIComponent(thread.title)}">
-                        ${thread.title}
-                    </a>
-                </strong>${hasFile}<br>
-                <small>Created by ${thread.user_id} • ${new Date(thread.created_at).toLocaleString()}</small>
-                <span style="color:#fffd01;"> ▲ ${up}</span>
-                <span style="color:#ff4444;"> ▼ ${down}</span>
+                        <div id="dropdown-${thread.id}" class="dropdown-menu">
+                            <button onclick="openReport('${thread.id}')">Report</button>
+                            ${(username === "20k" || username === thread.user_id) ? 
+                                `<button onclick="openDelete('${thread.id}')">Delete d1sc</button>` : ''}
+                        </div>
+                    </div>`;
+            });
+            document.getElementById('threadsList').innerHTML = html || "<p>No discussions yet.</p>";
+        }
 
-                <div id="dropdown-${thread.id}" class="dropdown-menu">
-                    <button onclick="openReport('${thread.id}')">Report</button>
-                    ${(username === "20k" || username === thread.user_id) ? 
-                        `<button onclick="openDelete('${thread.id}')">Delete d1sc</button>` : ''}
-                </div>
-            </div>`;
-    });
+        function showDropdown(threadId, owner, e) {
+            e.stopPropagation();
+            document.querySelectorAll('.dropdown-menu').forEach(m => m.style.display = 'none');
+            document.getElementById(`dropdown-${threadId}`).style.display = 'block';
+        }
 
-    document.getElementById('threadsList').innerHTML = html || "<p>No discussions yet.</p>";
-}
+        function openReport(threadId) {
+            currentThreadId = threadId;
+            document.getElementById('reportModal').style.display = 'flex';
+        }
 
-function showDropdown(threadId, owner, e) {
-    e.stopPropagation();
-    document.querySelectorAll('.dropdown-menu').forEach(m => m.style.display = 'none');
-    const menu = document.getElementById(`dropdown-${threadId}`);
-    if (menu) menu.style.display = 'block';
-}
+        function openDelete(threadId) {
+            currentThreadId = threadId;
+            document.getElementById('deleteModal').style.display = 'flex';
+        }
 
-function openReport(threadId) {
-    currentThreadId = threadId;
-    document.getElementById('reportModal').style.display = 'flex';
-}
+        function closeReportModal() {
+            document.getElementById('reportModal').style.display = 'none';
+        }
 
-function openDelete(threadId) {
-    currentThreadId = threadId;
-    document.getElementById('deleteModal').style.display = 'flex';
-}
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').style.display = 'none';
+        }
 
-function closeReportModal() {
-    document.getElementById('reportModal').style.display = 'none';
-}
+        async function submitReport() {
+            const reason = document.getElementById('reportReason').value.trim();
+            if (!reason) return showNotification("Please write a reason", "#ff4444");
 
-function closeDeleteModal() {
-    document.getElementById('deleteModal').style.display = 'none';
-}
+            const res = await fetch('/api/report', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ post_id: currentThreadId, reported_by: username, reason })
+            });
 
-function showCreateModal() {
-    document.getElementById('createModal').style.display = 'flex';
-}
+            const data = await res.json();
+            showNotification(data.message, data.success ? "#00cc66" : "#ff4444");
+            closeReportModal();
+        }
 
-function closeCreateModal() {
-    document.getElementById('createModal').style.display = 'none';
-}
+        async function confirmDelete() {
+            const res = await fetch(`/api/threads/${currentThreadId}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username })
+            });
 
-async function createD1sc() {
-    const title = document.getElementById('modal-title').value.trim();
-    const content = document.getElementById('modal-content').value.trim();
+            const data = await res.json();
+            showNotification(data.message, data.success ? "#00cc66" : "#ff4444");
+            closeDeleteModal();
+            if (data.success) loadThreads();
+        }
 
-    if (!title || !content) {
-        return showNotification("Title and content required", "#ff4444");
-    }
+        async function togglePin(threadId) {
+            const res = await fetch(`/api/threads/${threadId}/pin`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username })
+            });
+            const data = await res.json();
+            showNotification(data.message, data.success ? "#00cc66" : "#ff4444");
+            if (data.success) loadThreads();
+        }
 
-    const res = await fetch(`/api/threads`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            title,
-            content,
-            forum_id: forumId,
-            username: username
-        })
-    });
+        function showNotification(text, color) {
+            const notif = document.createElement('div');
+            notif.className = 'notification';
+            notif.style.background = color;
+            notif.textContent = text;
+            document.body.appendChild(notif);
+            setTimeout(() => notif.remove(), 2800);
+        }
 
-    const data = await res.json();
-    showNotification(data.message, data.success ? "#00cc66" : "#ff4444");
+        // Create d1sc
+        function showCreateModal() {
+            if (!username) return showNotification("Please login first", "#ff4444");
+            document.getElementById('createModal').style.display = 'flex';
+        }
 
-    if (data.success) {
-        closeCreateModal();
-        document.getElementById('modal-title').value = "";
-        document.getElementById('modal-content').value = "";
+        function closeCreateModal() {
+            document.getElementById('createModal').style.display = 'none';
+        }
+
+        async function createD1sc() {
+            const title = document.getElementById('modal-title').value.trim();
+            const content = document.getElementById('modal-content').value.trim();
+            const fileInput = document.getElementById('modal-file');
+
+            if (!title) return showNotification("Title is required", "#ff4444");
+
+            let fileUrl = null;
+            if (fileInput.files.length > 0) {
+                const formData = new FormData();
+                formData.append('file', fileInput.files[0]);
+                try {
+                    const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData });
+                    const uploadData = await uploadRes.json();
+                    if (uploadData.success) fileUrl = uploadData.url;
+                } catch (e) {
+                    return showNotification("Upload error", "#ff4444");
+                }
+            }
+
+            const res = await fetch('/api/threads', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, content, forum_id: forumId, username, fileUrl })
+            });
+
+            const data = await res.json();
+            showNotification(data.message, data.success ? "#00cc66" : "#ff4444");
+
+            if (data.success) {
+                closeCreateModal();
+                loadThreads();
+            }
+        }
+
         loadThreads();
-    }
-}
-
-async function submitReport() {
-    const reason = document.getElementById('reportReason').value.trim();
-    if (!reason) return showNotification("Please write a reason", "#ff4444");
-
-    const res = await fetch('/api/report', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ post_id: currentThreadId, reported_by: username, reason })
-    });
-
-    const data = await res.json();
-    showNotification(data.message, data.success ? "#00cc66" : "#ff4444");
-    closeReportModal();
-}
-
-async function confirmDelete() {
-    const res = await fetch(`/api/threads/${currentThreadId}`, {
-        method: 'DELETE',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ username })
-    });
-
-    const data = await res.json();
-    showNotification(data.message, data.success ? "#00cc66" : "#ff4444");
-    closeDeleteModal();
-    if (data.success) loadThreads();
-}
-
-async function togglePin(threadId) {
-    const res = await fetch(`/api/threads/${threadId}/pin`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ username })
-    });
-
-    const data = await res.json();
-    showNotification(data.message, data.success ? "#00cc66" : "#ff4444");
-    if (data.success) loadThreads();
-}
-
-function showNotification(text, color) {
-    const notif = document.createElement('div');
-    notif.className = 'notification';
-    notif.style.background = color;
-    notif.textContent = text;
-    document.body.appendChild(notif);
-    setTimeout(() => notif.remove(), 2800);
-}
-
-loadThreads();
-</script>
+    </script>
+</body>
+</html>

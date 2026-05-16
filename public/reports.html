@@ -5,88 +5,100 @@
     <title>Reports - 20Thousand Forums</title>
     <link rel="stylesheet" href="/css/style.css">
     <style>
+        .notification {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            padding: 15px 25px; border-radius: 6px; z-index: 20000;
+            color: white; font-weight: bold;
+        }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #444; }
         th { background: #0165fc; color: white; }
-        .modal {
-            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: #1e2f4f; padding: 25px; border: 3px solid #0165fc; border-radius: 12px;
-            z-index: 20000; width: 90%; max-width: 400px; color: white;
-        }
+        button { margin-right: 5px; padding: 6px 12px; }
     </style>
 </head>
 <body>
     <header>
         <img src="https://i.imgur.com/oJCfWc8.png" alt="Logo" class="logo">
-        <h1>Reports Management</h1>
+        <h1>20Thousand Forums - Reports</h1>
     </header>
 
-    <nav><a href="/admin.html">← Back to Admin Panel</a></nav>
-    <hr>
+    <nav>
+        <a href="/forums">← Back to Forums</a> | 
+        <a href="/admin.html">Admin Panel</a>
+    </nav>
 
-    <h2>All Reports (Newest First)</h2>
-    <div id="reportsList">Loading reports...</div>
-
-    <!-- Clear Confirmation Modal -->
-    <div id="clearModal" class="modal">
-        <h3>Clear Report?</h3>
-        <p>This will remove the report from the list.</p>
-        <button onclick="confirmClear()">Yes, Clear Report</button>
-        <button onclick="closeClearModal()" style="margin-left:10px; background:#555;">Cancel</button>
+    <div class="container">
+        <h2>All Reports</h2>
+        <button onclick="loadReports()">🔄 Refresh Reports</button>
+        
+        <table id="reportsTable">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Reported By</th>
+                    <th>Target ID</th>
+                    <th>Reason</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
     </div>
 
     <script>
-        let reportToClear = null;
-
         async function loadReports() {
-            const res = await fetch('/api/reports?username=20k');
-            let reports = await res.json();
+            try {
+                const res = await fetch('/api/reports?username=20k');
+                const reports = await res.json();
 
-            // Sort newest first
-            reports.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                const tbody = document.querySelector('#reportsTable tbody');
+                tbody.innerHTML = '';
 
-            let html = `<table>
-                <tr>
-                    <th>Post ID</th>
-                    <th>Reported By</th>
-                    <th>Reason</th>
-                    <th>Status</th>
-                    <th>Date</th>
-                    <th>Actions</th>
-                </tr>`;
+                if (reports.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:30px;">No reports yet.</td></tr>`;
+                    return;
+                }
 
-            reports.forEach(r => {
-                html += `
-                    <tr>
-                        <td>${r.post_id}</td>
-                        <td>${r.reported_by}</td>
-                        <td>${r.reason}</td>
-                        <td>${r.status}</td>
+                reports.forEach(r => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
                         <td>${new Date(r.created_at).toLocaleString()}</td>
+                        <td><strong>${r.reported_by}</strong></td>
+                        <td>${r.post_id}</td>
+                        <td>${r.reason}</td>
+                        <td>${r.status || 'pending'}</td>
                         <td>
-                            <button onclick="promptClear('${r.id}')">Clear Report</button>
+                            <button onclick="deleteThread('${r.post_id}')">Delete Thread</button>
+                            <button onclick="clearReport('${r.id}')" style="background:#ffaa00;">Clear Report</button>
                         </td>
-                    </tr>`;
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (err) {
+                console.error(err);
+                showNotification("Failed to load reports", "#ff4444");
+            }
+        }
+
+        async function deleteThread(threadId) {
+            if (!confirm("Delete this thread and all replies permanently?")) return;
+
+            const res = await fetch(`/api/threads/${threadId}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: "20k" })
             });
 
-            html += '</table>';
-            document.getElementById('reportsList').innerHTML = html || "<p>No reports yet.</p>";
+            const data = await res.json();
+            showNotification(data.message, data.success ? "#00cc66" : "#ff4444");
+            if (data.success) loadReports();
         }
 
-        function promptClear(reportId) {
-            reportToClear = reportId;
-            document.getElementById('clearModal').style.display = 'block';
-        }
+        async function clearReport(reportId) {
+            if (!confirm("Mark this report as cleared/resolved?")) return;
 
-        function closeClearModal() {
-            document.getElementById('clearModal').style.display = 'none';
-            reportToClear = null;
-        }
-
-        async function confirmClear() {
-            if (!reportToClear) return;
-
-            const res = await fetch(`/api/reports/${reportToClear}/clear`, {
+            const res = await fetch(`/api/reports/${reportId}/review`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username: "20k" })
@@ -94,26 +106,19 @@
 
             const data = await res.json();
             showNotification(data.message, data.success ? "#00cc66" : "#ff4444");
-            closeClearModal();
             loadReports();
         }
 
-        function showNotification(text, color = "#0165fc") {
+        function showNotification(text, color) {
             const notif = document.createElement('div');
-            notif.style.position = 'fixed';
-            notif.style.top = '20px';
-            notif.style.left = '50%';
-            notif.style.transform = 'translateX(-50%)';
-            notif.style.padding = '15px 25px';
-            notif.style.borderRadius = '6px';
+            notif.className = 'notification';
             notif.style.background = color;
-            notif.style.color = 'white';
-            notif.style.zIndex = '20000';
             notif.textContent = text;
             document.body.appendChild(notif);
-            setTimeout(() => notif.remove(), 3000);
+            setTimeout(() => notif.remove(), 2800);
         }
 
+        // Load reports on page open
         loadReports();
     </script>
 </body>
