@@ -6,6 +6,7 @@ const postSchema = new mongoose.Schema({
     thread_id: String,
     user_id: String,
     fileUrl: String,
+    parent_id: { type: String, default: null }, // 🔥 ADD THIS
     created_at: { type: Date, default: Date.now }
 });
 

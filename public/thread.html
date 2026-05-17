@@ -1,185 +1,264 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>20Thousand Forums</title>
-    <link rel="stylesheet" href="/css/style.css">
-    <style>
-        .notification { 
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%); 
-            padding: 15px 25px; border-radius: 6px; z-index: 20000; 
-            color: white; font-weight: bold; 
-        }
-        .post { 
-            background: #1e2f4f; padding: 15px; margin: 12px 0; 
-            border-radius: 8px; border-left: 5px solid #0165fc; 
-            position: relative; 
-        }
-        .original-post { 
-            background: #fff3d9 !important; color: #000000 !important; 
-        }
-        .menu-btn, .edit-btn, .delete-btn, .reply-btn { 
-            position: absolute; top: 10px; right: 10px; background: none; 
-            border: none; font-size: 22px; cursor: pointer; color: #aaa; 
-        }
-        .edit-btn { right: 45px; }
-        .delete-btn { right: 80px; color: #ff6666; }
-        .reply-btn { right: 115px; }
-        img, video { max-width: 100%; border-radius: 8px; margin-top: 8px; }
-    </style>
+<meta charset="UTF-8">
+<title>20Thousand Forums</title>
+<link rel="stylesheet" href="/css/style.css">
+
+<style>
+.notification {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 15px 25px;
+    border-radius: 6px;
+    z-index: 20000;
+    color: white;
+    font-weight: bold;
+}
+
+/* ONLY ORIGINAL POST */
+.original-post {
+    background: #fff3d9;
+    color: #000;
+    border-left: 5px solid #fffd01;
+}
+
+/* ALL REPLIES */
+.reply-post {
+    background: #1e2f4f;
+    color: white;
+    border-left: 5px solid #0165fc;
+}
+
+.post {
+    padding: 15px;
+    margin: 12px 0;
+    border-radius: 8px;
+    position: relative;
+}
+
+.edit-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 22px;
+    cursor: pointer;
+    color: #aaa;
+}
+
+.reply-btn {
+    margin-top: 8px;
+    background: none;
+    border: none;
+    color: #aaa;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+img, video {
+    max-width: 100%;
+    border-radius: 8px;
+    margin-top: 8px;
+}
+
+h2 { font-size: 26px; }
+h3 { font-size: 20px; }
+</style>
 </head>
+
 <body>
-    <header>
-        <img src="https://i.imgur.com/oJCfWc8.png" alt="Logo" class="logo">
-        <h1>20Thousand Forums</h1>
-    </header>
+<header>
+    <img src="https://i.imgur.com/oJCfWc8.png" class="logo">
+    <h1>20Thousand Forums</h1>
+</header>
 
-    <nav><a href="/forums">← Back to Boards</a></nav>
-    <hr>
+<nav><a href="/forums">← Back to Boards</a></nav>
+<hr>
 
-    <h2 id="thread-title"></h2>
-    <p><small>Created by <strong id="thread-creator">Unknown</strong></small></p>
+<h2 id="thread-title"></h2>
+<p><small>Created by <strong id="thread-creator"></strong></small></p>
 
-    <div id="postsList"></div>
+<div id="postsList"></div>
 
-    <hr>
-    <h3 id="reply-header">Reply</h3>
-    <form id="replyForm">
-        <textarea id="postContent" placeholder="Write your reply..." rows="4"></textarea><br><br>
-        <input type="file" id="mediaFile" accept="image/*,video/*"><br><br>
-        <button type="submit" class="button">Post Reply</button>
-    </form>
+<hr>
 
-    <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        const threadId = urlParams.get('id');
-        const username = localStorage.getItem('username');
+<h3>Reply</h3>
+<form id="replyForm">
+    <textarea id="postContent" placeholder="Write your reply..." rows="4"></textarea><br><br>
+    <input type="file" id="mediaFile" accept="image/*,video/*"><br><br>
+    <button type="submit">Post Reply</button>
+</form>
 
-        document.getElementById('thread-title').textContent = urlParams.get('title') || "Thread";
+<!-- EDIT MODAL -->
+<div id="editModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#1e2f4f; padding:25px; border:3px solid #0165fc; border-radius:12px; z-index:20000; width:90%; max-width:500px; color:white;">
+    <h3>Edit Post</h3>
+    <textarea id="editContent" rows="8" style="width:100%;"></textarea><br><br>
+    <button onclick="saveEdit()">Save</button>
+    <button onclick="closeEditModal()">Cancel</button>
+</div>
 
-        let replyingTo = null;
+<script>
+const urlParams = new URLSearchParams(window.location.search);
+const threadId = urlParams.get('id');
+const username = localStorage.getItem('username');
 
-        function showNotification(text, color = "#00cc66") {
-            const notif = document.createElement('div');
-            notif.className = 'notification';
-            notif.style.background = color;
-            notif.textContent = text;
-            document.body.appendChild(notif);
-            setTimeout(() => notif.remove(), 2500);
-        }
+let currentReplyParent = null;
+let currentEditId = null;
+let rootPostId = null;
 
-        function formatText(text) {
-            if (!text) return "";
-            return text
-                .replace(/\n/g, "<br>")
-                .replace(/\*\*\*(.*?)\*\*\*/g, "<b><i style='color:#000000;'>$1</i></b>")
-                .replace(/\*\*(.*?)\*\*/g, "<b style='color:#000000;'>$1</b>")
-                .replace(/\*(.*?)\*/g, "<i style='color:#000000;'>$1</i>");
-        }
+// ================= THREAD INFO =================
+async function loadThreadInfo() {
+    const res = await fetch(`/api/threads/${threadId}`);
+    const data = await res.json();
 
-        function renderMedia(url) {
-            if (!url) return '';
-            return url.match(/\.(mp4|webm|mov)$/i) 
-                ? `<video controls src="${url}"></video>` 
-                : `<img src="${url}" style="max-width:100%; border-radius:8px;">`;
-        }
+    document.getElementById('thread-title').textContent = data.title;
+    document.getElementById('thread-creator').textContent = data.creator;
+}
 
-        async function loadPosts() {
-            try {
-                const res = await fetch(`/api/threads/${threadId}/posts`);
-                const posts = await res.json();
-                console.log("📥 Loaded posts:", posts);
+// ================= FORMAT =================
+function formatContent(text) {
+    if (!text) return "";
 
-                const original = posts.find(p => !p.parent_id);
-                const replies = posts.filter(p => p.parent_id);
+    let safe = text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
 
-                let html = '';
+    safe = safe.replace(/^## (.*)$/gm, "<h3>$1</h3>");
+    safe = safe.replace(/^# (.*)$/gm, "<h2>$1</h2>");
+    safe = safe.replace(/\*\*\*(.*?)\*\*\*/g, "<b><i>$1</i></b>");
+    safe = safe.replace(/\*\*(.*?)\*\*/g, "<b>$1</b>");
+    safe = safe.replace(/\*(.*?)\*/g, "<i>$1</i>");
+    safe = safe.replace(/\n/g, "<br>");
 
-                // Original Post
-                if (original) {
-                    const canManage = (username === original.user_id || username === "20k");
-                    html += `
-                        <div class="post original-post">
-                            ${canManage ? `<button class="edit-btn" onclick="editPost('${original.id}')">✏️</button>` : ''}
-                            ${canManage ? `<button class="delete-btn" onclick="deletePost('${original.id}')">🗑️</button>` : ''}
-                            <button class="reply-btn" onclick="startReply('${original.id}')">↩️</button>
-                            <strong>${original.user_id}</strong> 
-                            <small>${new Date(original.created_at).toLocaleString()}</small>
-                            <p>${formatText(original.content)}</p>
-                            ${renderMedia(original.fileUrl)}
-                        </div>`;
+    return safe;
+}
+
+// ================= RECURSIVE RENDER =================
+function render(posts, depth = 0) {
+    let html = '';
+
+    posts.forEach(post => {
+
+        const isOriginal = post.id === rootPostId; // 🔥 FIX
+        const isReply = !isOriginal;
+
+        html += `
+            <div class="post ${isOriginal ? 'original-post' : 'reply-post'}"
+                 style="margin-left:${depth * 25}px">
+
+                ${(username === post.user_id || username === "20k")
+                    ? `<button class="edit-btn" onclick="editPost('${post.id}')">✏️</button>`
+                    : ''
                 }
 
-                // Nested Replies
-                function renderReplies(parentId, level = 0) {
-                    let str = '';
-                    const children = replies
-                        .filter(r => r.parent_id === parentId)
-                        .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+                <strong>${post.user_id}</strong>
+                <small>${new Date(post.created_at).toLocaleString()}</small>
 
-                    children.forEach(reply => {
-                        const canManage = (username === reply.user_id || username === "20k");
-                        str += `
-                            <div class="post" style="margin-left: ${level * 45}px; border-left: 3px solid #555;">
-                                ${canManage ? `<button class="edit-btn" onclick="editPost('${reply.id}')">✏️</button>` : ''}
-                                ${canManage ? `<button class="delete-btn" onclick="deletePost('${reply.id}')">🗑️</button>` : ''}
-                                <button class="reply-btn" onclick="startReply('${reply.id}')">↩️</button>
-                                <strong>${reply.user_id}</strong> 
-                                <small>${new Date(reply.created_at).toLocaleString()}</small>
-                                <p>${formatText(reply.content)}</p>
-                                ${renderMedia(reply.fileUrl)}
-                                ${renderReplies(reply.id, level + 1)}
-                            </div>`;
-                    });
-                    return str;
+                <p>${formatContent(post.content)}</p>
+
+                ${post.fileUrl ? `<img src="${post.fileUrl}">` : ''}
+
+                ${isOriginal ? '' : `<button class="reply-btn" onclick="setReply('${post.id}')">Reply</button>`}
+
+                ${post.replies && post.replies.length > 0
+                    ? render(post.replies, depth + 1)
+                    : ''
                 }
 
-                html += renderReplies(original ? original.id : null);
-                document.getElementById('postsList').innerHTML = html || '<p>No posts yet.</p>';
+            </div>
+        `;
+    });
 
-                if (original) document.getElementById('thread-creator').textContent = original.user_id;
-            } catch(e) {
-                console.error(e);
-            }
-        }
+    return html;
+}
 
-        // Submit Reply
-        document.getElementById('replyForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const content = document.getElementById('postContent').value.trim();
+// ================= LOAD POSTS =================
+async function loadPosts() {
+    const res = await fetch(`/api/threads/${threadId}/posts`);
+    const posts = await res.json();
 
-            if (!username) return showNotification("Please login first", "#ff4444");
-            if (!content) return showNotification("Write something", "#ff4444");
+    if (posts.length > 0) {
+        rootPostId = posts[0].id; // 🔥 FIX: first post is always OP
+    }
 
-            const res = await fetch('/api/posts', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    content, 
-                    thread_id: threadId, 
-                    username, 
-                    parent_id: replyingTo 
-                })
-            });
+    document.getElementById('postsList').innerHTML =
+        posts.length ? render(posts) : "<p>No posts yet.</p>";
+}
 
-            const data = await res.json();
-            showNotification(data.message, data.success ? "#00cc66" : "#ff4444");
+// ================= CREATE REPLY =================
+document.getElementById('replyForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-            if (data.success) {
-                document.getElementById('postContent').value = '';
-                replyingTo = null;
-                document.getElementById('reply-header').textContent = "Reply";
-                await loadPosts();   // This should now show the new reply
-            }
-        });
+    const content = document.getElementById('postContent').value.trim();
+    const fileInput = document.getElementById('mediaFile');
 
-        function startReply(parentId) {
-            replyingTo = parentId;
-            document.getElementById('reply-header').textContent = "Replying to a post...";
-        }
+    let fileUrl = null;
 
-        // Load on start
-        loadPosts();
-    </script>
+    if (fileInput.files.length > 0) {
+        const fd = new FormData();
+        fd.append('file', fileInput.files[0]);
+
+        const r = await fetch('/api/upload', { method: 'POST', body: fd });
+        const d = await r.json();
+        if (d.success) fileUrl = d.url;
+    }
+
+    await fetch('/api/posts', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+            content,
+            thread_id: threadId,
+            username,
+            fileUrl,
+            parent_id: currentReplyParent || null
+        })
+    });
+
+    currentReplyParent = null;
+    document.getElementById('postContent').value = "";
+    document.getElementById('postContent').placeholder = "Write your reply...";
+    loadPosts();
+});
+
+// ================= REPLY TARGET =================
+function setReply(id) {
+    currentReplyParent = id;
+    document.getElementById('postContent').placeholder = "Replying...";
+}
+
+// ================= EDIT =================
+function editPost(id) {
+    currentEditId = id;
+    document.getElementById('editModal').style.display = 'block';
+}
+
+function closeEditModal() {
+    document.getElementById('editModal').style.display = 'none';
+}
+
+async function saveEdit() {
+    const content = document.getElementById('editContent').value;
+
+    await fetch(`/api/posts/${currentEditId}`, {
+        method: 'PUT',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ username, content })
+    });
+
+    closeEditModal();
+    loadPosts();
+}
+
+// INIT
+loadThreadInfo();
+loadPosts();
+</script>
+
 </body>
 </html>

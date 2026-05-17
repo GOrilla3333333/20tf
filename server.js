@@ -17,47 +17,111 @@ app.use('/uploads', express.static('uploads'));
 // ================= UPLOAD FOLDER =================
 if (!fs.existsSync('uploads')) {
     fs.mkdirSync('uploads');
-    console.log("📁 uploads folder created");
 }
 
-// ================= MULTER SETUP =================
+// ================= MULTER =================
 const storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, 'uploads/'),
     filename: (req, file, cb) => {
-        const safeName = Date.now() + '-' + file.originalname.replace(/\s/g, '_');
-        cb(null, safeName);
+        cb(null, Date.now() + '-' + file.originalname.replace(/\s/g, '_'));
     }
 });
-
 const upload = multer({ storage });
 
-// ================= MONGO CONNECTION =================
+// ================= DB =================
 mongoose.connect(process.env.MONGO_URI)
-    .then(() => console.log("✅ Connected to MongoDB Atlas"))
-    .catch(err => console.error("❌ MongoDB Error:", err));
+    .then(() => console.log("✅ MongoDB connected"))
+    .catch(err => console.log(err));
 
 // ================= MODELS =================
 const User = require('./models/User');
 const Forum = require('./models/Forum');
 const Thread = require('./models/Thread');
 const Post = require('./models/Post');
-const Vote = require('./models/Vote');
-const Report = require('./models/Report');
 const GlobalBanner = require('./models/GlobalBanner');
+const Report = require('./models/Report');
 
-// ================= HTML ROUTES =================
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
-app.get('/register', (req, res) => res.sendFile(path.join(__dirname, 'public', 'register.html')));
-app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
-app.get('/forums', (req, res) => res.sendFile(path.join(__dirname, 'public', 'forums.html')));
-app.get('/thread-list.html', (req, res) => res.sendFile(path.join(__dirname, 'public', 'thread-list.html')));
-app.get('/thread.html', (req, res) => res.sendFile(path.join(__dirname, 'public', 'thread.html')));
+// =====================================================
+// HTML ROUTES
+// =====================================================
 
-// ================= UPLOAD ROUTE =================
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/register', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'register.html'));
+});
+
+app.get('/login', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
+app.get('/forums', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'forums.html'));
+});
+
+app.get('/thread.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'thread.html'));
+});
+
+// =====================================================
+// AUTH FIX (LOGIN / REGISTER)
+// =====================================================
+
+app.post('/api/register', async (req, res) => {
+    try {
+        const { username, password } = req.body;
+
+        if (!username || !password)
+            return res.json({ success: false, message: "Missing fields" });
+
+        const exists = await User.findOne({ username });
+        if (exists)
+            return res.json({ success: false, message: "User already exists" });
+
+        await new User({
+            username,
+            password,
+            banned: false
+        }).save();
+
+        res.json({ success: true, message: "Account created" });
+
+    } catch (err) {
+        console.error(err);
+        res.json({ success: false, message: "Server error" });
+    }
+});
+
+app.post('/api/login', async (req, res) => {
+    try {
+        const { username, password } = req.body;
+
+        const user = await User.findOne({ username, password });
+
+        if (!user)
+            return res.json({ success: false, message: "Invalid credentials" });
+
+        if (user.banned)
+            return res.json({ success: false, message: "User is banned" });
+
+        res.json({ success: true, message: "Login successful" });
+
+    } catch (err) {
+        console.error(err);
+        res.json({ success: false, message: "Server error" });
+    }
+});
+
+// =====================================================
+// UPLOAD
+// =====================================================
+
 app.post('/api/upload', (req, res) => {
     upload.single('file')(req, res, function (err) {
         if (err) return res.json({ success: false, message: "Upload error" });
-        if (!req.file) return res.json({ success: false, message: "No file received" });
+        if (!req.file) return res.json({ success: false, message: "No file" });
 
         res.json({
             success: true,
@@ -66,29 +130,10 @@ app.post('/api/upload', (req, res) => {
     });
 });
 
-// ================= AUTH =================
-app.post('/api/register', async (req, res) => {
-    const { username, password } = req.body;
-    if (!username || !password) return res.json({ success: false, message: "Username and password required" });
+// =====================================================
+// FORUMS
+// =====================================================
 
-    const existing = await User.findOne({ username });
-    if (existing) return res.json({ success: false, message: "Username already taken" });
-
-    await new User({ username, password }).save();
-    res.json({ success: true, message: "User created successfully!" });
-});
-
-app.post('/api/login', async (req, res) => {
-    const { username, password } = req.body;
-    const user = await User.findOne({ username, password });
-
-    if (!user) return res.json({ success: false, message: "Invalid username or password" });
-    if (user.banned) return res.json({ success: false, message: "Account banned", banned: true });
-
-    res.json({ success: true, message: "Login successful" });
-});
-
-// ================= FORUMS =================
 app.get('/api/forums', async (req, res) => {
     const forums = await Forum.find();
     res.json(forums);
@@ -96,155 +141,168 @@ app.get('/api/forums', async (req, res) => {
 
 app.post('/api/forums', async (req, res) => {
     const { name, description } = req.body;
+
     const forum = new Forum({
         id: Date.now().toString(36),
         name,
         description
     });
+
     await forum.save();
     res.json({ success: true, message: "Forum created" });
 });
 
-// ================= THREADS =================
-app.get('/api/forums/:forumId/threads', async (req, res) => {
-    const threads = await Thread.find({ forum_id: req.params.forumId });
-    const result = [];
+// =====================================================
+// THREAD INFO
+// =====================================================
 
-    for (const thread of threads) {
-        const votes = await Vote.find({ target_type: 'thread', target_id: thread.id });
-        const netVotes = votes.reduce((sum, v) => sum + v.vote_type, 0);
-        result.push({ ...thread.toObject(), netVotes });
-    }
-    res.json(result);
-});
+app.get('/api/threads/:threadId', async (req, res) => {
+    const thread = await Thread.findOne({ id: String(req.params.threadId) });
 
-app.post('/api/threads', async (req, res) => {
-    const { title, content, forum_id, username, fileUrl } = req.body;
-    if (!title || !forum_id || !username) return res.json({ success: false, message: "Missing information" });
-
-    const thread = new Thread({
-        id: Date.now().toString(36),
-        title,
-        forum_id,
-        user_id: username,
-        pinned: false,
-        created_at: new Date()
-    });
-    await thread.save();
-
-    const post = new Post({
-        id: Date.now().toString(36) + 'p',
-        content: content || "",
-        thread_id: thread.id,
-        user_id: username,
-        fileUrl: fileUrl || null,
-        created_at: new Date()
-    });
-    await post.save();
-
-    res.json({ success: true, message: "d1sc created successfully!" });
-});
-
-app.put('/api/threads/:threadId', async (req, res) => {
-    const { username, title, content } = req.body;
-    const thread = await Thread.findOne({ id: req.params.threadId });
-
-    if (!thread) return res.json({ success: false, message: "Thread not found" });
-    if (thread.user_id !== username && username !== "20k") return res.json({ success: false, message: "No permission" });
-
-    if (title) thread.title = title;
-    await thread.save();
-
-    if (content) {
-        const post = await Post.findOne({ thread_id: thread.id });
-        if (post) {
-            post.content = content;
-            await post.save();
-        }
+    if (!thread) {
+        return res.json({
+            success: false,
+            title: "Thread not found",
+            creator: "Unknown"
+        });
     }
 
-    res.json({ success: true, message: "Updated successfully" });
+    res.json({
+        success: true,
+        id: thread.id,
+        title: thread.title,
+        creator: thread.user_id,
+        created_at: thread.created_at
+    });
 });
 
-app.delete('/api/threads/:threadId', async (req, res) => {
-    const { username } = req.body;
-    const thread = await Thread.findOne({ id: req.params.threadId });
+// =====================================================
+// POSTS (TREE BUILDING)
+// =====================================================
 
-    if (!thread) return res.json({ success: false, message: "Thread not found" });
-    if (thread.user_id !== username && username !== "20k") return res.json({ success: false, message: "No permission" });
-
-    await Thread.deleteOne({ id: thread.id });
-    await Post.deleteMany({ thread_id: thread.id });
-
-    res.json({ success: true, message: "Deleted successfully" });
-});
-
-// ================= POSTS =================
 app.get('/api/threads/:threadId/posts', async (req, res) => {
-    const posts = await Post.find({ thread_id: req.params.threadId }).sort({ created_at: 1 });
-    const result = [];
+    const posts = await Post.find({ thread_id: String(req.params.threadId) })
+        .sort({ created_at: 1 });
 
-    for (const post of posts) {
-        const votes = await Vote.find({ target_type: 'post', target_id: post.id });
-        const netVotes = votes.reduce((sum, v) => sum + v.vote_type, 0);
-        result.push({ ...post.toObject(), netVotes });
-    }
-    res.json(result);
+    const cleaned = posts.map(p => ({
+        id: String(p.id),
+        content: p.content,
+        thread_id: String(p.thread_id),
+        user_id: p.user_id,
+        fileUrl: p.fileUrl,
+        parent_id: p.parent_id ? String(p.parent_id) : null,
+        created_at: p.created_at,
+        replies: []
+    }));
+
+    const map = new Map();
+    cleaned.forEach(p => map.set(p.id, p));
+
+    const tree = [];
+
+    cleaned.forEach(p => {
+        if (p.parent_id && map.has(p.parent_id)) {
+            map.get(p.parent_id).replies.push(p);
+        } else {
+            tree.push(p);
+        }
+    });
+
+    res.json(tree);
 });
 
-// === CREATE POST / REPLY ===
+// =====================================================
+// CREATE POST
+// =====================================================
+
 app.post('/api/posts', async (req, res) => {
     const { content, thread_id, username, fileUrl, parent_id } = req.body;
 
-    if (!content || !thread_id || !username) {
-        return res.json({ success: false, message: "Missing information" });
-    }
-
-    const newPost = new Post({
+    const post = new Post({
         id: Date.now().toString(36),
-        content: content.trim(),
-        thread_id,
+        content: content ? content.trim() : "",
+        thread_id: String(thread_id),
         user_id: username,
         fileUrl: fileUrl || null,
-        parent_id: parent_id || null,     // ← This is the important line
+        parent_id: parent_id ? String(parent_id) : null,
         created_at: new Date()
     });
 
-    await newPost.save();
-    console.log(`💬 New post created | parent_id: ${parent_id || 'null'}`);
-    
-    res.json({ success: true, message: "Reply posted!" });
+    await post.save();
+
+    res.json({
+        success: true,
+        message: parent_id ? "Reply posted!" : "Post created!"
+    });
 });
 
-// ================= VOTES =================
-app.post('/api/vote', async (req, res) => {
-    const { target_type, target_id, vote_type, username } = req.body;
+// =====================================================
+// EDIT POST
+// =====================================================
 
-    const existing = await Vote.findOne({ target_type, target_id, user_id: username });
+app.put('/api/posts/:postId', async (req, res) => {
+    const { username, content } = req.body;
 
-    if (existing) {
-        if (existing.vote_type === vote_type) {
-            await Vote.deleteOne({ _id: existing._id });
-            return res.json({ success: true, message: "Vote removed" });
-        } else {
-            existing.vote_type = vote_type;
-            await existing.save();
-            return res.json({ success: true, message: "Vote changed" });
-        }
-    }
+    const post = await Post.findOne({ id: req.params.postId });
 
-    await new Vote({
-        id: Date.now().toString(36),
-        user_id: username,
-        target_type,
-        target_id,
-        vote_type
-    }).save();
+    if (!post)
+        return res.json({ success: false, message: "Post not found" });
 
-    res.json({ success: true, message: "Voted!" });
+    if (post.user_id !== username && username !== "20k")
+        return res.json({ success: false, message: "No permission" });
+
+    post.content = content;
+    await post.save();
+
+    res.json({ success: true, message: "Updated" });
 });
 
-// ================= REPORTS =================
+// =====================================================
+// DELETE POST
+// =====================================================
+
+app.delete('/api/posts/:postId', async (req, res) => {
+    const { username } = req.body;
+
+    const post = await Post.findOne({ id: req.params.postId });
+
+    if (!post)
+        return res.json({ success: false, message: "Post not found" });
+
+    if (post.user_id !== username && username !== "20k")
+        return res.json({ success: false, message: "No permission" });
+
+    await Post.deleteOne({ id: req.params.postId });
+
+    res.json({ success: true, message: "Deleted" });
+});
+
+// =====================================================
+// DELETE THREAD (FIXED)
+// =====================================================
+
+app.delete('/api/threads/:threadId', async (req, res) => {
+    const { username } = req.body;
+
+    const thread = await Thread.findOne({ id: req.params.threadId });
+
+    if (!thread)
+        return res.json({ success: false, message: "Thread not found" });
+
+    if (username !== "20k" && thread.user_id !== username)
+        return res.json({ success: false, message: "No permission" });
+
+    await Post.deleteMany({ thread_id: thread.id });
+    await Thread.deleteOne({ id: thread.id });
+    await Report.deleteMany({ post_id: thread.id });
+
+    res.json({ success: true, message: "Thread deleted" });
+});
+
+// =====================================================
+// REPORT SYSTEM (FIXED)
+// =====================================================
+
 app.post('/api/report', async (req, res) => {
     const { post_id, reported_by, reason } = req.body;
 
@@ -253,56 +311,46 @@ app.post('/api/report', async (req, res) => {
         post_id,
         reported_by,
         reason,
-        status: "pending"
+        status: "pending",
+        created_at: new Date()
     }).save();
 
     res.json({ success: true, message: "Report submitted" });
 });
 
-// ✅ FIXED ROUTE
 app.get('/api/reports', async (req, res) => {
-    if (req.query.username !== "20k") {
-        return res.json({ success: false, message: "Admin access only" });
-    }
-
     const reports = await Report.find().sort({ created_at: -1 });
     res.json(reports);
 });
 
-app.post('/api/reports/:reportId/review', async (req, res) => {
-    if (req.body.username !== "20k") return res.json({ success: false, message: "Admin only" });
+app.post('/api/reports/:id/review', async (req, res) => {
+    const report = await Report.findOne({ id: req.params.id });
 
-    const report = await Report.findOne({ id: req.params.reportId });
-    if (report) {
-        report.status = "reviewed";
-        await report.save();
-        res.json({ success: true, message: "Report marked as reviewed" });
-    } else {
-        res.json({ success: false, message: "Report not found" });
-    }
+    if (!report)
+        return res.json({ success: false, message: "Not found" });
+
+    report.status = "cleared";
+    await report.save();
+
+    res.json({ success: true, message: "Report cleared" });
 });
 
-// ================= BANNER & BAN =================
-app.post('/api/admin/banner', async (req, res) => {
-    if (req.body.username !== "20k") return res.json({ success: false, message: "Admin only" });
-
-    await GlobalBanner.deleteMany({});
-    await new GlobalBanner({
-        text: req.body.text,
-        imageUrl: req.body.imageUrl,
-        active: true
-    }).save();
-
-    res.json({ success: true, message: "Banner updated" });
-});
+// =====================================================
+// GLOBAL BANNER
+// =====================================================
 
 app.get('/api/global-banner', async (req, res) => {
     const banner = await GlobalBanner.findOne({ active: true });
     res.json(banner || { active: false });
 });
 
+// =====================================================
+// BAN CHECK
+// =====================================================
+
 app.get('/api/check-ban/:username', async (req, res) => {
     const user = await User.findOne({ username: req.params.username });
+
     if (user && user.banned) {
         return res.json({
             banned: true,
@@ -310,64 +358,143 @@ app.get('/api/check-ban/:username', async (req, res) => {
             reason: user.banReason || "No reason"
         });
     }
+
     res.json({ banned: false });
 });
 
-// ================= PIN THREAD (Admin Only) =================
-app.post('/api/threads/:threadId/pin', async (req, res) => {
-    if (req.body.username !== "20k") {
-        return res.json({ success: false, message: "Only 20k can pin threads" });
+// =====================================================
+// THREADS BY FORUM
+// =====================================================
+
+app.get('/api/forums/:forumId/threads', async (req, res) => {
+    try {
+        const threads = await Thread.find({ forum_id: String(req.params.forumId) })
+            .sort({ created_at: -1 });
+
+        const result = [];
+
+        for (const thread of threads) {
+            const posts = await Post.find({ thread_id: thread.id });
+
+            result.push({
+                ...thread.toObject(),
+                postCount: posts.length
+            });
+        }
+
+        res.json(result);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json([]);
     }
+});
+
+// =====================================================
+// CREATE THREAD
+// =====================================================
+
+app.post('/api/threads', async (req, res) => {
+    try {
+        const { title, content, forum_id, username, fileUrl } = req.body;
+
+        if (!title || !forum_id || !username)
+            return res.json({ success: false, message: "Missing fields" });
+
+        const thread = new Thread({
+            id: Date.now().toString(36),
+            title,
+            forum_id: String(forum_id),
+            user_id: username,
+            pinned: false,
+            created_at: new Date()
+        });
+
+        await thread.save();
+
+        if (content && content.trim()) {
+            await new Post({
+                id: Date.now().toString(36) + "p",
+                thread_id: thread.id,
+                user_id: username,
+                content: content.trim(),
+                fileUrl: fileUrl || null,
+                parent_id: null,
+                created_at: new Date()
+            }).save();
+        }
+
+        res.json({ success: true, message: "d1sc created successfully!" });
+
+    } catch (err) {
+        console.error(err);
+        res.json({ success: false, message: "Server error creating thread" });
+    }
+});
+
+// =====================================================
+// ADMIN ROUTES (FIXED)
+// =====================================================
+
+// UPDATE BANNER
+app.post('/api/admin/banner', async (req, res) => {
+    const { username, text, imageUrl } = req.body;
+
+    if (username !== "20k")
+        return res.json({ success: false, message: "No permission" });
+
+    await GlobalBanner.findOneAndUpdate(
+        { active: true },
+        { active: true, text, imageUrl },
+        { upsert: true }
+    );
+
+    res.json({ success: true, message: "Banner updated" });
+});
+
+// BAN USER
+app.post('/api/admin/ban', async (req, res) => {
+    const { admin, targetUsername, reason, type } = req.body;
+
+    if (admin !== "20k")
+        return res.json({ success: false, message: "No permission" });
+
+    const user = await User.findOne({ username: targetUsername });
+
+    if (!user)
+        return res.json({ success: false, message: "User not found" });
+
+    user.banned = true;
+    user.banReason = reason;
+    user.banType = type;
+
+    await user.save();
+
+    res.json({ success: true, message: "User banned" });
+});
+
+// DELETE THREAD (ADMIN)
+app.delete('/api/admin/thread/:threadId', async (req, res) => {
+    const { username } = req.body;
+
+    if (username !== "20k")
+        return res.json({ success: false, message: "No permission" });
 
     const thread = await Thread.findOne({ id: req.params.threadId });
-    if (!thread) {
+
+    if (!thread)
         return res.json({ success: false, message: "Thread not found" });
-    }
 
-    thread.pinned = !thread.pinned;
-    await thread.save();
+    await Post.deleteMany({ thread_id: thread.id });
+    await Thread.deleteOne({ id: thread.id });
+    await Report.deleteMany({ post_id: thread.id });
 
-    res.json({ 
-        success: true, 
-        message: thread.pinned ? "📌 Thread pinned at the top" : "📌 Thread unpinned",
-        pinned: thread.pinned 
-    });
+    res.json({ success: true, message: "Thread deleted" });
 });
 
-// ================= EDIT POST =================
-app.put('/api/posts/:postId', async (req, res) => {
-    const { username, content } = req.body;
-    const post = await Post.findOne({ id: req.params.postId });
+// =====================================================
+// START SERVER
+// =====================================================
 
-    if (!post) return res.json({ success: false, message: "Post not found" });
-
-    // Only creator or 20k can edit
-    if (post.user_id !== username && username !== "20k") {
-        return res.json({ success: false, message: "You can only edit your own posts" });
-    }
-
-    if (content) post.content = content;
-    await post.save();
-
-    res.json({ success: true, message: "Post updated successfully" });
-});
-
-// Delete individual reply/post
-app.delete('/api/posts/:postId', async (req, res) => {
-    const { username } = req.body;
-    const post = await Post.findOne({ id: req.params.postId });
-
-    if (!post) return res.json({ success: false, message: "Post not found" });
-
-    if (post.user_id !== username && username !== "20k") {
-        return res.json({ success: false, message: "You can only delete your own replies" });
-    }
-
-    await Post.deleteOne({ id: req.params.postId });
-    res.json({ success: true, message: "Reply deleted successfully" });
-});
-
-// ================= START =================
 app.listen(PORT, () => {
-    console.log(`✅ 20Thousand Forums running at http://localhost:${PORT}`);
+    console.log(`🚀 Running on http://localhost:${PORT}`);
 });

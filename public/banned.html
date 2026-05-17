@@ -68,7 +68,7 @@
 </head>
 <body>
     <div class="container">
-        <img src="https://i.imgur.com/MJUtFlk.png" alt="Banned">
+        <img src="https://i.imgflip.com/6vvwv2.png" alt="Banned">
         <h1>YOU HAVE BEEN BANISHED FROM THIS SITE.</h1>
         
         <div class="reason">REASON: <span id="reason-text"></span></div>
@@ -89,23 +89,41 @@
     </audio>
 
     <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        document.getElementById('reason-text').textContent = urlParams.get('reason') || "No reason given";
-        
-        const type = urlParams.get('type');
-        document.getElementById('days-text').textContent = type === "permanent" ? "DAYS BANISHED: FOREVER" : "DAYS BANISHED: 7 DAYS";
+    const urlParams = new URLSearchParams(window.location.search);
+    document.getElementById('reason-text').textContent = urlParams.get('reason') || "No reason given";
 
-        function logout() {
-            localStorage.removeItem('username');
-            window.location.href = '/';
+    const type = urlParams.get('type');
+    document.getElementById('days-text').textContent =
+        type === "permanent" ? "DAYS BANISHED: FOREVER" : "DAYS BANISHED: 7 DAYS";
+
+    function logout() {
+        localStorage.removeItem('username');
+        window.location.href = '/';
+    }
+
+    const audio = document.getElementById('banAudio');
+    audio.volume = 0.7;
+
+    async function tryPlayAudio() {
+        try {
+            await audio.play();
+        } catch (e) {
+            // autoplay blocked — wait for interaction
+            console.log("Autoplay blocked, waiting for interaction...");
         }
+    }
 
-        // Try to play audio (some browsers block autoplay)
-        window.addEventListener('load', () => {
-            const audio = document.getElementById('banAudio');
-            audio.volume = 0.7;
-            audio.play().catch(() => {});
-        });
-    </script>
+    window.addEventListener('load', tryPlayAudio);
+
+    // 🔥 fallback: first user interaction unlocks audio
+    document.addEventListener('click', () => {
+        audio.play().catch(() => {});
+    }, { once: true });
+
+    document.addEventListener('keydown', () => {
+        audio.play().catch(() => {});
+    }, { once: true });
+</script>
+
 </body>
 </html>
