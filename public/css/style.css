@@ -1,10 +1,16 @@
 body {
-    font-family: "Comic Sans MS", "Comic Sans", cursive, sans-serif;
+    font-family: "Comic Neue", "Comic Sans MS", "Comic Sans", cursive, sans-serif;
     margin: 0;
     padding: 20px;
     background-color: #162437;
     color: #ffffff;
     line-height: 1.6;
+}
+
+/* Optional: improves mobile font rendering consistency */
+* {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
 }
 
 header {
