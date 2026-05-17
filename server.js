@@ -266,11 +266,11 @@ app.delete('/api/posts/:postId', async (req, res) => {
 
     const post = await Post.findOne({ id: req.params.postId });
 
-    if (!post)
-        return res.json({ success: false, message: "Post not found" });
+    if (!post) return res.json({ success: false, message: "Post not found" });
 
-    if (post.user_id !== username && username !== "20k")
+    if (post.user_id !== username && username !== "20k") {
         return res.json({ success: false, message: "No permission" });
+    }
 
     await Post.deleteOne({ id: req.params.postId });
 
@@ -489,6 +489,36 @@ app.delete('/api/admin/thread/:threadId', async (req, res) => {
     await Report.deleteMany({ post_id: thread.id });
 
     res.json({ success: true, message: "Thread deleted" });
+});
+
+// ================= PIN THREAD =================
+app.post('/api/threads/:threadId/pin', async (req, res) => {
+    try {
+        const { username } = req.body;
+
+        // only admin
+        if (username !== "20k") {
+            return res.json({ success: false, message: "Only admin can pin" });
+        }
+
+        const thread = await Thread.findOne({ id: req.params.threadId });
+
+        if (!thread) {
+            return res.json({ success: false, message: "Thread not found" });
+        }
+
+        thread.pinned = !thread.pinned;
+        await thread.save();
+
+        res.json({
+            success: true,
+            message: thread.pinned ? "📌 Pinned" : "📌 Unpinned"
+        });
+
+    } catch (err) {
+        console.error("PIN ERROR:", err);
+        res.json({ success: false, message: "Server error" });
+    }
 });
 
 // =====================================================

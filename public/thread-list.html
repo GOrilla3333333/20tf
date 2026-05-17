@@ -108,176 +108,271 @@
     </div>
 
     <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        const forumId = urlParams.get('id');
-        const forumName = urlParams.get('name');
-        const username = localStorage.getItem('username');
+    const urlParams = new URLSearchParams(window.location.search);
+    const forumId = urlParams.get('id');
+    const forumName = urlParams.get('name');
+    const username = localStorage.getItem('username');
 
-        document.getElementById('board-name').textContent = forumName || "board";
+    document.getElementById('board-name').textContent = forumName || "board";
 
-        let currentThreadId = null;
+    let currentThreadId = null;
 
-        async function loadThreads() {
-            const sortMode = document.getElementById('sortSelect').value;
-            const res = await fetch(`/api/forums/${forumId}/threads`);
-            let threads = await res.json();
+    function showCreateModal() {
+    if (!username) {
+        return showNotification("Please login first", "#ff4444");
+    }
+    document.getElementById('createModal').style.display = 'flex';
+}
 
-            const pinned = threads.filter(t => t.pinned);
-            let normal = threads.filter(t => !t.pinned);
+function closeCreateModal() {
+    document.getElementById('createModal').style.display = 'none';
+}
 
-            if (sortMode === "popular") {
-                normal.sort((a, b) => (b.netVotes || 0) - (a.netVotes || 0));
-            } else {
-                normal.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+function openReport(threadId) {
+    currentThreadId = threadId;
+    document.getElementById('reportModal').style.display = 'flex';
+}
+
+function closeReportModal() {
+    document.getElementById('reportModal').style.display = 'none';
+}
+
+function openDelete(threadId) {
+    currentThreadId = threadId;
+    document.getElementById('deleteModal').style.display = 'flex';
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteModal').style.display = 'none';
+}
+
+async function submitReport() {
+    const reason = document.getElementById('reportReason').value.trim();
+
+    if (!reason) {
+        return showNotification("Please write a reason", "#ff4444");
+    }
+
+    const res = await fetch('/api/report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            post_id: currentThreadId,
+            reported_by: username,
+            reason
+        })
+    });
+
+    const data = await res.json();
+
+    showNotification(data.message, data.success ? "#00cc66" : "#ff4444");
+
+    document.getElementById('reportReason').value = "";
+    closeReportModal();
+}
+
+async function confirmDelete() {
+    const res = await fetch(`/api/threads/${currentThreadId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username })
+    });
+
+    const data = await res.json();
+
+    showNotification(data.message, data.success ? "#00cc66" : "#ff4444");
+
+    closeDeleteModal();
+
+    if (data.success) {
+        loadThreads();
+    }
+}
+
+async function createD1sc() {
+    const title = document.getElementById('modal-title').value.trim();
+    const content = document.getElementById('modal-content').value.trim();
+    const fileInput = document.getElementById('modal-file');
+
+    if (!username) {
+        return showNotification("Please login first", "#ff4444");
+    }
+
+    if (!title) {
+        return showNotification("Title is required", "#ff4444");
+    }
+
+    let fileUrl = null;
+
+    // upload file if exists
+    if (fileInput.files.length > 0) {
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+
+        try {
+            const uploadRes = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            const uploadData = await uploadRes.json();
+
+            if (!uploadData.success) {
+                return showNotification("Upload failed", "#ff4444");
             }
 
-            threads = [...pinned, ...normal];
+            fileUrl = uploadData.url;
 
-            let html = '';
-            threads.forEach(thread => {
-                const hasFile = thread.fileUrl ? ' [📷 File Attached]' : '';
-                const net = thread.netVotes || 0;
-                const up = net > 0 ? net : 0;
-                const down = net < 0 ? Math.abs(net) : 0;
-                const isPinned = thread.pinned ? ' pinned' : '';
+        } catch (err) {
+            console.error(err);
+            return showNotification("Upload error", "#ff4444");
+        }
+    }
 
-                html += `
-                    <div class="thread${isPinned}">
-                        <button class="menu-btn" onclick="showDropdown('${thread.id}', '${thread.user_id}', event)">⋯</button>
-                        ${username === "20k" ? `<button class="pin-btn" onclick="togglePin('${thread.id}')">📌</button>` : ''}
-                        <strong><a href="/thread.html?id=${thread.id}&title=${encodeURIComponent(thread.title)}">${thread.title}</a></strong>${hasFile}<br>
-                        <small>Created by ${thread.user_id} • ${new Date(thread.created_at).toLocaleString()}</small>
-                        <span style="color:#fffd01;"> ▲ ${up}</span>
-                        <span style="color:#ff4444;"> ▼ ${down}</span>
+    try {
+        const res = await fetch('/api/threads', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                title,
+                content,
+                forum_id: forumId,
+                username,
+                fileUrl
+            })
+        });
 
-                        <div id="dropdown-${thread.id}" class="dropdown-menu">
-                            <button onclick="openReport('${thread.id}')">Report</button>
-                            ${(username === "20k" || username === thread.user_id) ? 
-                                `<button onclick="openDelete('${thread.id}')">Delete d1sc</button>` : ''}
-                        </div>
-                    </div>`;
-            });
-            document.getElementById('threadsList').innerHTML = html || "<p>No discussions yet.</p>";
+        const data = await res.json();
+
+        showNotification(data.message, data.success ? "#00cc66" : "#ff4444");
+
+        if (data.success) {
+            closeCreateModal();
+            loadThreads();
+
+            // clear modal inputs
+            document.getElementById('modal-title').value = "";
+            document.getElementById('modal-content').value = "";
+            document.getElementById('modal-file').value = "";
         }
 
-        function showDropdown(threadId, owner, e) {
-            e.stopPropagation();
-            document.querySelectorAll('.dropdown-menu').forEach(m => m.style.display = 'none');
-            document.getElementById(`dropdown-${threadId}`).style.display = 'block';
+    } catch (err) {
+        console.error(err);
+        showNotification("Failed to create d1sc", "#ff4444");
+    }
+}
+
+    async function loadThreads() {
+        const sortMode = document.getElementById('sortSelect').value;
+
+        const res = await fetch(`/api/forums/${forumId}/threads`);
+        let threads = await res.json();
+
+        const pinned = threads.filter(t => t.pinned);
+        let normal = threads.filter(t => !t.pinned);
+
+        if (sortMode === "popular") {
+            normal.sort((a, b) => (b.netVotes || 0) - (a.netVotes || 0));
+        } else {
+            normal.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
         }
 
-        function openReport(threadId) {
-            currentThreadId = threadId;
-            document.getElementById('reportModal').style.display = 'flex';
-        }
+        threads = [...pinned, ...normal];
 
-        function openDelete(threadId) {
-            currentThreadId = threadId;
-            document.getElementById('deleteModal').style.display = 'flex';
-        }
+        let html = '';
 
-        function closeReportModal() {
-            document.getElementById('reportModal').style.display = 'none';
-        }
+        threads.forEach(thread => {
+            const hasFile = thread.fileUrl ? ' [📷 File Attached]' : '';
+            const net = thread.netVotes || 0;
+            const up = net > 0 ? net : 0;
+            const down = net < 0 ? Math.abs(net) : 0;
 
-        function closeDeleteModal() {
-            document.getElementById('deleteModal').style.display = 'none';
-        }
+            const isPinned = thread.pinned ? ' pinned' : '';
 
-        async function submitReport() {
-            const reason = document.getElementById('reportReason').value.trim();
-            if (!reason) return showNotification("Please write a reason", "#ff4444");
+            html += `
+                <div class="thread${isPinned}">
+                    
+                    <button class="menu-btn" onclick="showDropdown('${thread.id}', event)">⋯</button>
 
-            const res = await fetch('/api/report', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ post_id: currentThreadId, reported_by: username, reason })
-            });
+                    ${username === "20k" ? `
+                        <button class="pin-btn" onclick="togglePin('${thread.id}')">
+                            ${thread.pinned ? "📌" : "📍"}
+                        </button>
+                    ` : ''}
 
-            const data = await res.json();
-            showNotification(data.message, data.success ? "#00cc66" : "#ff4444");
-            closeReportModal();
-        }
+                    <strong>
+                        <a href="/thread.html?id=${thread.id}&title=${encodeURIComponent(thread.title)}">
+                            ${thread.title}
+                        </a>
+                    </strong>
+                    ${hasFile}<br>
 
-        async function confirmDelete() {
-            const res = await fetch(`/api/threads/${currentThreadId}`, {
-                method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username })
-            });
+                    <small>
+                        Created by ${thread.user_id} • ${new Date(thread.created_at).toLocaleString()}
+                    </small>
 
-            const data = await res.json();
-            showNotification(data.message, data.success ? "#00cc66" : "#ff4444");
-            closeDeleteModal();
-            if (data.success) loadThreads();
-        }
+                    <span style="color:#fffd01;"> ▲ ${up}</span>
+                    <span style="color:#ff4444;"> ▼ ${down}</span>
 
-        async function togglePin(threadId) {
+                    <div id="dropdown-${thread.id}" class="dropdown-menu">
+                        <button onclick="openReport('${thread.id}')">Report</button>
+                        ${(username === "20k" || username === thread.user_id) ?
+                            `<button onclick="openDelete('${thread.id}')">Delete d1sc</button>` : ''}
+                    </div>
+                </div>
+            `;
+        });
+
+        document.getElementById('threadsList').innerHTML =
+            html || "<p>No discussions yet.</p>";
+    }
+
+    function showDropdown(threadId, e) {
+        e.stopPropagation();
+        document.querySelectorAll('.dropdown-menu')
+            .forEach(m => m.style.display = 'none');
+
+        document.getElementById(`dropdown-${threadId}`).style.display = 'block';
+    }
+
+    async function togglePin(threadId) {
+        try {
             const res = await fetch(`/api/threads/${threadId}/pin`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify({ username })
             });
-            const data = await res.json();
-            showNotification(data.message, data.success ? "#00cc66" : "#ff4444");
-            if (data.success) loadThreads();
-        }
-
-        function showNotification(text, color) {
-            const notif = document.createElement('div');
-            notif.className = 'notification';
-            notif.style.background = color;
-            notif.textContent = text;
-            document.body.appendChild(notif);
-            setTimeout(() => notif.remove(), 2800);
-        }
-
-        // Create d1sc
-        function showCreateModal() {
-            if (!username) return showNotification("Please login first", "#ff4444");
-            document.getElementById('createModal').style.display = 'flex';
-        }
-
-        function closeCreateModal() {
-            document.getElementById('createModal').style.display = 'none';
-        }
-
-        async function createD1sc() {
-            const title = document.getElementById('modal-title').value.trim();
-            const content = document.getElementById('modal-content').value.trim();
-            const fileInput = document.getElementById('modal-file');
-
-            if (!title) return showNotification("Title is required", "#ff4444");
-
-            let fileUrl = null;
-            if (fileInput.files.length > 0) {
-                const formData = new FormData();
-                formData.append('file', fileInput.files[0]);
-                try {
-                    const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData });
-                    const uploadData = await uploadRes.json();
-                    if (uploadData.success) fileUrl = uploadData.url;
-                } catch (e) {
-                    return showNotification("Upload error", "#ff4444");
-                }
-            }
-
-            const res = await fetch('/api/threads', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title, content, forum_id: forumId, username, fileUrl })
-            });
 
             const data = await res.json();
+
             showNotification(data.message, data.success ? "#00cc66" : "#ff4444");
 
             if (data.success) {
-                closeCreateModal();
-                loadThreads();
+                await loadThreads(); // IMPORTANT: refresh UI after pin toggle
             }
-        }
 
-        loadThreads();
-    </script>
+        } catch (err) {
+            console.error("PIN ERROR:", err);
+            showNotification("Pin request failed", "#ff4444");
+        }
+    }
+
+    function showNotification(text, color) {
+        const notif = document.createElement('div');
+        notif.className = 'notification';
+        notif.style.background = color;
+        notif.textContent = text;
+
+        document.body.appendChild(notif);
+
+        setTimeout(() => notif.remove(), 2500);
+    }
+
+    loadThreads();
+</script>
 </body>
 </html>
