@@ -5,6 +5,13 @@ const multer = require('multer');
 const fs = require('fs');
 require('dotenv').config();
 
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary'); // ✅ ADD THIS
+
+cloudinary.config({
+    cloudinary_url: process.env.CLOUDINARY_URL
+});
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -19,13 +26,15 @@ if (!fs.existsSync('uploads')) {
     fs.mkdirSync('uploads');
 }
 
-// ================= MULTER =================
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, 'uploads/'),
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + '-' + file.originalname.replace(/\s/g, '_'));
+// ================= cloudinary =================
+const storage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+        folder: 'forum-app',
+        allowed_formats: ['jpg', 'png', 'jpeg', 'gif', 'mp4', 'webp']
     }
 });
+
 const upload = multer({ storage });
 
 // ================= DB =================
@@ -118,16 +127,25 @@ app.post('/api/login', async (req, res) => {
 // UPLOAD
 // =====================================================
 
-app.post('/api/upload', (req, res) => {
-    upload.single('file')(req, res, function (err) {
-        if (err) return res.json({ success: false, message: "Upload error" });
+app.post('/api/upload', upload.single('file'), async (req, res) => {
+    try {
         if (!req.file) return res.json({ success: false, message: "No file" });
+
+        const result = await cloudinary.uploader.upload(req.file.path, {
+            folder: "forum-app"
+        });
+
+        fs.unlinkSync(req.file.path);
 
         res.json({
             success: true,
-            url: `/uploads/${req.file.filename}`
+            url: result.secure_url
         });
-    });
+
+    } catch (err) {
+        console.error(err);
+        res.json({ success: false, message: "Upload failed" });
+    }
 });
 
 // =====================================================
