@@ -129,22 +129,25 @@ app.post('/api/login', async (req, res) => {
 
 app.post('/api/upload', upload.single('file'), async (req, res) => {
     try {
-        if (!req.file) return res.json({ success: false, message: "No file" });
-
-        const result = await cloudinary.uploader.upload(req.file.path, {
-            folder: "forum-app"
-        });
-
-        fs.unlinkSync(req.file.path);
+        if (!req.file) {
+            return res.json({
+                success: false,
+                message: "No file"
+            });
+        }
 
         res.json({
             success: true,
-            url: result.secure_url
+            url: req.file.path
         });
 
     } catch (err) {
         console.error(err);
-        res.json({ success: false, message: "Upload failed" });
+
+        res.json({
+            success: false,
+            message: "Upload failed"
+        });
     }
 });
 
