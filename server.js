@@ -28,10 +28,31 @@ if (!fs.existsSync('uploads')) {
 
 // ================= cloudinary =================
 const storage = new CloudinaryStorage({
-    cloudinary: cloudinary,
-    params: {
-        folder: 'forum-app',
-        allowed_formats: ['jpg', 'png', 'jpeg', 'gif', 'mp4', 'webp']
+    cloudinary,
+    params: async (req, file) => {
+
+        let resourceType = "image";
+
+        // detect videos
+        if (file.mimetype.startsWith("video")) {
+            resourceType = "video";
+        }
+
+        return {
+            folder: "forum-app",
+            resource_type: resourceType,
+            allowed_formats: [
+                'jpg',
+                'png',
+                'jpeg',
+                'gif',
+                'webp',
+                'mp4',
+                'mov',
+                'webm',
+                'avi'
+            ]
+        };
     }
 });
 

@@ -139,7 +139,17 @@
             }
             let html = '';
             forums.forEach(f => {
-                html += `<div class="board"><strong><a href="/thread-list.html?id=${f.id}&name=${encodeURIComponent(f.name)}">s1k/${f.name}</a></strong><br><small>${f.description||''}</small></div>`;
+                html += `
+<div class="board">
+    <strong>
+        <a href="/thread-list.html?id=${f.id}&name=${encodeURIComponent(f.name)}"
+           style="color:white; text-decoration:none;">
+           s1k/${f.name}
+        </a>
+    </strong>
+    <br>
+    <small>${f.description || ''}</small>
+</div>`;
             });
             container.innerHTML = html;
         }
