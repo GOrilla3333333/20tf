@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <title>Admin Panel - 20Thousand Forums</title>
     <link rel="stylesheet" href="/css/style.css">
-
     <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="https://i.imgur.com/oJCfWc8.png">
 </head>
@@ -17,9 +16,7 @@
     <nav><a href="/forums">← Back to Forums</a></nav>
     <hr>
 
-    <div id="content">
-        <!-- Will be filled by JS -->
-    </div>
+    <div id="content"></div>
 
     <script>
         const username = localStorage.getItem('username');
@@ -33,19 +30,19 @@
         } else {
             document.getElementById('content').innerHTML = `
                 <h2>Global Banner</h2>
-                <input id="bannerText" placeholder="Banner text" style="width:70%"><br><br>
-                <input id="bannerImage" placeholder="Image URL (optional)" style="width:70%"><br><br>
-                <button onclick="updateBanner()">Update Banner</button>
-                <button onclick="clearBanner()">Clear Banner</button>
+                <input id="bannerText" placeholder="Banner text (HTML allowed)" style="width:80%; padding:10px;"><br><br>
+                <input id="bannerImage" placeholder="Image URL (optional)" style="width:80%; padding:10px;"><br><br>
+                <button onclick="updateBanner()" style="padding:12px 20px;">Update Banner</button>
+                <button onclick="clearBanner()" style="padding:12px 20px; background:#666;">Clear Banner</button>
 
                 <hr>
 
                 <h2>Ban User</h2>
-                <input id="banUsername" placeholder="Username"><br>
-                <input id="banReason" placeholder="Reason"><br>
+                <input id="banUsername" placeholder="Username"><br><br>
+                <input id="banReason" placeholder="Reason"><br><br>
                 <select id="banType">
                     <option value="temporary">Temporary (7 days)</option>
-                    <option value="permanent">Permanent</option>
+                    <option value="permanent" selected>Permanent</option>
                 </select><br><br>
                 <button onclick="banUser()">Ban User</button>
 
@@ -62,7 +59,6 @@
             `;
         }
 
-        // Banner functions
         async function updateBanner() {
             const text = document.getElementById('bannerText').value.trim();
             const imageUrl = document.getElementById('bannerImage').value.trim();
@@ -73,7 +69,8 @@
                 body: JSON.stringify({ username: "20k", text, imageUrl })
             });
             const data = await res.json();
-            alert(data.message);
+            
+            alert(data.message || "Banner updated successfully!");
         }
 
         async function clearBanner() {
@@ -83,7 +80,7 @@
                 body: JSON.stringify({ username: "20k", text: "", imageUrl: "" })
             });
             const data = await res.json();
-            alert(data.message);
+            alert(data.message || "Banner cleared!");
         }
 
         async function banUser() {

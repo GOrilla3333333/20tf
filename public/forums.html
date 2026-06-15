@@ -7,16 +7,35 @@
     <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="https://i.imgur.com/oJCfWc8.png">
     <style>
-        .modal {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); display: none; align-items: center;
-            justify-content: center; z-index: 10000;
-        }
-        .modal-content {
-            background: #1e2f4f; padding: 25px; border-radius: 12px;
-            border: 3px solid #0165fc; width: 90%; max-width: 400px; color: white;
-        }
-    </style>
+    .modal {
+        position: fixed; 
+        top: 0; left: 0; 
+        width: 100%; height: 100%;
+        background: rgba(0,0,0,0.85); 
+        display: none; 
+        align-items: center;
+        justify-content: center; 
+        z-index: 10000;
+    }
+    .modal-content {
+        background: #1e2f4f; 
+        padding: 25px; 
+        border-radius: 12px;
+        border: 3px solid #0165fc; 
+        width: 90%; 
+        max-width: 400px; 
+        color: white;
+        text-align: center;
+    }
+    .button {
+        padding: 10px 20px;
+        margin: 10px 5px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: bold;
+    }
+</style>
 </head>
 <body>
     <header>
@@ -64,23 +83,23 @@
         }
 
         // Global Banner
-       async function loadGlobalBanner() {
-    try {
-        const res = await fetch('/api/global-banner');
-        const banner = await res.json();
-        const el = document.getElementById('global-banner');
-        
-        if (banner.active && (banner.text || banner.imageUrl)) {
-            el.innerHTML = banner.text || "";
-            if (banner.imageUrl) {
-                el.innerHTML += `<br><img src="${banner.imageUrl}" style="max-width:100%; margin-top:8px;">`;
-            }
-            el.style.display = 'block';
-        } else {
-            el.style.display = 'none';   // Completely hide when cleared
+        async function loadGlobalBanner() {
+            try {
+                const res = await fetch('/api/global-banner');
+                const banner = await res.json();
+                const el = document.getElementById('global-banner');
+                
+                if (banner.active && (banner.text || banner.imageUrl)) {
+                    el.innerHTML = banner.text || "";
+                    if (banner.imageUrl) {
+                        el.innerHTML += `<br><img src="${banner.imageUrl}" style="max-width:100%; margin-top:8px;">`;
+                    }
+                    el.style.display = 'block';
+                } else {
+                    el.style.display = 'none';
+                }
+            } catch(e) {}
         }
-    } catch(e) {}
-}
 
         loadGlobalBanner();
 
@@ -110,24 +129,24 @@
             }
         }
 
-        function showLogoutModal() {
-            const modal = document.createElement('div');
-            modal.className = 'modal';
-            modal.style.display = 'flex';
-            modal.innerHTML = `
-                <div class="modal-content">
-                    <h3>Logout?</h3>
-                    <p>Are you sure you want to logout?</p>
-                    <button class="button" onclick="doLogout()" style="background:#ff4444;">Yes, Logout</button>
-                    <button onclick="this.parentElement.parentElement.remove()">Cancel</button>
-                </div>`;
-            document.body.appendChild(modal);
-        }
+            window.showLogoutModal = function() {
+                const modal = document.createElement('div');
+                modal.className = 'modal';
+                modal.style.display = 'flex';
+                modal.innerHTML = `
+                    <div class="modal-content">
+                        <h3>Logout?</h3>
+                        <p>Are you sure you want to logout?</p>
+                        <button class="button" onclick="doLogout()" style="background:#ff4444;">Yes, Logout</button>
+                        <button onclick="this.parentElement.parentElement.remove()">Cancel</button>
+                    </div>`;
+                document.body.appendChild(modal);
+            };
 
-        function doLogout() {
-            localStorage.removeItem('username');
-            window.location.href = '/';
-        }
+            window.doLogout = function() {
+                localStorage.clear();
+                window.location.href = '/login';
+            };
 
         async function loadForums() {
             const res = await fetch('/api/forums');
@@ -157,22 +176,21 @@
         loadForums();
 
         // Ban Check
-async function checkBan() {
-    const username = localStorage.getItem('username');
-    if (!username) return;
+        async function checkBan() {
+            const username = localStorage.getItem('username');
+            if (!username) return;
 
-    try {
-        const res = await fetch(`/api/check-ban/${username}`);
-        const data = await res.json();
-        if (data.banned) {
-            const type = data.type || "permanent";
-            window.location.href = `/banned.html?reason=${encodeURIComponent(data.reason)}&type=${type}`;
+            try {
+                const res = await fetch(`/api/check-ban/${username}`);
+                const data = await res.json();
+                if (data.banned) {
+                    const type = data.type || "permanent";
+                    window.location.href = `/banned.html?reason=${encodeURIComponent(data.reason)}&type=${type}`;
+                }
+            } catch(e) {}
         }
-    } catch(e) {}
-}
 
-checkBan();
-
+        checkBan();
     </script>
 </body>
 </html>

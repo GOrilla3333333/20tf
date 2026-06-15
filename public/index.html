@@ -6,6 +6,51 @@
     <link rel="stylesheet" href="/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="https://i.imgur.com/oJCfWc8.png">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    
+    <style>
+        .announcement {
+            background: #1e2f4f;
+            padding: 18px;
+            margin: 15px 0;
+            border-radius: 8px;
+            border-left: 5px solid #fffd01;
+            position: relative;
+        }
+        .pinned-announcement {
+            border-left-color: #ffd700;
+            background: #2a3f5f;
+        }
+        .admin-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 18px;
+        }
+        .admin-create {
+            background: #0f1b2e;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 2px solid #0165fc;
+        }
+
+        /* Modal Styles */
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); display: none; align-items: center;
+            justify-content: center; z-index: 20000;
+        }
+        .modal-content {
+            background: #1e2f4f; 
+            padding: 25px; 
+            border-radius: 12px;
+            border: 3px solid #0165fc; 
+            width: 90%; 
+            max-width: 500px; 
+            color: white;
+        }
+    </style>
 </head>
 <body>
     <header>
@@ -19,125 +64,207 @@
         <span id="user-nav"></span>
     </nav>
 
-    <!-- Global Banner -->
     <div id="global-banner" style="display:none; background:#fffd01; color:#162437; padding:12px; text-align:center; font-weight:bold;"></div>
 
-<div class="container">
-    <h2>Welcome to 20Thousand Forums</h2>
+    <div class="container">
+        <h2>Welcome to 20Thousand Forums</h2>
+        <p>This is a community-driven forum where you can talk, debate, joke around, or post whatever’s on your mind...</p>
+        <p><strong>Made by 20k</strong></p>
 
-    <p>
-        This is a community-driven forum where you can talk, debate, joke around, or post whatever’s on your mind.
-        No strict corporate filter — just normal people posting and discussing things freely.
-    </p>
-
-    <p>
-        The only expectation is simple: keep things within the rules and don’t make the site unusable for everyone else.
-        Other than that, you’re free to participate however you want.
-    </p>
-
-    <p>
-        <strong>Made by 20k</strong> — built as a simple, open forum space for discussion, chaos, and everything in between.
-    </p>
-
-    <p>
-        <strong>Current boards:</strong> s1k/general, s1k/gaming, s1k/questions, s1k/random, and more.
-        Each board has its own purpose, but you’re not locked into anything — explore and post where it fits best.
-    </p>
-        
         <div class="board">
-    <h3>Quick Links</h3>
+            <h3>Quick Links</h3>
+            <p><a href="/forums">→ Browse all Boards</a></p>
+            <p style="margin-top:15px;">
+                <a href="/commandments.html" style="display:inline-block; padding:12px 18px; background:#fffd01; color:#162437; font-weight:bold; border-radius:8px; text-decoration:none;">
+                    ⚠ View 20Thousand Commandments (Rules)
+                </a>
+            </p>
+        </div>
 
-    <p><a href="/forums">→ Browse all Boards</a></p>
+        <h2>📢 Announcements</h2>
+        
+        <div id="admin-announce" class="admin-create" style="display:none;">
+            <h3>Create New Announcement</h3>
+            <textarea id="announceContent" rows="5" style="width:100%;" placeholder="Write announcement..."></textarea><br><br>
+            <button onclick="createAnnouncement()" class="button">Post Announcement</button>
+        </div>
 
-    <p style="margin-top:15px;">
-        <a href="/thread.html?id=mpa0kz8f&title=20THOUSAND%20FORUMS%3A%20THE%20COMMANDMENTS" style="
-            display:inline-block;
-            padding:12px 18px;
-            background:#fffd01;
-            color:#162437;
-            font-weight:bold;
-            border-radius:8px;
-            text-decoration:none;
-            font-size:16px;
-            box-shadow:0 3px 0 #b3b100;
-        ">
-            ⚠ View 20Thousand Commandments (Rules)
-        </a>
-    </p>
-</div>
+        <div id="announcementsList">Loading announcements...</div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <h3>Edit Announcement</h3>
+            <textarea id="editContent" rows="6" style="width:100%;"></textarea><br><br>
+            <button onclick="saveEdit()" class="button" style="background:#00cc66;">Save Changes</button>
+            <button onclick="closeEditModal()" class="button">Cancel</button>
         </div>
     </div>
 
-    <footer style="text-align:center; margin-top:50px; color:#666; font-size:14px;">
-        Art by rbzxyzz
-    </footer>
-
     <script>
-        const username = localStorage.getItem('username');
-        const nav = document.getElementById('user-nav');
+        document.addEventListener('DOMContentLoaded', () => {
+            const username = localStorage.getItem('username');
+            const nav = document.getElementById('user-nav');
 
-        if (username) {
-            nav.innerHTML = `Logged in as: <strong>${username}</strong> | <a href="#" onclick="showLogoutModal()">Logout</a>`;
-        } else {
-            nav.innerHTML = `<a href="/register">Register</a> | <a href="/login">Login</a>`;
-        }
-
-        // Global Banner
-        async function loadGlobalBanner() {
-            try {
-                const res = await fetch('/api/global-banner');
-                const banner = await res.json();
-                const el = document.getElementById('global-banner');
-                if (banner.active && (banner.text || banner.imageUrl)) {
-                    el.innerHTML = banner.text || "Announcement";
-                    if (banner.imageUrl) {
-                        el.innerHTML += `<br><img src="${banner.imageUrl}" style="max-width:100%; margin-top:8px;">`;
-                    }
-                    el.style.display = 'block';
+            if (nav) {
+                if (username) {
+                    nav.innerHTML = `Logged in as: <strong>${username}</strong> | <a href="#" onclick="showLogoutModal()">Logout</a>`;
                 } else {
-                    el.style.display = 'none';
+                    nav.innerHTML = `<a href="/register">Register</a> | <a href="/login">Login</a>`;
                 }
-            } catch(e) {}
-        }
+            }
 
-        loadGlobalBanner();
+            if (username === "20k") {
+                document.getElementById('admin-announce').style.display = 'block';
+            }
 
-        function showLogoutModal() {
-            const modal = document.createElement('div');
-            modal.className = 'modal';
-            modal.style.display = 'flex';
-            modal.innerHTML = `
-                <div class="modal-content">
-                    <h3>Logout?</h3>
-                    <p>Are you sure you want to logout?</p>
-                    <button class="button" onclick="doLogout()" style="background:#ff4444;">Yes, Logout</button>
-                    <button onclick="this.parentElement.parentElement.remove()">Cancel</button>
-                </div>`;
-            document.body.appendChild(modal);
-        }
+            async function loadGlobalBanner() {
+                try {
+                    const res = await fetch('/api/global-banner');
+                    const banner = await res.json();
+                    const el = document.getElementById('global-banner');
+                    if (banner.active && (banner.text || banner.imageUrl)) {
+                        el.innerHTML = banner.text || "";
+                        if (banner.imageUrl) el.innerHTML += `<br><img src="${banner.imageUrl}" style="max-width:100%; margin-top:8px;">`;
+                        el.style.display = 'block';
+                    } else {
+                        el.style.display = 'none';
+                    }
+                } catch(e) {}
+            }
 
-        function doLogout() {
-            localStorage.removeItem('username');
-            window.location.href = '/';
-        }
+            function formatAnnouncement(text) {
+                if (!text) return "";
+                return text
+                    .replace(/^### (.*$)/gm, '<h4>$1</h4>')
+                    .replace(/^## (.*$)/gm, '<h3>$1</h3>')
+                    .replace(/^# (.*$)/gm, '<h2>$1</h2>')
+                    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+                    .replace(/\n/g, '<br>');
+            }
 
-        // Ban Check
-async function checkBan() {
-    const username = localStorage.getItem('username');
-    if (!username) return;
+            async function loadAnnouncements() {
+                try {
+                    const res = await fetch('/api/announcements');
+                    const announcements = await res.json();
 
-    try {
-        const res = await fetch(`/api/check-ban/${username}`);
-        const data = await res.json();
-        if (data.banned) {
-            const type = data.type || "permanent";
-            window.location.href = `/banned.html?reason=${encodeURIComponent(data.reason)}&type=${type}`;
-        }
-    } catch(e) {}
-}
+                    let html = '';
+                    announcements.forEach(a => {
+                        const isPinned = a.pinned ? ' pinned-announcement' : '';
+                        html += `
+                            <div class="announcement${isPinned}">
+                                ${username === "20k" ? `
+                                <div class="admin-controls">
+                                    <button onclick="pinAnnouncement('${a.id}')" title="Pin">📌</button>
+                                    <button onclick="editAnnouncement('${a.id}', \`${a.content.replace(/`/g, '\\`')}\`)" title="Edit">✏️</button>
+                                    <button onclick="deleteAnnouncement('${a.id}')" title="Delete" style="color:#ff6666;">🗑</button>
+                                </div>` : ''}
+                                <small>${new Date(a.created_at).toLocaleString()} — by <strong>${a.author}</strong></small>
+                                <div style="margin-top:10px;">${formatAnnouncement(a.content)}</div>
+                            </div>`;
+                    });
 
-checkBan();
+                    document.getElementById('announcementsList').innerHTML = 
+                        html || "<p>No announcements yet.</p>";
+                } catch(e) {
+                    document.getElementById('announcementsList').innerHTML = "<p>Failed to load announcements.</p>";
+                }
+            }
 
+            // Create
+            window.createAnnouncement = async function() {
+                const content = document.getElementById('announceContent').value.trim();
+                if (!content) return alert("Announcement cannot be empty");
+
+                const res = await fetch('/api/announcements', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content, author: "20k" })
+                });
+
+                const data = await res.json();
+                alert(data.message);
+
+                if (data.success) {
+                    document.getElementById('announceContent').value = "";
+                    loadAnnouncements();
+                }
+            };
+
+            // Edit Modal
+            let currentEditId = null;
+
+            window.editAnnouncement = function(id, currentContent) {
+                currentEditId = id;
+                document.getElementById('editContent').value = currentContent;
+                document.getElementById('editModal').style.display = 'flex';
+            };
+
+            window.saveEdit = async function() {
+                const newContent = document.getElementById('editContent').value.trim();
+                if (!newContent) return alert("Content cannot be empty");
+
+                const res = await fetch(`/api/announcements/${currentEditId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content: newContent })
+                });
+
+                const data = await res.json();
+                alert(data.message);
+
+                closeEditModal();
+                loadAnnouncements();
+            };
+
+            window.closeEditModal = function() {
+                document.getElementById('editModal').style.display = 'none';
+            };
+
+            // Delete
+            window.deleteAnnouncement = async function(id) {
+                if (!confirm("Delete this announcement permanently?")) return;
+
+                const res = await fetch(`/api/announcements/${id}`, { method: 'DELETE' });
+                const data = await res.json();
+                alert(data.message);
+                loadAnnouncements();
+            };
+
+            // Pin
+            window.pinAnnouncement = async function(id) {
+                const res = await fetch(`/api/announcements/${id}/pin`, { method: 'POST' });
+                const data = await res.json();
+                alert(data.message);
+                loadAnnouncements();
+            };
+
+            // Logout Modal
+            window.showLogoutModal = function() {
+                const modal = document.createElement('div');
+                modal.className = 'modal';
+                modal.style.display = 'flex';
+                modal.innerHTML = `
+                    <div class="modal-content">
+                        <h3>Logout?</h3>
+                        <p>Are you sure you want to logout?</p>
+                        <button onclick="doLogout()" class="button" style="background:#ff4444;">Yes, Logout</button>
+                        <button onclick="this.parentElement.parentElement.remove()" class="button">Cancel</button>
+                    </div>`;
+                document.body.appendChild(modal);
+            };
+
+            window.doLogout = function() {
+                localStorage.clear();
+                window.location.href = '/login';
+            };
+
+            // Initialize
+            loadGlobalBanner();
+            loadAnnouncements();
+        });
     </script>
 </body>
 </html>

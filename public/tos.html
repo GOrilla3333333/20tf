@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>20Thousand Forums - Terms of Service</title>
+<link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" href="https://i.imgur.com/oJCfWc8.png">
+
+<style>
+    body {
+        background: #0a2540;
+        color: white;
+        font-family: 'Comic Neue', cursive;
+        margin: 0;
+        padding: 20px;
+        line-height: 1.6;
+    }
+    .container {
+        max-width: 950px;
+        margin: 0 auto;
+        background: #1e2f4f;
+        padding: 40px;
+        border-radius: 12px;
+        border: 3px solid #0165fc;
+    }
+    h1, h2, h3 {
+        color: #fffd01;
+    }
+    .tos-content {
+        max-height: 65vh;
+        overflow-y: auto;
+        padding: 25px;
+        background: #0f1b2e;
+        border: 2px solid #0165fc;
+        border-radius: 8px;
+        margin-bottom: 30px;
+    }
+    ul {
+        padding-left: 25px;
+    }
+    li {
+        margin-bottom: 8px;
+    }
+    .checkbox-group {
+        margin: 30px 0;
+    }
+    label {
+        display: block;
+        font-size: 18px;
+        margin: 15px 0;
+        cursor: pointer;
+    }
+    input[type="checkbox"] {
+        transform: scale(1.5);
+        margin-right: 12px;
+    }
+    button {
+        background: #0165fc;
+        color: white;
+        border: none;
+        padding: 16px 40px;
+        font-size: 22px;
+        font-weight: bold;
+        border-radius: 8px;
+        cursor: pointer;
+        margin-top: 10px;
+    }
+    button:disabled {
+        background: #555;
+        cursor: not-allowed;
+    }
+    .warning {
+        color: #ff6666;
+    }
+</style>
+</head>
+<body>
+<div class="container">
+    <h1>20Thousand Forums — The 20Thousand Commandments</h1>
+    <p><strong>Please read everything carefully before proceeding.</strong></p>
+
+    <div class="tos-content" id="tosContent">
+        <!-- Full TOS Content -->
+    </div>
+
+    <div class="checkbox-group">
+        <label>
+            <input type="checkbox" id="agree"> 
+            <strong>I agree to follow these commandments</strong>
+        </label>
+        <label>
+            <input type="checkbox" id="disagree"> 
+            <strong class="warning">I HATE these commandments and I do not CARE</strong>
+        </label>
+    </div>
+
+    <button id="proceedBtn" disabled>Proceed to Site</button>
+</div>
+
+<script>
+const agree = document.getElementById('agree');
+const disagree = document.getElementById('disagree');
+const proceedBtn = document.getElementById('proceedBtn');
+
+function updateButton() {
+    if (agree.checked && !disagree.checked) {
+        proceedBtn.disabled = false;
+        proceedBtn.textContent = "✅ Proceed to Site";
+    } else if (disagree.checked) {
+        proceedBtn.disabled = false;
+        proceedBtn.textContent = "🚪 Leave Site";
+    } else {
+        proceedBtn.disabled = true;
+    }
+}
+
+agree.addEventListener('change', () => {
+    if (agree.checked) disagree.checked = false;
+    updateButton();
+});
+
+disagree.addEventListener('change', () => {
+    if (disagree.checked) agree.checked = false;
+    updateButton();
+});
+
+proceedBtn.addEventListener('click', async () => {
+    const username = localStorage.getItem('username');
+    
+    if (disagree.checked) {
+        alert("You have declined the Terms of Service.\n\nYou will be logged out.");
+        localStorage.clear();
+        window.location.href = "/login";
+        return;
+    }
+
+    // Agree → go to Home (index.html)
+    await fetch('/api/accept-tos', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ username })
+    });
+
+    window.location.href = "/";   // ← Changed to Home
+});
+
+// ================= FULL TOS =================
+document.getElementById('tosContent').innerHTML = `
+<h2>Welcome to 20Thousand Forums.</h2>
+<p>This forum is built around open discussion and minimal censorship. Users are allowed to argue, joke around, post controversial opinions, criticize ideas, and speak freely without being punished simply because someone dislikes what they said.</p>
+<p>However, freedom of speech here does not protect:</p>
+<ul>
+    <li>illegal activity</li>
+    <li>serious threats</li>
+    <li>targeted harassment</li>
+    <li>hardcore NSFW/gore</li>
+    <li>platform abuse</li>
+</ul>
+<p>The rules below exist to keep the site functional without turning it into an overmoderated mess.</p>
+<p>When staff issue warnings, punishments may reference specific law numbers.</p>
+
+<hr>
+
+<h2>Section I — General Conduct</h2>
+
+<h3>Law 01 — Use Common Sense</h3>
+<p>If something would obviously cause major problems for the site, don’t do it. Trying to loophole rules with technicalities may still result in punishment.</p>
+
+<h3>Law 02 — Freedom of Speech Is Allowed</h3>
+<p>Users are allowed to post controversial opinions, argue/debate, criticize ideologies, use profanity, make edgy jokes, and troll or use satire within reason.</p>
+<p>Being offended alone is not a rules violation.</p>
+
+<h3>Law 03 — Don’t Turn Discussions Into Harassment</h3>
+<p>Arguments are allowed. Targeted harassment, stalking, repeated personal attacks, intimidation, or organizing harassment campaigns is not.</p>
+
+<hr>
+
+<h2>Section II — Illegal & Dangerous Content</h2>
+
+<h3>Law 04 — No Illegal Content</h3>
+<p>Posting or distributing illegal material (malware, phishing, fraud, extremist propaganda, etc.) is prohibited.</p>
+
+<h3>Law 05 — No Doxxing or Personal Information Leaks</h3>
+<p>Do not post private information (addresses, phone numbers, passwords, etc.).</p>
+
+<h3>Law 06 — No Exploitation of Minors</h3>
+<p>Any content involving the exploitation or endangerment of minors is strictly prohibited and will result in immediate permanent bans.</p>
+
+<h3>Law 07 — No Real Threats or Criminal Coordination</h3>
+<p>Do not threaten real violence or organize illegal activity.</p>
+
+<hr>
+
+<h2>Section III — NSFW & Graphic Content</h2>
+
+<h3>Law 08 — No Hardcore Pornography</h3>
+<p>Explicit pornography or graphic sexual content is not allowed.</p>
+
+<h3>Law 09 — No Extreme Gore</h3>
+<p>Do not post real death footage, mutilation content, or graphic gore intended purely for shock value.</p>
+
+<hr>
+
+<h2>Section IV — Platform Integrity</h2>
+
+<h3>Law 10 — No Spam</h3>
+<p>Repeated unwanted posts, bot spam, mass advertising, or flooding is prohibited.</p>
+
+<h3>Law 11 — No Platform Abuse</h3>
+<p>Do not exploit bugs, crash the site, upload malicious files, or attempt to bypass security.</p>
+
+<h3>Law 12 — No False Reports</h3>
+<p>Abusing the report system is not allowed.</p>
+
+<hr>
+
+<h2>Section V — Moderation</h2>
+
+<h3>Law 13 — Moderators Have Final Say</h3>
+<p>Staff may act against behavior that clearly harms the platform.</p>
+
+<h3>Law 14 — Context Matters</h3>
+<p>Intent, severity, and context will be considered.</p>
+
+<h3>Law 15 — Punishments Scale With Severity</h3>
+<p>Punishments range from warnings to permanent bans.</p>
+
+<hr>
+
+<h2>Section VI — Reports & Appeals</h2>
+
+<h3>Law 16 — Use the Reports Section Properly</h3>
+<p>Use reports for serious issues only.</p>
+
+<h3>Law 17 — Appeals Are Allowed</h3>
+<p>You may appeal punishments by emailing freedombegins248@gmail.com</p>
+
+<hr>
+
+<h2>Section VII — Final Principles</h2>
+
+<h3>Law 18 — The Internet Contains Opinions</h3>
+<p>You will see offensive humor, controversial opinions, and content you dislike. That alone is not a violation.</p>
+
+<h3>Law 19 — Don’t Make the Site Worse</h3>
+<p>Behavior that consistently ruins the site may result in intervention.</p>
+
+<h3>Law 20 — Don’t Be an Idiot</h3>
+<p>Don’t do things that would obviously get the site shut down.</p>
+
+<hr>
+
+<p><strong>Use common sense. Respect the spirit of the rules.</strong></p>
+<p>For bug reports or suggestions, contact Discord: o0eq or Email: freedombegins248@gmail.com</p>
+`;
+</script>
+</body>
+</html>

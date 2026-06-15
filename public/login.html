@@ -65,12 +65,20 @@
                 const data = await res.json();
                 
                 if (data.success) {
-                    localStorage.setItem('username', username);   // ← Fixed here
-                    showNotification("Login successful! Redirecting...", "#00cc66");
-                    
-                    setTimeout(() => {
-                        window.location.href = '/forums';
-                    }, 1000);
+                    localStorage.setItem('username', username);
+
+                    if (data.redirect) {
+                        // Redirect to TOS for new accounts
+                        showNotification("Please accept the Terms of Service", "#ffaa00");
+                        setTimeout(() => {
+                            window.location.href = data.redirect;
+                        }, 800);
+                    } else {
+                        showNotification("Login successful! Redirecting...", "#00cc66");
+                        setTimeout(() => {
+                            window.location.href = '/forums';
+                        }, 1000);
+                    }
                 } else {
                     showNotification(data.message || "Invalid username or password", "#ff4444");
                 }
