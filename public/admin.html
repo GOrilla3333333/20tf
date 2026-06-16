@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Admin Panel - 20Thousand Forums</title>
     <link rel="stylesheet" href="/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
@@ -30,6 +31,25 @@
             cursor: pointer;
             font-weight: bold;
         }
+
+        /* Mobile Improvements */
+        body {
+            font-size: 16px;
+        }
+        input, textarea, select, button {
+            font-size: 16px !important;
+        }
+        .container, #content {
+            padding: 10px 15px;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+        }
+        h2 {
+            font-size: 1.7em;
+        }
     </style>
 </head>
 <body>
@@ -43,7 +63,7 @@
 
     <div id="content"></div>
 
-    <!-- Modals -->
+    <!-- Success Modal -->
     <div id="successModal" class="modal">
         <div class="modal-content" style="background:#00cc66; color:white;" id="successContent"></div>
     </div>
@@ -60,17 +80,17 @@
         } else {
             document.getElementById('content').innerHTML = `
                 <h2>Global Banner</h2>
-                <input id="bannerText" placeholder="Banner text (HTML allowed)" style="width:80%; padding:10px;"><br><br>
-                <input id="bannerImage" placeholder="Image URL (optional)" style="width:80%; padding:10px;"><br><br>
+                <input id="bannerText" placeholder="Banner text (HTML allowed)" style="width:100%; padding:12px;"><br><br>
+                <input id="bannerImage" placeholder="Image URL (optional)" style="width:100%; padding:12px;"><br><br>
                 <button onclick="updateBanner()" class="button">Update Banner</button>
                 <button onclick="clearBanner()" class="button" style="background:#666;">Clear Banner</button>
 
                 <hr>
 
                 <h2>Ban User</h2>
-                <input id="banUsername" placeholder="Username"><br><br>
-                <input id="banReason" placeholder="Reason"><br><br>
-                <select id="banType">
+                <input id="banUsername" placeholder="Username" style="width:100%; padding:12px;"><br><br>
+                <input id="banReason" placeholder="Reason" style="width:100%; padding:12px;"><br><br>
+                <select id="banType" style="width:100%; padding:12px;">
                     <option value="temporary">Temporary (7 days)</option>
                     <option value="permanent" selected>Permanent</option>
                 </select><br><br>
@@ -79,7 +99,7 @@
                 <hr>
 
                 <h2>Delete Thread</h2>
-                <input id="deleteThreadId" placeholder="Thread ID"><br><br>
+                <input id="deleteThreadId" placeholder="Thread ID" style="width:100%; padding:12px;"><br><br>
                 <button onclick="deleteThread()" class="button">Delete Thread</button>
 
                 <hr>
@@ -132,14 +152,7 @@
                 body: JSON.stringify({ admin: "20k", targetUsername: target, reason, type })
             });
             const data = await res.json();
-            
-            if (data.success) {
-                showSuccessModal(`✅ ${target} has been banned!`);
-                document.getElementById('banUsername').value = "";
-                document.getElementById('banReason').value = "";
-            } else {
-                alert(data.message || "Failed to ban user");
-            }
+            showSuccessModal(data.message || "User banned!");
         }
 
         async function deleteThread() {

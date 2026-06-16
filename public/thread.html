@@ -1,385 +1,395 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>20Thousand Forums</title>
-<link rel="stylesheet" href="/css/style.css">
-<link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
-<link rel="icon" type="image/png" href="https://i.imgur.com/oJCfWc8.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>20Thousand Forums</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="https://i.imgur.com/oJCfWc8.png">
 
-<style>
-.notification {
-    position: fixed;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    padding: 15px 25px;
-    border-radius: 6px;
-    z-index: 20000;
-    color: white;
-    font-weight: bold;
-}
+    <style>
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 25px;
+            border-radius: 6px;
+            z-index: 20000;
+            color: white;
+            font-weight: bold;
+        }
 
-.original-post {
-    background: #fff3d9;
-    color: #000;
-    border-left: 5px solid #fffd01;
-}
+        .original-post {
+            background: #fff3d9;
+            color: #000;
+            border-left: 5px solid #fffd01;
+        }
 
-.reply-post {
-    background: #1e2f4f;
-    color: white;
-    border-left: 5px solid #0165fc;
-}
+        .reply-post {
+            background: #1e2f4f;
+            color: white;
+            border-left: 5px solid #0165fc;
+        }
 
-.post {
-    padding: 15px;
-    margin: 12px 0;
-    border-radius: 8px;
-    position: relative;
-}
+        .post {
+            padding: 15px;
+            margin: 12px 0;
+            border-radius: 8px;
+            position: relative;
+        }
 
-.edit-btn, .del-btn {
-    position: absolute;
-    top: 10px;
-    background: none;
-    border: none;
-    font-size: 18px;
-    cursor: pointer;
-    color: #aaa;
-}
+        .edit-btn, .del-btn {
+            position: absolute;
+            top: 10px;
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: #aaa;
+        }
 
-.edit-btn { right: 40px; }
-.del-btn { right: 10px; color: #ff4444; }
+        .edit-btn { right: 40px; }
+        .del-btn { right: 10px; color: #ff4444; }
 
-.reply-btn {
-    margin-top: 8px;
-    background: none;
-    border: none;
-    color: #aaa;
-    cursor: pointer;
-    font-size: 12px;
-}
+        .reply-btn {
+            margin-top: 8px;
+            background: none;
+            border: none;
+            color: #aaa;
+            cursor: pointer;
+            font-size: 12px;
+        }
 
-.reply-box {
-    position: sticky;
-    bottom: 0;
-    background: #0f1b2e;
-    padding: 12px;
-    border-top: 2px solid #0165fc;
-}
+        .reply-box {
+            position: sticky;
+            bottom: 0;
+            background: #0f1b2e;
+            padding: 12px;
+            border-top: 2px solid #0165fc;
+        }
 
-.reply-target {
-    font-size: 12px;
-    color: #aaa;
-    margin-bottom: 5px;
-}
+        .reply-target {
+            font-size: 12px;
+            color: #aaa;
+            margin-bottom: 5px;
+        }
 
-.cancel-reply {
-    color: #ff4444;
-    cursor: pointer;
-    font-size: 12px;
-    margin-left: 10px;
-}
+        .cancel-reply {
+            color: #ff4444;
+            cursor: pointer;
+            font-size: 12px;
+            margin-left: 10px;
+        }
 
-.preview {
-    margin-top: 8px;
-    max-width: 150px;
-}
+        .preview {
+            margin-top: 8px;
+            max-width: 150px;
+        }
 
-img, video {
-    max-width: 100%;
-    border-radius: 8px;
-    margin-top: 8px;
-}
-</style>
+        img, video {
+            max-width: 100%;
+            border-radius: 8px;
+            margin-top: 8px;
+        }
+
+        /* Mobile Improvements */
+        body {
+            font-size: 16px;
+        }
+        input, textarea, select, button {
+            font-size: 16px !important;
+        }
+        .container {
+            padding: 10px 15px;
+        }
+        .post {
+            margin: 10px 0;
+            padding: 14px;
+        }
+        .reply-box {
+            padding: 12px 15px;
+        }
+        textarea {
+            width: 100%;
+        }
+    </style>
 </head>
-
 <body>
-<header>
-    <img src="https://i.imgur.com/oJCfWc8.png" class="logo">
-    <h1>20Thousand Forums</h1>
-</header>
+    <header>
+        <img src="https://i.imgur.com/oJCfWc8.png" class="logo">
+        <h1>20Thousand Forums</h1>
+    </header>
 
-<nav><a href="/forums">← Back to Boards</a></nav>
-<hr>
+    <nav><a href="/forums">← Back to Boards</a></nav>
+    <hr>
 
-<h2 id="thread-title"></h2>
-<p><small>Created by <strong id="thread-creator"></strong></small></p>
+    <h2 id="thread-title"></h2>
+    <p><small>Created by <strong id="thread-creator"></strong></small></p>
 
-<div id="postsList"></div>
+    <div id="postsList"></div>
 
-<!-- REPLY BOX -->
-<div class="reply-box">
-    <div class="reply-target">
-        Replying to: <span id="replyTarget">OP</span>
-        <span class="cancel-reply" onclick="cancelReply()">Cancel</span>
+    <!-- REPLY BOX -->
+    <div class="reply-box">
+        <div class="reply-target">
+            Replying to: <span id="replyTarget">OP</span>
+            <span class="cancel-reply" onclick="cancelReply()">Cancel</span>
+        </div>
+
+        <form id="replyForm">
+            <textarea id="postContent" placeholder="Write your reply..." rows="3"></textarea><br><br>
+            <input type="file" id="mediaFile" accept="image/*,video/*"><br>
+
+            <div id="preview"></div>
+
+            <button type="submit">Post Reply</button>
+        </form>
     </div>
 
-    <form id="replyForm">
-        <textarea id="postContent" placeholder="Write your reply..." rows="3"></textarea><br><br>
-        <input type="file" id="mediaFile" accept="image/*,video/*"><br>
-
-        <div id="preview"></div>
-
-        <button type="submit">Post Reply</button>
-    </form>
-</div>
-
-<!-- EDIT MODAL -->
-<div id="editModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+    <!-- EDIT MODAL -->
+    <div id="editModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
 background:#1e2f4f; padding:25px; border:3px solid #0165fc; border-radius:12px; z-index:20000; width:90%; max-width:500px; color:white;">
-    <h3>Edit Post</h3>
-    <textarea id="editContent" rows="8" style="width:100%;"></textarea><br><br>
-    <button onclick="saveEdit()">Save</button>
-    <button onclick="closeEditModal()">Cancel</button>
-</div>
+        <h3>Edit Post</h3>
+        <textarea id="editContent" rows="8" style="width:100%;"></textarea><br><br>
+        <button onclick="saveEdit()">Save</button>
+        <button onclick="closeEditModal()">Cancel</button>
+    </div>
 
-<script>
-const urlParams = new URLSearchParams(window.location.search);
-const threadId = urlParams.get('id');
-const username = localStorage.getItem('username');
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const threadId = urlParams.get('id');
+        const username = localStorage.getItem('username');
 
-let currentReplyParent = null;
-let currentEditId = null;
-let rootPostId = null;
-let fileToSend = null;
+        let currentReplyParent = null;
+        let currentEditId = null;
+        let rootPostId = null;
+        let fileToSend = null;
 
-// THREAD INFO
-async function loadThreadInfo() {
-    const res = await fetch(`/api/threads/${threadId}`);
-    const data = await res.json();
-    document.getElementById('thread-title').textContent = data.title || "Untitled Thread";
-    document.getElementById('thread-creator').textContent = data.creator || "Unknown";
-}
+        // THREAD INFO
+        async function loadThreadInfo() {
+            const res = await fetch(`/api/threads/${threadId}`);
+            const data = await res.json();
+            document.getElementById('thread-title').textContent = data.title || "Untitled Thread";
+            document.getElementById('thread-creator').textContent = data.creator || "Unknown";
+        }
 
-// FORMAT CONTENT
-function formatContent(text) {
-    if (!text) return "";
-    return text
-        .replace(/&/g,"&amp;")
-        .replace(/</g,"&lt;")
-        .replace(/>/g,"&gt;")
-        .replace(/\n/g,"<br>");
-}
+        // FORMAT
+        function formatContent(text) {
+            if (!text) return "";
+            return text
+                .replace(/&/g,"&amp;")
+                .replace(/</g,"&lt;")
+                .replace(/>/g,"&gt;")
+                .replace(/\n/g,"<br>");
+        }
 
-// RENDER POSTS
-function render(posts, depth = 0) {
-    let html = '';
+        // RENDER
+        function render(posts, depth = 0) {
+            let html = '';
 
-    posts.forEach(post => {
-        const isOriginal = post.id === rootPostId;
+            posts.forEach(post => {
+                const isOriginal = post.id === rootPostId;
 
-        html += `
-        <div class="post ${isOriginal ? 'original-post':'reply-post'}" style="margin-left:${depth*20}px">
+                html += `
+                <div class="post ${isOriginal ? 'original-post':'reply-post'}" style="margin-left:${depth*20}px">
 
-            ${post.user_id === username || username === "20k"
-                ? `<button class="edit-btn" onclick="editPost('${post.id}')">✏️</button>
-                   ${!isOriginal ? `<button class="del-btn" onclick="deletePost('${post.id}')">🗑</button>`:''}`
-                : ''
+                    ${post.user_id === username || username === "20k"
+                        ? `<button class="edit-btn" onclick="editPost('${post.id}')">✏️</button>
+                           ${!isOriginal ? `<button class="del-btn" onclick="deletePost('${post.id}')">🗑</button>`:''}`
+                        : ''
+                    }
+
+                    <strong>${post.user_id}</strong>
+                    <small>${new Date(post.created_at).toLocaleString()}</small>
+
+                    <p>${formatContent(post.content)}</p>
+
+                    ${post.fileUrl ? (
+                        post.fileUrl.match(/\.(mp4|mov|webm|avi|mkv)$/i)
+                            ? `<video controls><source src="${post.fileUrl}" type="video/mp4"></video>`
+                            : `<img src="${post.fileUrl}">`
+                    ) : ''}
+
+                    ${!isOriginal ? `<button class="reply-btn" onclick="setReply('${post.id}','${post.user_id}')">Reply</button>`:''}
+
+                    ${post.replies?.length ? render(post.replies, depth+1):''}
+                </div>`;
+            });
+
+            return html;
+        }
+
+        // LOAD
+        async function loadPosts() {
+            const res = await fetch(`/api/threads/${threadId}/posts`);
+            const posts = await res.json();
+
+            if (posts.length > 0) rootPostId = posts[0].id;
+
+            document.getElementById('postsList').innerHTML =
+                posts.length ? render(posts) : "<p>No posts yet.</p>";
+        }
+
+        // REPLY SET
+        function setReply(id, user) {
+            currentReplyParent = id;
+            document.getElementById('replyTarget').textContent = user;
+        }
+
+        function cancelReply() {
+            currentReplyParent = null;
+            document.getElementById('replyTarget').textContent = "OP";
+        }
+
+        // IMAGE PREVIEW
+        document.getElementById('mediaFile').addEventListener('change', (e)=>{
+            const file = e.target.files[0];
+            fileToSend = file;
+
+            if (!file) return;
+
+            const url = URL.createObjectURL(file);
+            document.getElementById('preview').innerHTML =
+                `<img src="${url}" class="preview">
+                 <button onclick="removeFile()">Remove</button>`;
+        });
+
+        function removeFile() {
+            fileToSend = null;
+            document.getElementById('mediaFile').value = "";
+            document.getElementById('preview').innerHTML = "";
+        }
+
+        // POST
+        document.getElementById('replyForm').addEventListener('submit', async (e)=>{
+            e.preventDefault();
+
+            const content = document.getElementById('postContent').value.trim();
+
+            if (!content) {
+                showErrorModal("Add some words to post the reply!");
+                return;
             }
 
-            <strong>${post.user_id}</strong>
-            <small>${new Date(post.created_at).toLocaleString()}</small>
+            let fileUrl = null;
 
-            <p>${formatContent(post.content)}</p>
+            if (fileToSend) {
+                const fd = new FormData();
+                fd.append('file', fileToSend);
 
-            ${post.fileUrl ? (
-    post.fileUrl.match(/\.(mp4|mov|webm|avi|mkv)$/i)
-        ? `<video controls style="max-width:100%; border-radius:8px; margin-top:8px;">
-                <source src="${post.fileUrl}" type="video/mp4">
-           </video>`
-        : `<img src="${post.fileUrl}">`
-) : ''}
+                const r = await fetch('/api/upload',{method:'POST',body:fd});
+                const d = await r.json();
+                if (d.success) fileUrl = d.url;
+            }
 
-            ${!isOriginal ? `<button class="reply-btn" onclick="setReply('${post.id}','${post.user_id}')">Reply</button>`:''}
+            const res = await fetch('/api/posts',{
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({
+                    content: content,
+                    thread_id:threadId,
+                    username,
+                    fileUrl,
+                    parent_id:currentReplyParent
+                })
+            });
 
-            ${post.replies?.length ? render(post.replies, depth+1):''}
-        </div>`;
-    });
+            const data = await res.json();
 
-    return html;
-}
+            if (!data.success) {
+                showErrorModal(data.message || "Failed to post reply");
+                return;
+            }
 
-// LOAD POSTS
-async function loadPosts() {
-    const res = await fetch(`/api/threads/${threadId}/posts`);
-    const posts = await res.json();
+            document.getElementById('postContent').value = "";
+            cancelReply();
+            removeFile();
+            loadPosts();
+        });
 
-    if (posts.length > 0) rootPostId = posts[0].id;
+        // Red Error Modal
+        function showErrorModal(message) {
+            let existing = document.getElementById('errorModal');
+            if (existing) existing.remove();
 
-    document.getElementById('postsList').innerHTML =
-        posts.length ? render(posts) : "<p>No posts yet.</p>";
-}
+            const modal = document.createElement('div');
+            modal.id = 'errorModal';
+            modal.style.cssText = `
+                position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+                background:#c42b2b; color:white; padding:25px 30px; border-radius:12px;
+                z-index:30000; text-align:center; box-shadow:0 0 20px rgba(0,0,0,0.5);
+                max-width:400px; font-family:Comic Neue, sans-serif;
+            `;
 
-// REPLY TARGET
-function setReply(id, user) {
-    currentReplyParent = id;
-    document.getElementById('replyTarget').textContent = user;
-}
+            modal.innerHTML = `
+                <h3 style="margin:0 0 15px 0;">⚠️ Error</h3>
+                <p style="margin:0 0 20px 0; font-size:18px;">${message}</p>
+                <button onclick="this.parentElement.remove()" 
+                        style="background:white; color:#c42b2b; border:none; padding:10px 20px; 
+                               border-radius:6px; font-weight:bold; cursor:pointer;">
+                    OK
+                </button>
+            `;
 
-function cancelReply() {
-    currentReplyParent = null;
-    document.getElementById('replyTarget').textContent = "OP";
-}
-
-// FILE PREVIEW
-document.getElementById('mediaFile').addEventListener('change', (e)=>{
-    const file = e.target.files[0];
-    fileToSend = file;
-
-    if (!file) return;
-
-    const url = URL.createObjectURL(file);
-    document.getElementById('preview').innerHTML =
-        `<img src="${url}" class="preview">
-         <button onclick="removeFile()">Remove</button>`;
-});
-
-function removeFile() {
-    fileToSend = null;
-    document.getElementById('mediaFile').value = "";
-    document.getElementById('preview').innerHTML = "";
-}
-
-// SHOW RED ERROR MODAL
-function showErrorModal(message) {
-    let existing = document.getElementById('errorModal');
-    if (existing) existing.remove();
-
-    const modal = document.createElement('div');
-    modal.id = 'errorModal';
-    modal.style.cssText = `
-        position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
-        background:#c42b2b; color:white; padding:25px 30px; border-radius:12px;
-        z-index:30000; text-align:center; box-shadow:0 0 20px rgba(0,0,0,0.5);
-        max-width:400px; font-family:Comic Neue, sans-serif;
-    `;
-
-    modal.innerHTML = `
-        <h3 style="margin:0 0 15px 0;">⚠️ Error</h3>
-        <p style="margin:0 0 20px 0; font-size:18px;">${message}</p>
-        <button onclick="this.parentElement.remove()" 
-                style="background:white; color:#c42b2b; border:none; padding:10px 20px; 
-                       border-radius:6px; font-weight:bold; cursor:pointer;">
-            OK
-        </button>
-    `;
-
-    document.body.appendChild(modal);
-}
-
-// SUBMIT REPLY
-document.getElementById('replyForm').addEventListener('submit', async (e)=>{
-    e.preventDefault();
-
-    const content = document.getElementById('postContent').value.trim();
-
-    if (!content) {
-        showErrorModal("Add some words to post the reply!");
-        return;
-    }
-
-    let fileUrl = null;
-
-    if (fileToSend) {
-        const fd = new FormData();
-        fd.append('file', fileToSend);
-
-        const r = await fetch('/api/upload',{method:'POST',body:fd});
-        const d = await r.json();
-        if (d.success) fileUrl = d.url;
-    }
-
-    const res = await fetch('/api/posts',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({
-            content: content,
-            thread_id:threadId,
-            username,
-            fileUrl,
-            parent_id:currentReplyParent
-        })
-    });
-
-    const data = await res.json();
-
-    if (!data.success) {
-        showErrorModal(data.message || "Failed to post reply");
-        return;
-    }
-
-    // Success
-    document.getElementById('postContent').value = "";
-    cancelReply();
-    removeFile();
-    loadPosts();
-});
-
-// EDIT & DELETE FUNCTIONS
-function editPost(id){
-    currentEditId = id;
-    document.getElementById('editModal').style.display='block';
-}
-
-function closeEditModal(){
-    document.getElementById('editModal').style.display='none';
-}
-
-async function saveEdit(){
-    await fetch(`/api/posts/${currentEditId}`,{
-        method:'PUT',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({
-            username,
-            content:document.getElementById('editContent').value
-        })
-    });
-
-    closeEditModal();
-    loadPosts();
-}
-
-async function deletePost(id){
-    if (!confirm("Delete this reply?")) return;
-
-    const res = await fetch(`/api/posts/${id}`,{
-        method:'DELETE',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({username})
-    });
-
-    loadPosts();
-}
-
-// Strong Ban Check
-async function checkBan() {
-    const currentUser = localStorage.getItem('username');
-    if (!currentUser) return;
-
-    try {
-        const res = await fetch(`/api/check-ban/${currentUser}`);
-        const data = await res.json();
-
-        if (data.banned) {
-            localStorage.clear(); // Force logout
-            window.location.href = `/banned.html?reason=${encodeURIComponent(data.reason || 'No reason')}&type=${data.type || 'permanent'}`;
+            document.body.appendChild(modal);
         }
-    } catch (e) {
-        console.error("Ban check error");
-    }
-}
 
-// Run immediately and every 8 seconds
-document.addEventListener('DOMContentLoaded', () => {
-    checkBan();
-    setInterval(checkBan, 8000);
-});
+        // EDIT & DELETE
+        function editPost(id){
+            currentEditId = id;
+            document.getElementById('editModal').style.display='block';
+        }
 
-// Initialize
-loadThreadInfo();
-loadPosts();
-</script>
+        function closeEditModal(){
+            document.getElementById('editModal').style.display='none';
+        }
+
+        async function saveEdit(){
+            await fetch(`/api/posts/${currentEditId}`,{
+                method:'PUT',
+                headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({
+                    username,
+                    content:document.getElementById('editContent').value
+                })
+            });
+
+            closeEditModal();
+            loadPosts();
+        }
+
+        async function deletePost(id){
+            if (!confirm("Delete this reply?")) return;
+
+            const res = await fetch(`/api/posts/${id}`,{
+                method:'DELETE',
+                headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({username})
+            });
+
+            loadPosts();
+        }
+
+        // Strong Ban Check
+        async function checkBan() {
+            const currentUser = localStorage.getItem('username');
+            if (!currentUser) return;
+            try {
+                const res = await fetch(`/api/check-ban/${currentUser}`);
+                const data = await res.json();
+                if (data.banned) {
+                    localStorage.clear();
+                    window.location.href = `/banned.html?reason=${encodeURIComponent(data.reason || 'No reason')}&type=${data.type || 'permanent'}`;
+                }
+            } catch (e) {}
+        }
+
+        // Initialize
+        loadThreadInfo();
+        loadPosts();
+        checkBan();
+        setInterval(checkBan, 8000);
+    </script>
 </body>
 </html>

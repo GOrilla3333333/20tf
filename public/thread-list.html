@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>20Thousand Forums</title>
     <link rel="stylesheet" href="/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
@@ -53,6 +54,33 @@
             max-width: 100%;
             border-radius: 8px;
             margin-top: 8px;
+        }
+
+        /* Thread Title - Pure White */
+        .thread-title {
+            color: white !important;
+            text-decoration: none;
+        }
+        .thread-title:hover {
+            color: #fffd01 !important;
+        }
+
+        /* Mobile Improvements */
+        body {
+            font-size: 16px;
+        }
+        input, textarea, select, button {
+            font-size: 16px !important;
+        }
+        .container {
+            padding: 10px 15px;
+        }
+        h2, h3 {
+            font-size: 1.6em;
+        }
+        .thread {
+            margin: 10px 0;
+            padding: 14px;
         }
     </style>
 </head>
@@ -135,9 +163,7 @@
     }
 
     function showCreateModal() {
-        if (!username) {
-            return showNotification("Please login first", "#ff4444");
-        }
+        if (!username) return showNotification("Please login first", "#ff4444");
         document.getElementById('createModal').style.display = 'flex';
     }
 
@@ -206,15 +232,10 @@
             formData.append('file', fileInput.files[0]);
 
             try {
-                const uploadRes = await fetch('/api/upload', {
-                    method: 'POST',
-                    body: formData
-                });
+                const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData });
                 const uploadData = await uploadRes.json();
 
-                if (!uploadData.success) {
-                    return showNotification(uploadData.message || "Upload failed", "#ff4444");
-                }
+                if (!uploadData.success) return showNotification(uploadData.message || "Upload failed", "#ff4444");
                 fileUrl = uploadData.url;
             } catch (err) {
                 console.error(err);
@@ -226,13 +247,7 @@
             const res = await fetch('/api/threads', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    title,
-                    content,
-                    forum_id: forumId,
-                    username,
-                    fileUrl
-                })
+                body: JSON.stringify({ title, content, forum_id: forumId, username, fileUrl })
             });
 
             const data = await res.json();
@@ -296,7 +311,7 @@
                         ` : ''}
 
                         <strong>
-                            <a href="/thread.html?id=${thread.id}&title=${encodeURIComponent(thread.title)}">
+                            <a href="/thread.html?id=${thread.id}&title=${encodeURIComponent(thread.title)}" class="thread-title">
                                 ${thread.title}
                             </a>
                         </strong><br>
@@ -343,31 +358,24 @@
         }
     }
 
-// Strong Ban Check
-async function checkBan() {
-    const currentUser = localStorage.getItem('username');
-    if (!currentUser) return;
-
-    try {
-        const res = await fetch(`/api/check-ban/${currentUser}`);
-        const data = await res.json();
-
-        if (data.banned) {
-            localStorage.clear(); // Force logout
-            window.location.href = `/banned.html?reason=${encodeURIComponent(data.reason || 'No reason')}&type=${data.type || 'permanent'}`;
-        }
-    } catch (e) {
-        console.error("Ban check error");
+    // Strong Ban Check
+    async function checkBan() {
+        const currentUser = localStorage.getItem('username');
+        if (!currentUser) return;
+        try {
+            const res = await fetch(`/api/check-ban/${currentUser}`);
+            const data = await res.json();
+            if (data.banned) {
+                localStorage.clear();
+                window.location.href = `/banned.html?reason=${encodeURIComponent(data.reason || 'No reason')}&type=${data.type || 'permanent'}`;
+            }
+        } catch (e) {}
     }
-}
 
-// Run immediately and every 8 seconds
-document.addEventListener('DOMContentLoaded', () => {
+    // Initialize
+    loadThreads();
     checkBan();
     setInterval(checkBan, 8000);
-});
-
-    loadThreads();
     </script>
 </body>
 </html>
