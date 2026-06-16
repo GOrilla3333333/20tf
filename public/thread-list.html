@@ -343,6 +343,30 @@
         }
     }
 
+// Strong Ban Check
+async function checkBan() {
+    const currentUser = localStorage.getItem('username');
+    if (!currentUser) return;
+
+    try {
+        const res = await fetch(`/api/check-ban/${currentUser}`);
+        const data = await res.json();
+
+        if (data.banned) {
+            localStorage.clear(); // Force logout
+            window.location.href = `/banned.html?reason=${encodeURIComponent(data.reason || 'No reason')}&type=${data.type || 'permanent'}`;
+        }
+    } catch (e) {
+        console.error("Ban check error");
+    }
+}
+
+// Run immediately and every 8 seconds
+document.addEventListener('DOMContentLoaded', () => {
+    checkBan();
+    setInterval(checkBan, 8000);
+});
+
     loadThreads();
     </script>
 </body>

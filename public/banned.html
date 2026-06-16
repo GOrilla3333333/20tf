@@ -3,28 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <title>BANNED - 20Thousand Forums</title>
-
-    <!-- ✅ ADD THIS -->
-    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="icon" type="image/png" href="https://i.imgur.com/oJCfWc8.png">
-
     <style>
         body {
             margin: 0;
             padding: 0;
             background: #000;
             color: #ff4444;
-            font-family: "Comic Neue", "Comic Sans MS", cursive, sans-serif;
+            font-family: "Comic Sans MS", cursive, sans-serif;
             text-align: center;
             overflow: hidden;
             animation: fadeIn 1.5s;
         }
-
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
         }
-
         .container {
             margin-top: 5vh;
             max-width: 680px;
@@ -32,32 +25,27 @@
             margin-right: auto;
             padding: 0 20px;
         }
-
         img {
             width: 240px;
             border: 4px solid #ff0000;
             box-shadow: 0 0 25px red;
             margin-bottom: 15px;
         }
-
         h1 {
             font-size: 2.5em;
             margin: 8px 0 12px 0;
             text-shadow: 0 0 20px red;
         }
-
         .reason {
             font-size: 1.4em;
             margin: 8px 0;
             color: #ffff00;
         }
-
         .days {
             font-size: 1.25em;
             color: #ffaa00;
             margin-bottom: 20px;
         }
-
         .message {
             font-family: "Papyrus", fantasy;
             font-size: 1.2em;
@@ -66,7 +54,6 @@
             margin: 15px auto;
             max-width: 90%;
         }
-
         .logout-btn {
             background: #ff4444;
             color: white;
@@ -80,3 +67,63 @@
     </style>
 </head>
 <body>
+    <div class="container">
+        <img src="https://i.imgflip.com/6vvwv2.png" alt="Banned">
+        <h1>YOU HAVE BEEN BANISHED FROM THIS SITE.</h1>
+        
+        <div class="reason">REASON: <span id="reason-text"></span></div>
+        <div class="days" id="days-text"></div>
+        
+        <div class="message">
+            You have broken the rules of this site.<br>
+            Please have some time to think about your actions,<br>
+            and do NOT replicate what you have done if you return.
+        </div>
+
+        <button class="logout-btn" onclick="logout()">LOGOUT</button>
+    </div>
+
+    <!-- Audio -->
+    <audio id="banAudio" autoplay loop>
+        <source src="https://mp3tourl.com/audio/1778251987629-fb26ce13-605b-491f-9d9b-bc3854281186.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    document.getElementById('reason-text').textContent = urlParams.get('reason') || "No reason given";
+
+    const type = urlParams.get('type');
+    document.getElementById('days-text').textContent =
+        type === "permanent" ? "DAYS BANISHED: FOREVER" : "DAYS BANISHED: 7 DAYS";
+
+    function logout() {
+        localStorage.removeItem('username');
+        window.location.href = '/';
+    }
+
+    const audio = document.getElementById('banAudio');
+    audio.volume = 0.7;
+
+    async function tryPlayAudio() {
+        try {
+            await audio.play();
+        } catch (e) {
+            // autoplay blocked — wait for interaction
+            console.log("Autoplay blocked, waiting for interaction...");
+        }
+    }
+
+    window.addEventListener('load', tryPlayAudio);
+
+    // 🔥 fallback: first user interaction unlocks audio
+    document.addEventListener('click', () => {
+        audio.play().catch(() => {});
+    }, { once: true });
+
+    document.addEventListener('keydown', () => {
+        audio.play().catch(() => {});
+    }, { once: true });
+</script>
+
+</body>
+</html>

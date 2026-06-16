@@ -454,18 +454,25 @@ app.post('/api/threads', async (req, res) => {
 });
 
 app.post('/api/admin/ban', async (req, res) => {
-    const { admin, targetUsername, reason, type } = req.body;
-    if (admin !== "20k") return res.json({ success: false, message: "No permission" });
+    try {
+        const { admin, targetUsername, reason, type } = req.body;
 
-    const user = await User.findOne({ username: targetUsername });
-    if (!user) return res.json({ success: false, message: "User not found" });
+        if (admin !== "20k") return res.json({ success: false, message: "No permission" });
 
-    user.banned = true;
-    user.banReason = reason;
-    user.banType = type;
-    await user.save();
+        const user = await User.findOne({ username: targetUsername });
+        if (!user) return res.json({ success: false, message: "User not found" });
 
-    res.json({ success: true, message: "User banned" });
+        user.banned = true;
+        user.banReason = reason || "No reason given";
+        user.banType = type || "permanent";
+
+        await user.save();
+
+        res.json({ success: true, message: `User ${targetUsername} has been banned.` });
+    } catch (err) {
+        console.error(err);
+        res.json({ success: false, message: "Server error" });
+    }
 });
 
 app.delete('/api/admin/thread/:threadId', async (req, res) => {
