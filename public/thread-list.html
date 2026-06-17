@@ -50,37 +50,18 @@
         }
         .dropdown-menu button:hover { background: #0165fc; }
 
-        video {
+        video, img {
             max-width: 100%;
             border-radius: 8px;
             margin-top: 8px;
         }
 
-        /* Thread Title - Pure White */
         .thread-title {
             color: white !important;
             text-decoration: none;
         }
         .thread-title:hover {
             color: #fffd01 !important;
-        }
-
-        /* Mobile Improvements */
-        body {
-            font-size: 16px;
-        }
-        input, textarea, select, button {
-            font-size: 16px !important;
-        }
-        .container {
-            padding: 10px 15px;
-        }
-        h2, h3 {
-            font-size: 1.6em;
-        }
-        .thread {
-            margin: 10px 0;
-            padding: 14px;
         }
     </style>
 </head>
@@ -118,6 +99,7 @@
             <input id="modal-title" placeholder="Thread Title" style="width:100%; padding:10px; margin:10px 0;"><br>
             <textarea id="modal-content" placeholder="First post content..." rows="5" style="width:100%; padding:10px;"></textarea><br>
             <input type="file" id="modal-file" accept="image/*,video/*"><br><br>
+            <div id="uploadPreview" style="margin:10px 0; min-height:40px;"></div>
             <button class="button" onclick="createD1sc()">Create d1sc</button>
             <button onclick="closeCreateModal()">Cancel</button>
         </div>
@@ -152,6 +134,7 @@
     document.getElementById('board-name').textContent = forumName || "board";
 
     let currentThreadId = null;
+    let uploadedFileUrl = null;
 
     function showNotification(text, color) {
         const notif = document.createElement('div');
@@ -159,11 +142,14 @@
         notif.style.background = color;
         notif.textContent = text;
         document.body.appendChild(notif);
-        setTimeout(() => notif.remove(), 2500);
+        setTimeout(() => notif.remove(), 2800);
     }
 
     function showCreateModal() {
         if (!username) return showNotification("Please login first", "#ff4444");
+        uploadedFileUrl = null;
+        document.getElementById('uploadPreview').innerHTML = '';
+        document.getElementById('modal-file').value = '';
         document.getElementById('createModal').style.display = 'flex';
     }
 
@@ -171,83 +157,51 @@
         document.getElementById('createModal').style.display = 'none';
     }
 
-    function openReport(threadId) {
-        currentThreadId = threadId;
-        document.getElementById('reportModal').style.display = 'flex';
-    }
+    // Pre-upload
+    document.getElementById('modal-file').addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
 
-    function closeReportModal() {
-        document.getElementById('reportModal').style.display = 'none';
-    }
+        const previewDiv = document.getElementById('uploadPreview');
+        previewDiv.innerHTML = `<p style="color:#ffff00;">Uploading ${file.name}...</p>`;
 
-    function openDelete(threadId) {
-        currentThreadId = threadId;
-        document.getElementById('deleteModal').style.display = 'flex';
-    }
+        const formData = new FormData();
+        formData.append('file', file);
 
-    function closeDeleteModal() {
-        document.getElementById('deleteModal').style.display = 'none';
-    }
+        try {
+            const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData });
+            const uploadData = await uploadRes.json();
 
-    async function submitReport() {
-        const reason = document.getElementById('reportReason').value.trim();
-        if (!reason) return showNotification("Please write a reason", "#ff4444");
-
-        const res = await fetch('/api/report', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ post_id: currentThreadId, reported_by: username, reason })
-        });
-
-        const data = await res.json();
-        showNotification(data.message, data.success ? "#00cc66" : "#ff4444");
-        closeReportModal();
-    }
-
-    async function confirmDelete() {
-        const res = await fetch(`/api/threads/${currentThreadId}`, {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username })
-        });
-
-        const data = await res.json();
-        showNotification(data.message, data.success ? "#00cc66" : "#ff4444");
-        closeDeleteModal();
-        if (data.success) loadThreads();
-    }
+            if (uploadData.success) {
+                uploadedFileUrl = uploadData.url;
+                previewDiv.innerHTML = `<p style="color:#00cc66;">✅ ${file.name} uploaded</p>`;
+            } else {
+                previewDiv.innerHTML = `<p style="color:#ff6666;">Upload failed</p>`;
+            }
+        } catch (err) {
+            console.error(err);
+            previewDiv.innerHTML = `<p style="color:#ff6666;">Upload error</p>`;
+        }
+    });
 
     async function createD1sc() {
         const title = document.getElementById('modal-title').value.trim();
         const content = document.getElementById('modal-content').value.trim();
-        const fileInput = document.getElementById('modal-file');
 
         if (!username) return showNotification("Please login first", "#ff4444");
         if (!title) return showNotification("Title is required", "#ff4444");
-
-        let fileUrl = null;
-
-        if (fileInput.files.length > 0) {
-            const formData = new FormData();
-            formData.append('file', fileInput.files[0]);
-
-            try {
-                const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData });
-                const uploadData = await uploadRes.json();
-
-                if (!uploadData.success) return showNotification(uploadData.message || "Upload failed", "#ff4444");
-                fileUrl = uploadData.url;
-            } catch (err) {
-                console.error(err);
-                return showNotification("Upload error", "#ff4444");
-            }
-        }
 
         try {
             const res = await fetch('/api/threads', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title, content, forum_id: forumId, username, fileUrl })
+                body: JSON.stringify({
+                    title,
+                    content,
+                    forum_id: forumId,
+                    username,
+                    fileUrl: uploadedFileUrl
+                })
             });
 
             const data = await res.json();
@@ -259,6 +213,7 @@
                 document.getElementById('modal-title').value = "";
                 document.getElementById('modal-content').value = "";
                 document.getElementById('modal-file').value = "";
+                uploadedFileUrl = null;
             }
         } catch (err) {
             console.error(err);
@@ -341,6 +296,52 @@
         e.stopPropagation();
         document.querySelectorAll('.dropdown-menu').forEach(m => m.style.display = 'none');
         document.getElementById(`dropdown-${threadId}`).style.display = 'block';
+    }
+
+    function openReport(threadId) {
+        currentThreadId = threadId;
+        document.getElementById('reportModal').style.display = 'flex';
+    }
+
+    function closeReportModal() {
+        document.getElementById('reportModal').style.display = 'none';
+    }
+
+    function openDelete(threadId) {
+        currentThreadId = threadId;
+        document.getElementById('deleteModal').style.display = 'flex';
+    }
+
+    function closeDeleteModal() {
+        document.getElementById('deleteModal').style.display = 'none';
+    }
+
+    async function submitReport() {
+        const reason = document.getElementById('reportReason').value.trim();
+        if (!reason) return showNotification("Please write a reason", "#ff4444");
+
+        const res = await fetch('/api/report', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ post_id: currentThreadId, reported_by: username, reason })
+        });
+
+        const data = await res.json();
+        showNotification(data.message, data.success ? "#00cc66" : "#ff4444");
+        closeReportModal();
+    }
+
+    async function confirmDelete() {
+        const res = await fetch(`/api/threads/${currentThreadId}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username })
+        });
+
+        const data = await res.json();
+        showNotification(data.message, data.success ? "#00cc66" : "#ff4444");
+        closeDeleteModal();
+        if (data.success) loadThreads();
     }
 
     async function togglePin(threadId) {

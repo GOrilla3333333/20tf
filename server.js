@@ -422,7 +422,10 @@ app.get('/api/check-ban/:username', async (req, res) => {
 app.post('/api/threads', async (req, res) => {
     try {
         const { title, content, forum_id, username, fileUrl } = req.body;
-        if (!title || !forum_id || !username) return res.json({ success: false, message: "Missing fields" });
+
+        if (!title || !forum_id || !username) {
+            return res.json({ success: false, message: "Missing fields" });
+        }
 
         const thread = new Thread({
             id: Date.now().toString(36),
@@ -434,17 +437,16 @@ app.post('/api/threads', async (req, res) => {
         });
         await thread.save();
 
-        if (content && content.trim()) {
-            await new Post({
-                id: Date.now().toString(36) + "p",
-                thread_id: thread.id,
-                user_id: username,
-                content: content.trim(),
-                fileUrl: fileUrl || null,
-                parent_id: null,
-                created_at: new Date()
-            }).save();
-        }
+        // Always create initial post (even if only media, no text)
+        await new Post({
+            id: Date.now().toString(36) + "p",
+            thread_id: thread.id,
+            user_id: username,
+            content: content ? content.trim() : "",
+            fileUrl: fileUrl || null,
+            parent_id: null,
+            created_at: new Date()
+        }).save();
 
         res.json({ success: true, message: "d1sc created successfully!" });
     } catch (err) {

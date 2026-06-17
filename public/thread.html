@@ -83,36 +83,11 @@
             margin-left: 10px;
         }
 
-        .preview {
-            margin-top: 8px;
-            max-width: 150px;
-        }
-
         img, video {
             max-width: 100%;
             border-radius: 8px;
             margin-top: 8px;
-        }
-
-        /* Mobile Improvements */
-        body {
-            font-size: 16px;
-        }
-        input, textarea, select, button {
-            font-size: 16px !important;
-        }
-        .container {
-            padding: 10px 15px;
-        }
-        .post {
-            margin: 10px 0;
-            padding: 14px;
-        }
-        .reply-box {
-            padding: 12px 15px;
-        }
-        textarea {
-            width: 100%;
+            display: block;
         }
     </style>
 </head>
@@ -166,15 +141,17 @@ background:#1e2f4f; padding:25px; border:3px solid #0165fc; border-radius:12px; 
         let rootPostId = null;
         let fileToSend = null;
 
-        // THREAD INFO
         async function loadThreadInfo() {
-            const res = await fetch(`/api/threads/${threadId}`);
-            const data = await res.json();
-            document.getElementById('thread-title').textContent = data.title || "Untitled Thread";
-            document.getElementById('thread-creator').textContent = data.creator || "Unknown";
+            try {
+                const res = await fetch(`/api/threads/${threadId}`);
+                const data = await res.json();
+                document.getElementById('thread-title').textContent = data.title || "Untitled Thread";
+                document.getElementById('thread-creator').textContent = data.creator || "Unknown";
+            } catch (e) {
+                document.getElementById('thread-title').textContent = "Thread not found";
+            }
         }
 
-        // FORMAT
         function formatContent(text) {
             if (!text) return "";
             return text
@@ -184,12 +161,21 @@ background:#1e2f4f; padding:25px; border:3px solid #0165fc; border-radius:12px; 
                 .replace(/\n/g,"<br>");
         }
 
-        // RENDER
         function render(posts, depth = 0) {
             let html = '';
 
             posts.forEach(post => {
                 const isOriginal = post.id === rootPostId;
+
+                let mediaHTML = '';
+                if (post.fileUrl) {
+                    console.log("🖼️ Rendering media for post", post.id, "→", post.fileUrl);
+                    if (post.fileUrl.match(/\.(mp4|mov|webm|avi|mkv)$/i)) {
+                        mediaHTML = `<video controls><source src="${post.fileUrl}" type="video/mp4"></video>`;
+                    } else {
+                        mediaHTML = `<img src="${post.fileUrl}" alt="Image">`;
+                    }
+                }
 
                 html += `
                 <div class="post ${isOriginal ? 'original-post':'reply-post'}" style="margin-left:${depth*20}px">
@@ -205,11 +191,7 @@ background:#1e2f4f; padding:25px; border:3px solid #0165fc; border-radius:12px; 
 
                     <p>${formatContent(post.content)}</p>
 
-                    ${post.fileUrl ? (
-                        post.fileUrl.match(/\.(mp4|mov|webm|avi|mkv)$/i)
-                            ? `<video controls><source src="${post.fileUrl}" type="video/mp4"></video>`
-                            : `<img src="${post.fileUrl}">`
-                    ) : ''}
+                    ${mediaHTML}
 
                     ${!isOriginal ? `<button class="reply-btn" onclick="setReply('${post.id}','${post.user_id}')">Reply</button>`:''}
 
@@ -220,18 +202,22 @@ background:#1e2f4f; padding:25px; border:3px solid #0165fc; border-radius:12px; 
             return html;
         }
 
-        // LOAD
         async function loadPosts() {
-            const res = await fetch(`/api/threads/${threadId}/posts`);
-            const posts = await res.json();
+            try {
+                const res = await fetch(`/api/threads/${threadId}/posts`);
+                const posts = await res.json();
+                console.log("🔍 Full posts data received:", posts);   // DEBUG
 
-            if (posts.length > 0) rootPostId = posts[0].id;
+                if (posts.length > 0) rootPostId = posts[0].id;
 
-            document.getElementById('postsList').innerHTML =
-                posts.length ? render(posts) : "<p>No posts yet.</p>";
+                document.getElementById('postsList').innerHTML =
+                    posts.length ? render(posts) : "<p>No posts yet.</p>";
+            } catch (err) {
+                console.error("Load posts error:", err);
+                document.getElementById('postsList').innerHTML = "<p>Error loading posts.</p>";
+            }
         }
 
-        // REPLY SET
         function setReply(id, user) {
             currentReplyParent = id;
             document.getElementById('replyTarget').textContent = user;
@@ -242,17 +228,19 @@ background:#1e2f4f; padding:25px; border:3px solid #0165fc; border-radius:12px; 
             document.getElementById('replyTarget').textContent = "OP";
         }
 
-        // IMAGE PREVIEW
-        document.getElementById('mediaFile').addEventListener('change', (e)=>{
+        document.getElementById('mediaFile').addEventListener('change', (e) => {
             const file = e.target.files[0];
             fileToSend = file;
 
             if (!file) return;
 
             const url = URL.createObjectURL(file);
-            document.getElementById('preview').innerHTML =
-                `<img src="${url}" class="preview">
-                 <button onclick="removeFile()">Remove</button>`;
+            document.getElementById('preview').innerHTML = `
+                <p>Preview:</p>
+                ${file.type.startsWith('video') ? 
+                    `<video controls><source src="${url}" type="video/mp4"></video>` : 
+                    `<img src="${url}" class="preview">`}
+                <button onclick="removeFile()">Remove</button>`;
         });
 
         function removeFile() {
@@ -261,16 +249,11 @@ background:#1e2f4f; padding:25px; border:3px solid #0165fc; border-radius:12px; 
             document.getElementById('preview').innerHTML = "";
         }
 
-        // POST
-        document.getElementById('replyForm').addEventListener('submit', async (e)=>{
+        document.getElementById('replyForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
             const content = document.getElementById('postContent').value.trim();
-
-            if (!content) {
-                showErrorModal("Add some words to post the reply!");
-                return;
-            }
+            if (!content) return showErrorModal("Add some words to post the reply!");
 
             let fileUrl = null;
 
@@ -278,20 +261,24 @@ background:#1e2f4f; padding:25px; border:3px solid #0165fc; border-radius:12px; 
                 const fd = new FormData();
                 fd.append('file', fileToSend);
 
-                const r = await fetch('/api/upload',{method:'POST',body:fd});
-                const d = await r.json();
-                if (d.success) fileUrl = d.url;
+                try {
+                    const r = await fetch('/api/upload', {method:'POST', body:fd});
+                    const d = await r.json();
+                    if (d.success) fileUrl = d.url;
+                } catch (err) {
+                    console.error(err);
+                }
             }
 
-            const res = await fetch('/api/posts',{
-                method:'POST',
-                headers:{'Content-Type':'application/json'},
-                body:JSON.stringify({
+            const res = await fetch('/api/posts', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
                     content: content,
-                    thread_id:threadId,
+                    thread_id: threadId,
                     username,
                     fileUrl,
-                    parent_id:currentReplyParent
+                    parent_id: currentReplyParent
                 })
             });
 
@@ -308,7 +295,6 @@ background:#1e2f4f; padding:25px; border:3px solid #0165fc; border-radius:12px; 
             loadPosts();
         });
 
-        // Red Error Modal
         function showErrorModal(message) {
             let existing = document.getElementById('errorModal');
             if (existing) existing.remove();
@@ -318,24 +304,16 @@ background:#1e2f4f; padding:25px; border:3px solid #0165fc; border-radius:12px; 
             modal.style.cssText = `
                 position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
                 background:#c42b2b; color:white; padding:25px 30px; border-radius:12px;
-                z-index:30000; text-align:center; box-shadow:0 0 20px rgba(0,0,0,0.5);
-                max-width:400px; font-family:Comic Neue, sans-serif;
+                z-index:30000; text-align:center; max-width:400px;
             `;
-
             modal.innerHTML = `
-                <h3 style="margin:0 0 15px 0;">⚠️ Error</h3>
-                <p style="margin:0 0 20px 0; font-size:18px;">${message}</p>
-                <button onclick="this.parentElement.remove()" 
-                        style="background:white; color:#c42b2b; border:none; padding:10px 20px; 
-                               border-radius:6px; font-weight:bold; cursor:pointer;">
-                    OK
-                </button>
+                <h3>⚠️ Error</h3>
+                <p>${message}</p>
+                <button onclick="this.parentElement.remove()" style="background:white; color:#c42b2b; border:none; padding:10px 20px; border-radius:6px; cursor:pointer;">OK</button>
             `;
-
             document.body.appendChild(modal);
         }
 
-        // EDIT & DELETE
         function editPost(id){
             currentEditId = id;
             document.getElementById('editModal').style.display='block';
@@ -354,7 +332,6 @@ background:#1e2f4f; padding:25px; border:3px solid #0165fc; border-radius:12px; 
                     content:document.getElementById('editContent').value
                 })
             });
-
             closeEditModal();
             loadPosts();
         }
@@ -362,16 +339,14 @@ background:#1e2f4f; padding:25px; border:3px solid #0165fc; border-radius:12px; 
         async function deletePost(id){
             if (!confirm("Delete this reply?")) return;
 
-            const res = await fetch(`/api/posts/${id}`,{
+            await fetch(`/api/posts/${id}`,{
                 method:'DELETE',
                 headers:{'Content-Type':'application/json'},
                 body:JSON.stringify({username})
             });
-
             loadPosts();
         }
 
-        // Strong Ban Check
         async function checkBan() {
             const currentUser = localStorage.getItem('username');
             if (!currentUser) return;
@@ -385,7 +360,6 @@ background:#1e2f4f; padding:25px; border:3px solid #0165fc; border-radius:12px; 
             } catch (e) {}
         }
 
-        // Initialize
         loadThreadInfo();
         loadPosts();
         checkBan();
