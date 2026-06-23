@@ -12,19 +12,7 @@
         .original-post { background: #fff3d9; color: #000; border-left: 5px solid #fffd01; }
         .reply-post { background: #1e2f4f; color: white; border-left: 5px solid #0165fc; }
         .post { padding: 15px; margin: 12px 0; border-radius: 8px; position: relative; }
-        
-        /* Better media sizing */
-        img, video {
-            max-width: 100%;
-            max-height: 500px;        /* Prevents super tall images */
-            width: auto;
-            height: auto;
-            border-radius: 8px;
-            margin: 10px 0 15px 0;
-            display: block;
-            object-fit: contain;      /* Keeps aspect ratio */
-        }
-        
+        img, video { max-width: 100%; border-radius: 8px; margin: 10px 0 15px 0; display: block; }
         a { color: #0165fc; text-decoration: underline; }
     </style>
 </head>
@@ -62,29 +50,37 @@
             } catch(e) {}
         }
 
+        function makeMedia(text) {
+            if (!text) return "";
+
+            // Replace Cloudinary URLs with embedded media (remove the raw URL)
+            return text.replace(/(https:\/\/res\.cloudinary\.com\/[^\s<]+)/gi, (url) => {
+                if (url.match(/\.(mp4|mov|webm|avi|mkv)$/i)) {
+                    return `<video controls><source src="${url}" type="video/mp4"></video>`;
+                }
+                return `<img src="${url}" alt="Media">`;
+            });
+        }
+
         function render(posts) {
             let html = '';
             posts.forEach(post => {
                 const allFiles = post.fileUrls || (post.fileUrl ? [post.fileUrl] : []);
-                let mediaHTML = '';
-                allFiles.forEach(url => {
-                    if (url) {
-                        if (url.match(/\.(mp4|mov|webm|avi|mkv)$/i)) {
-                            mediaHTML += `<video controls><source src="${url}" type="video/mp4"></video>`;
-                        } else {
-                            mediaHTML += `<img src="${url}" alt="Media">`;
-                        }
+                let mediaHTML = allFiles.map(url => {
+                    if (!url) return '';
+                    if (url.match(/\.(mp4|mov|webm|avi|mkv)$/i)) {
+                        return `<video controls><source src="${url}" type="video/mp4"></video>`;
                     }
-                });
+                    return `<img src="${url}" alt="Media">`;
+                }).join('');
 
                 let text = (post.content || '').replace(/\n/g, '<br>');
-                text = text.replace(/https:\/\/res\.cloudinary\.com[^\s<]+/gi, ''); // hide raw urls
 
                 html += `
                 <div class="post ${post.parent_id ? 'reply-post' : 'original-post'}">
                     <strong>${post.user_id}</strong> 
                     <small>${new Date(post.created_at).toLocaleString()}</small>
-                    <div>${text}</div>
+                    <div>${makeMedia(text)}</div>
                     ${mediaHTML}
                 </div>`;
             });
