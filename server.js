@@ -115,7 +115,7 @@ app.post('/api/accept-tos', async (req, res) => {
 });
 
 // =====================================================
-// UPLOAD (Fixed for Videos)
+// UPLOAD
 // =====================================================
 app.post('/api/upload', (req, res) => {
     upload.single('file')(req, res, async function(err) {
@@ -129,7 +129,7 @@ app.post('/api/upload', (req, res) => {
                 return res.json({ success: false, message: "No file received" });
             }
 
-            console.log("✅ File uploaded:", req.file.path); // for debugging
+            console.log("✅ File uploaded:", req.file.path);
 
             res.json({
                 success: true,
@@ -183,7 +183,7 @@ app.get('/api/forums/:forumId/threads', async (req, res) => {
 });
 
 // =====================================================
-// ANNOUNCEMENTS (Full Support)
+// ANNOUNCEMENTS
 // =====================================================
 app.get('/api/announcements', async (req, res) => {
     try {
@@ -282,9 +282,8 @@ app.get('/api/global-banner', async (req, res) => {
 });
 
 // =====================================================
-// OTHER ROUTES
+// THREAD INFO
 // =====================================================
-
 app.get('/api/threads/:threadId', async (req, res) => {
     const thread = await Thread.findOne({ id: String(req.params.threadId) });
     if (!thread) return res.json({ success: false, title: "Thread not found", creator: "Unknown" });
@@ -297,57 +296,118 @@ app.get('/api/threads/:threadId', async (req, res) => {
     });
 });
 
-app.get('/api/threads/:threadId/posts', async (req, res) => {
-    const posts = await Post.find({ thread_id: String(req.params.threadId) }).sort({ created_at: 1 });
-
-    const cleaned = posts.map(p => ({
-        id: String(p.id),
-        content: p.content,
-        thread_id: String(p.thread_id),
-        user_id: p.user_id,
-        fileUrl: p.fileUrl,
-        parent_id: p.parent_id ? String(p.parent_id) : null,
-        created_at: p.created_at,
-        replies: []
-    }));
-
-    const map = new Map();
-    cleaned.forEach(p => map.set(p.id, p));
-
-    const tree = [];
-    cleaned.forEach(p => {
-        if (p.parent_id && map.has(p.parent_id)) {
-            map.get(p.parent_id).replies.push(p);
-        } else {
-            tree.push(p);
-        }
-    });
-
-    res.json(tree);
-});
-
+// ================= CREATE POST =================
 app.post('/api/posts', async (req, res) => {
-    const { content, thread_id, username, fileUrl, parent_id } = req.body;
-    if (!content || content.trim() === "") {
-        return res.json({ success: false, message: "Add some words to post the reply!" });
-    }
-    if (!thread_id || !username) {
-        return res.json({ success: false, message: "Missing required fields" });
-    }
+    try {
+        const { content, thread_id, username, fileUrl, fileUrls, parent_id } = req.body;
 
-    const post = new Post({
-        id: Date.now().toString(36),
-        content: content.trim(),
-        thread_id: String(thread_id),
-        user_id: username,
-        fileUrl: fileUrl || null,
-        parent_id: parent_id ? String(parent_id) : null,
-        created_at: new Date()
-    });
+        if (!thread_id || !username) {
+            return res.json({ success: false, message: "Missing required fields" });
+        }
 
-    await post.save();
-    res.json({ success: true, message: parent_id ? "Reply posted!" : "Post created!" });
+        const allFiles = Array.isArray(fileUrls) ? fileUrls : (fileUrl ? [fileUrl] : []);
+
+        const post = new Post({
+            id: Date.now().toString(36),
+            content: content ? content.trim() : "",
+            thread_id: String(thread_id),
+            user_id: username,
+            fileUrl: allFiles[0] || null,
+            fileUrls: allFiles,
+            parent_id: parent_id ? String(parent_id) : null,
+            created_at: new Date()
+        });
+
+        await post.save();
+        console.log("✅ Post saved with files:", allFiles);
+        res.json({ success: true, message: parent_id ? "Reply posted!" : "Post created!" });
+    } catch (err) {
+        console.error("Post creation error:", err);
+        res.json({ success: false, message: "Server error" });
+    }
 });
+
+// ================= GET POSTS =================
+app.get('/api/threads/:threadId/posts', async (req, res) => {
+    try {
+        const posts = await Post.find({ thread_id: String(req.params.threadId) }).sort({ created_at: 1 });
+
+        const cleaned = posts.map(p => ({
+            id: String(p.id),
+            content: p.content || "",
+            thread_id: String(p.thread_id),
+            user_id: p.user_id,
+            fileUrl: p.fileUrl,
+            fileUrls: p.fileUrls || (p.fileUrl ? [p.fileUrl] : []),
+            parent_id: p.parent_id ? String(p.parent_id) : null,
+            created_at: p.created_at,
+            replies: []
+        }));
+
+        // Build reply tree
+        const map = new Map();
+        cleaned.forEach(p => map.set(p.id, p));
+
+        const tree = [];
+        cleaned.forEach(p => {
+            if (p.parent_id && map.has(p.parent_id)) {
+                map.get(p.parent_id).replies.push(p);
+            } else {
+                tree.push(p);
+            }
+        });
+
+        res.json(tree);
+    } catch (err) {
+        console.error("Get posts error:", err);
+        res.json([]);
+    }
+});
+
+// =====================================================
+// CREATE THREAD - Multiple files support
+// =====================================================
+app.post('/api/threads', async (req, res) => {
+    try {
+        const { title, content, forum_id, username, fileUrl, fileUrls } = req.body;
+
+        if (!title || !forum_id || !username) {
+            return res.json({ success: false, message: "Missing fields" });
+        }
+
+        const thread = new Thread({
+            id: Date.now().toString(36),
+            title,
+            forum_id: String(forum_id),
+            user_id: username,
+            pinned: false,
+            created_at: new Date()
+        });
+        await thread.save();
+
+        const allFiles = fileUrls || (fileUrl ? [fileUrl] : []);
+
+        await new Post({
+            id: Date.now().toString(36) + "p",
+            thread_id: thread.id,
+            user_id: username,
+            content: content ? content.trim() : "",
+            fileUrl: allFiles[0] || null,
+            fileUrls: allFiles,
+            parent_id: null,
+            created_at: new Date()
+        }).save();
+
+        res.json({ success: true, message: "d1sc created successfully!" });
+    } catch (err) {
+        console.error(err);
+        res.json({ success: false, message: "Server error creating thread" });
+    }
+});
+
+// =====================================================
+// REMAINING ROUTES (unchanged)
+// =====================================================
 
 app.put('/api/posts/:postId', async (req, res) => {
     const { username, content } = req.body;
@@ -417,42 +477,6 @@ app.get('/api/check-ban/:username', async (req, res) => {
         });
     }
     res.json({ banned: false });
-});
-
-app.post('/api/threads', async (req, res) => {
-    try {
-        const { title, content, forum_id, username, fileUrl } = req.body;
-
-        if (!title || !forum_id || !username) {
-            return res.json({ success: false, message: "Missing fields" });
-        }
-
-        const thread = new Thread({
-            id: Date.now().toString(36),
-            title,
-            forum_id: String(forum_id),
-            user_id: username,
-            pinned: false,
-            created_at: new Date()
-        });
-        await thread.save();
-
-        // Always create initial post (even if only media, no text)
-        await new Post({
-            id: Date.now().toString(36) + "p",
-            thread_id: thread.id,
-            user_id: username,
-            content: content ? content.trim() : "",
-            fileUrl: fileUrl || null,
-            parent_id: null,
-            created_at: new Date()
-        }).save();
-
-        res.json({ success: true, message: "d1sc created successfully!" });
-    } catch (err) {
-        console.error(err);
-        res.json({ success: false, message: "Server error creating thread" });
-    }
 });
 
 app.post('/api/admin/ban', async (req, res) => {
