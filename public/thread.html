@@ -9,10 +9,66 @@
     <link rel="icon" type="image/png" href="https://i.imgur.com/oJCfWc8.png">
 
     <style>
-        .original-post { background: #fff3d9; color: #000; border-left: 5px solid #fffd01; }
-        .reply-post { background: #1e2f4f; color: white; border-left: 5px solid #0165fc; }
-        .post { padding: 15px; margin: 12px 0; border-radius: 8px; position: relative; }
-        img, video { max-width: 100%; border-radius: 8px; margin: 10px 0 15px 0; display: block; }
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 25px;
+            border-radius: 6px;
+            z-index: 20000;
+            color: white;
+            font-weight: bold;
+        }
+
+        .original-post {
+            background: #fff3d9;
+            color: #000;
+            border-left: 5px solid #fffd01;
+        }
+
+        .reply-post {
+            background: #1e2f4f;
+            color: white;
+            border-left: 5px solid #0165fc;
+        }
+
+        .post {
+            padding: 15px;
+            margin: 12px 0;
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .edit-btn, .del-btn {
+            position: absolute;
+            top: 10px;
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: #aaa;
+        }
+
+        .edit-btn { right: 40px; }
+        .del-btn { right: 10px; color: #ff4444; }
+
+        .reply-btn {
+            margin-top: 8px;
+            background: none;
+            border: none;
+            color: #aaa;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        img, video {
+            max-width: 100%;
+            border-radius: 8px;
+            margin: 10px 0 15px 0;
+            display: block;
+        }
+
         a { color: #0165fc; text-decoration: underline; }
     </style>
 </head>
@@ -30,7 +86,13 @@
 
     <div id="postsList">Loading posts...</div>
 
+    <!-- REPLY BOX -->
     <div style="position:sticky; bottom:0; background:#0f1b2e; padding:12px; border-top:2px solid #0165fc;">
+        <div class="reply-target">
+            Replying to: <span id="replyTarget">OP</span>
+            <span onclick="cancelReply()" style="color:#ff4444; cursor:pointer; margin-left:10px;">Cancel</span>
+        </div>
+
         <form id="replyForm">
             <textarea id="postContent" placeholder="Write your reply..." rows="4"></textarea><br><br>
             <input type="file" id="mediaFile" accept="image/*,video/*" multiple><br><br>
@@ -38,8 +100,22 @@
         </form>
     </div>
 
+    <!-- EDIT MODAL -->
+    <div id="editModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+background:#1e2f4f; padding:25px; border:3px solid #0165fc; border-radius:12px; z-index:20000; width:90%; max-width:500px; color:white;">
+        <h3>Edit Post</h3>
+        <textarea id="editContent" rows="8" style="width:100%;"></textarea><br><br>
+        <button onclick="saveEdit()">Save</button>
+        <button onclick="closeEditModal()">Cancel</button>
+    </div>
+
     <script>
         const threadId = new URLSearchParams(window.location.search).get('id');
+        const username = localStorage.getItem('username');
+
+        let currentReplyParent = null;
+        let currentEditId = null;
+        let rootPostId = null;
 
         async function loadThreadInfo() {
             try {
@@ -52,8 +128,6 @@
 
         function makeMedia(text) {
             if (!text) return "";
-
-            // Replace Cloudinary URLs with embedded media (remove the raw URL)
             return text.replace(/(https:\/\/res\.cloudinary\.com\/[^\s<]+)/gi, (url) => {
                 if (url.match(/\.(mp4|mov|webm|avi|mkv)$/i)) {
                     return `<video controls><source src="${url}" type="video/mp4"></video>`;
@@ -62,8 +136,9 @@
             });
         }
 
-        function render(posts) {
+        function render(posts, depth = 0) {
             let html = '';
+
             posts.forEach(post => {
                 const allFiles = post.fileUrls || (post.fileUrl ? [post.fileUrl] : []);
                 let mediaHTML = allFiles.map(url => {
@@ -76,12 +151,26 @@
 
                 let text = (post.content || '').replace(/\n/g, '<br>');
 
+                const isOriginal = post.id === rootPostId;
+
                 html += `
-                <div class="post ${post.parent_id ? 'reply-post' : 'original-post'}">
+                <div class="post ${isOriginal ? 'original-post' : 'reply-post'}" style="margin-left:${depth*20}px">
+
+                    ${post.user_id === username || username === "20k"
+                        ? `<button class="edit-btn" onclick="editPost('${post.id}')">✏️</button>
+                           ${!isOriginal ? `<button class="del-btn" onclick="deletePost('${post.id}')">🗑</button>` : ''}`
+                        : ''
+                    }
+
                     <strong>${post.user_id}</strong> 
                     <small>${new Date(post.created_at).toLocaleString()}</small>
+
                     <div>${makeMedia(text)}</div>
                     ${mediaHTML}
+
+                    ${!isOriginal ? `<button class="reply-btn" onclick="setReply('${post.id}','${post.user_id}')">Reply</button>` : ''}
+
+                    ${post.replies && post.replies.length ? render(post.replies, depth + 1) : ''}
                 </div>`;
             });
             return html;
@@ -91,16 +180,35 @@
             try {
                 const res = await fetch(`/api/threads/${threadId}/posts`);
                 const posts = await res.json();
-                document.getElementById('postsList').innerHTML = posts.length ? render(posts) : "<p>No posts yet.</p>";
+
+                if (posts.length > 0) rootPostId = posts[0].id;
+
+                document.getElementById('postsList').innerHTML = 
+                    posts.length ? render(posts) : "<p>No posts yet.</p>";
             } catch(e) {
                 console.error(e);
             }
+        }
+
+        function setReply(id, user) {
+            currentReplyParent = id;
+            document.getElementById('replyTarget').textContent = user;
+        }
+
+        function cancelReply() {
+            currentReplyParent = null;
+            document.getElementById('replyTarget').textContent = "OP";
         }
 
         document.getElementById('replyForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const content = document.getElementById('postContent').value.trim();
             const files = document.getElementById('mediaFile').files;
+
+            if (!content && files.length === 0) {
+                showNotification("Add some words to post the reply!", "#ff4444");
+                return;
+            }
 
             let fileUrls = [];
             for (let file of files) {
@@ -117,15 +225,59 @@
                 body: JSON.stringify({
                     content: content,
                     thread_id: threadId,
-                    username: localStorage.getItem('username'),
-                    fileUrls: fileUrls
+                    username: username,
+                    fileUrls: fileUrls,
+                    parent_id: currentReplyParent
                 })
             });
 
             document.getElementById('postContent').value = '';
             document.getElementById('mediaFile').value = '';
+            cancelReply();
             loadPosts();
         });
+
+        function showNotification(text, color) {
+            const notif = document.createElement('div');
+            notif.className = 'notification';
+            notif.style.background = color;
+            notif.textContent = text;
+            document.body.appendChild(notif);
+            setTimeout(() => notif.remove(), 3000);
+        }
+
+        function editPost(id){
+            currentEditId = id;
+            document.getElementById('editModal').style.display='block';
+        }
+
+        function closeEditModal(){
+            document.getElementById('editModal').style.display='none';
+        }
+
+        async function saveEdit(){
+            await fetch(`/api/posts/${currentEditId}`,{
+                method:'PUT',
+                headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({
+                    username,
+                    content:document.getElementById('editContent').value
+                })
+            });
+            closeEditModal();
+            loadPosts();
+        }
+
+        async function deletePost(id){
+            if (!confirm("Delete this reply?")) return;
+
+            await fetch(`/api/posts/${id}`,{
+                method:'DELETE',
+                headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({username})
+            });
+            loadPosts();
+        }
 
         loadThreadInfo();
         loadPosts();
