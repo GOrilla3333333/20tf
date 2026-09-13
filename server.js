@@ -158,6 +158,26 @@ app.post('/api/forums', async (req, res) => {
 });
 
 // =====================================================
+// NEW: FORUM STATS (for forums.html counters)
+// =====================================================
+app.get('/api/forum-stats', async (req, res) => {
+    try {
+        const forums = ['pit', 'srs', 'br', 'crt', 'cnfs', 'ot'];
+        const stats = {};
+
+        for (const id of forums) {
+            const count = await Thread.countDocuments({ forum_id: id });
+            stats[id] = count;
+        }
+
+        res.json(stats);
+    } catch (err) {
+        console.error(err);
+        res.json({});
+    }
+});
+
+// =====================================================
 // THREADS BY FORUM
 // =====================================================
 app.get('/api/forums/:forumId/threads', async (req, res) => {
@@ -171,8 +191,8 @@ app.get('/api/forums/:forumId/threads', async (req, res) => {
             const posts = await Post.find({ thread_id: thread.id });
             result.push({
                 ...thread.toObject(),
-                postCount: posts.length,
-                netVotes: 0
+                postCount: posts.length,          // real reply count
+                views: thread.views || 0          // real views
             });
         }
         res.json(result);
@@ -282,18 +302,29 @@ app.get('/api/global-banner', async (req, res) => {
 });
 
 // =====================================================
-// THREAD INFO
+// THREAD INFO + INCREMENT VIEWS
 // =====================================================
 app.get('/api/threads/:threadId', async (req, res) => {
-    const thread = await Thread.findOne({ id: String(req.params.threadId) });
-    if (!thread) return res.json({ success: false, title: "Thread not found", creator: "Unknown" });
-    res.json({
-        success: true,
-        id: thread.id,
-        title: thread.title,
-        creator: thread.user_id,
-        created_at: thread.created_at
-    });
+    try {
+        const thread = await Thread.findOne({ id: String(req.params.threadId) });
+        if (!thread) return res.json({ success: false, title: "Thread not found", creator: "Unknown" });
+
+        // Increment views
+        thread.views = (thread.views || 0) + 1;
+        await thread.save();
+
+        res.json({
+            success: true,
+            id: thread.id,
+            title: thread.title,
+            creator: thread.user_id,
+            created_at: thread.created_at,
+            views: thread.views
+        });
+    } catch (err) {
+        console.error(err);
+        res.json({ success: false, title: "Thread not found", creator: "Unknown" });
+    }
 });
 
 // ================= CREATE POST =================
@@ -327,22 +358,31 @@ app.post('/api/posts', async (req, res) => {
     }
 });
 
-// ================= GET POSTS =================
+// ================= GET POSTS (with pfp) =================
 app.get('/api/threads/:threadId/posts', async (req, res) => {
     try {
         const posts = await Post.find({ thread_id: String(req.params.threadId) }).sort({ created_at: 1 });
 
-        const cleaned = posts.map(p => ({
-            id: String(p.id),
-            content: p.content || "",
-            thread_id: String(p.thread_id),
-            user_id: p.user_id,
-            fileUrl: p.fileUrl,
-            fileUrls: p.fileUrls || (p.fileUrl ? [p.fileUrl] : []),
-            parent_id: p.parent_id ? String(p.parent_id) : null,
-            created_at: p.created_at,
-            replies: []
-        }));
+        const cleaned = [];
+
+        for (const p of posts) {
+            // Get the user's profile picture
+            const user = await User.findOne({ username: p.user_id });
+            const pfp = user?.pfp || "https://i.imgur.com/oJCfWc8.png";
+
+            cleaned.push({
+                id: String(p.id),
+                content: p.content || "",
+                thread_id: String(p.thread_id),
+                user_id: p.user_id,
+                pfp: pfp,                                    // ← profile picture
+                fileUrl: p.fileUrl,
+                fileUrls: p.fileUrls || (p.fileUrl ? [p.fileUrl] : []),
+                parent_id: p.parent_id ? String(p.parent_id) : null,
+                created_at: p.created_at,
+                replies: []
+            });
+        }
 
         // Build reply tree
         const map = new Map();
@@ -365,7 +405,7 @@ app.get('/api/threads/:threadId/posts', async (req, res) => {
 });
 
 // =====================================================
-// CREATE THREAD - Multiple files support
+// CREATE THREAD
 // =====================================================
 app.post('/api/threads', async (req, res) => {
     try {
@@ -381,6 +421,7 @@ app.post('/api/threads', async (req, res) => {
             forum_id: String(forum_id),
             user_id: username,
             pinned: false,
+            views: 0,                    // start at 0
             created_at: new Date()
         });
         await thread.save();
@@ -406,7 +447,52 @@ app.post('/api/threads', async (req, res) => {
 });
 
 // =====================================================
-// REMAINING ROUTES (unchanged)
+// PROFILE
+// =====================================================
+
+// Get public profile
+app.get('/api/profile/:username', async (req, res) => {
+    try {
+        const user = await User.findOne({ username: req.params.username });
+        if (!user) return res.json({ success: false, message: "User not found" });
+
+        res.json({
+            success: true,
+            username: user.username,
+            pfp: user.pfp || "https://i.imgur.com/oJCfWc8.png",
+            banner: user.banner || "",
+            bio: user.bio || "No bio yet.",
+            created_at: user.created_at
+        });
+    } catch (err) {
+        console.error(err);
+        res.json({ success: false, message: "Server error" });
+    }
+});
+
+// Update profile (only own profile)
+app.post('/api/profile/update', async (req, res) => {
+    try {
+        const { username, bio, pfp, banner } = req.body;
+        if (!username) return res.json({ success: false, message: "Missing username" });
+
+        const user = await User.findOne({ username });
+        if (!user) return res.json({ success: false, message: "User not found" });
+
+        if (bio !== undefined) user.bio = bio;
+        if (pfp !== undefined) user.pfp = pfp;
+        if (banner !== undefined) user.banner = banner;
+
+        await user.save();
+        res.json({ success: true, message: "Profile updated!" });
+    } catch (err) {
+        console.error(err);
+        res.json({ success: false, message: "Server error" });
+    }
+});
+
+// =====================================================
+// REMAINING ROUTES
 // =====================================================
 
 app.put('/api/posts/:postId', async (req, res) => {

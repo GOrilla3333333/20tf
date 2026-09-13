@@ -1,12 +1,18 @@
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
-    username: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
-    created_at: { type: Date, default: Date.now },
+    username: String,
+    password: String,
     banned: { type: Boolean, default: false },
+    banReason: String,
     banType: String,
-    banReason: String
+    tosAccepted: { type: Boolean, default: false },
+
+    // Profile fields
+    pfp: { type: String, default: "https://i.imgur.com/oJCfWc8.png" },
+    banner: { type: String, default: "" },
+    bio: { type: String, default: "No bio yet." },
+    created_at: { type: Date, default: Date.now }
 });
 
 module.exports = mongoose.model('User', userSchema);

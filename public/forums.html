@@ -2,204 +2,156 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>20Thousand Forums</title>
     <link rel="stylesheet" href="/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="https://i.imgur.com/oJCfWc8.png">
     <style>
-        .modal {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); display: none; align-items: center;
-            justify-content: center; z-index: 10000;
+        .category {
+            margin-bottom: 28px;
         }
-        .modal-content {
-            background: #1e2f4f; padding: 25px; border-radius: 12px;
-            border: 3px solid #0165fc; width: 90%; max-width: 450px; color: white;
-        }
-        .notification {
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-            padding: 15px 25px; border-radius: 6px; z-index: 20000;
-            color: white; font-weight: bold;
-        }
-
-        /* Mobile Improvements */
-        body {
-            font-size: 16px;
-        }
-        input, textarea, select, button {
-            font-size: 16px !important;
-        }
-        .container {
-            padding: 10px 15px;
+        .category-title {
+            color: #fffd01;
+            font-size: 1.25em;
+            margin-bottom: 10px;
+            padding-bottom: 4px;
+            border-bottom: 2px solid #0165fc;
         }
         .board {
-            margin: 12px 0;
-            padding: 12px;
+            background: #1e2f4f;
+            border: 2px solid #0165fc;
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
         }
-        button {
-            padding: 12px 20px;
-            font-size: 16px;
+        .board:hover {
+            background: #2a3f5f;
+            border-color: #fffd01;
         }
-        h2, h3 {
-            font-size: 1.6em;
+        .board-name {
+            flex: 1;
+            font-size: 1.2em;
+            color: white;
+        }
+        .board-desc {
+            flex: 2;
+            color: #aaa;
+        }
+        .board-stats {
+            text-align: right;
+            color: #ccc;
+            font-size: 0.95em;
+            min-width: 100px;
         }
     </style>
 </head>
 <body>
     <header>
-        <img src="https://i.imgur.com/oJCfWc8.png" alt="Logo" class="logo">
+        <img src="https://i.imgur.com/oJCfWc8.png" class="logo">
         <h1>20Thousand Forums</h1>
     </header>
 
     <nav>
-    <a href="/">Home</a> |
-    <a href="/forums">Boards</a> |
-    <a href="/imk"><strong>Imageboard (imk)</strong></a> |
-    <span id="user-nav"></span>
-</nav>
-
-    <!-- Global Banner -->
-    <div id="global-banner" style="display:none; background:#fffd01; color:#162437; padding:12px; text-align:center; font-weight:bold;"></div>
+        <a href="/">Home</a> |
+        <a href="/forums">Boards</a> |
+        <span id="user-nav"></span>
+    </nav>
 
     <div class="container">
         <h2>Boards (s1k/)</h2>
-        <div id="create-area"></div>
-        <h3>Existing Boards</h3>
-        <div id="forumsList">Loading...</div>
-    </div>
 
-    <!-- Create s1k Modal -->
-    <div id="createS1kModal" class="modal">
-        <div class="modal-content">
-            <h3>+ Create New s1k</h3>
-            <input id="s1k-name" placeholder="Board name (e.g. gaming)" style="width:100%; padding:10px; margin:10px 0;"><br>
-            <textarea id="s1k-desc" placeholder="Description" rows="3" style="width:100%; padding:10px;"></textarea><br><br>
-            <button class="button" onclick="createS1k()">Create s1k</button>
-            <button onclick="closeModal('createS1kModal')">Cancel</button>
+        <!-- General -->
+        <div class="category">
+            <div class="category-title">General</div>
+
+            <div class="board" onclick="window.location.href='/thread-list.html?id=pit&name=The Pit'">
+                <div class="board-name">/pit/ — The Pit</div>
+                <div class="board-desc">Main board • Everything goes</div>
+                <div class="board-stats">Threads: <span id="pit-threads">—</span></div>
+            </div>
+
+            <div class="board" onclick="window.location.href='/thread-list.html?id=srs&name=Serious'">
+                <div class="board-name">/srs/ — Serious</div>
+                <div class="board-desc">Real talk, debates & long posts</div>
+                <div class="board-stats">Threads: <span id="srs-threads">—</span></div>
+            </div>
         </div>
+
+        <!-- Brainrot -->
+        <div class="category">
+            <div class="category-title">Brainrot</div>
+
+            <div class="board" onclick="window.location.href='/thread-list.html?id=br&name=Brainrot'">
+                <div class="board-name">/br/ — Brainrot</div>
+                <div class="board-desc">Memes, crapposting & degeneracy</div>
+                <div class="board-stats">Threads: <span id="br-threads">—</span></div>
+            </div>
+        </div>
+
+        <!-- Creativity -->
+        <div class="category">
+            <div class="category-title">Creativity</div>
+
+            <div class="board" onclick="window.location.href='/thread-list.html?id=crt&name=Creativity'">
+                <div class="board-name">/crt/ — Creativity</div>
+                <div class="board-desc">Art, edits, music & OC</div>
+                <div class="board-stats">Threads: <span id="crt-threads">—</span></div>
+            </div>
+        </div>
+
+        <!-- Meta -->
+        <div class="category">
+            <div class="category-title">Meta</div>
+
+            <div class="board" onclick="window.location.href='/thread-list.html?id=cnfs&name=Confessions'">
+                <div class="board-name">/cnfs/ — Confessions</div>
+                <div class="board-desc">Anonymous vents, stories & thoughts</div>
+                <div class="board-stats">Threads: <span id="cnfs-threads">—</span></div>
+            </div>
+
+            <div class="board" onclick="window.location.href='/thread-list.html?id=ot&name=Off-Topic'">
+                <div class="board-name">/ot/ — Off-Topic</div>
+                <div class="board-desc">Random nonsense & tangents</div>
+                <div class="board-stats">Threads: <span id="ot-threads">—</span></div>
+            </div>
+        </div>
+
     </div>
 
     <script>
         const username = localStorage.getItem('username');
+        document.getElementById('user-nav').innerHTML = username 
+            ? `Logged in as: <strong>${username}</strong> | <a href="#" onclick="logout()">Logout</a>`
+            : '<a href="/login">Login</a> | <a href="/register">Register</a>';
 
-        if (username) {
-            document.getElementById('user-nav').innerHTML = `Logged in as: <strong>${username}</strong> | <a href="#" onclick="showLogoutModal()">Logout</a>`;
-            if (username === "20k") {
-                document.getElementById('create-area').innerHTML = `<button class="button" onclick="showCreateS1kModal()">+ Create New s1k</button><br><br>`;
-            }
-        } else {
-            document.getElementById('user-nav').innerHTML = `<a href="/register">Register</a> | <a href="/login">Login</a>`;
-        }
-
-        // Global Banner
-        async function loadGlobalBanner() {
-            try {
-                const res = await fetch('/api/global-banner');
-                const banner = await res.json();
-                const el = document.getElementById('global-banner');
-                
-                if (banner.active && (banner.text || banner.imageUrl)) {
-                    el.innerHTML = banner.text || "";
-                    if (banner.imageUrl) {
-                        el.innerHTML += `<br><img src="${banner.imageUrl}" style="max-width:100%; margin-top:8px;">`;
-                    }
-                    el.style.display = 'block';
-                } else {
-                    el.style.display = 'none';
-                }
-            } catch(e) {}
-        }
-
-        loadGlobalBanner();
-
-        function showCreateS1kModal() {
-            document.getElementById('createS1kModal').style.display = 'flex';
-        }
-
-        function closeModal(id) {
-            document.getElementById(id).style.display = 'none';
-        }
-
-        async function createS1k() {
-            const name = document.getElementById('s1k-name').value.trim();
-            const desc = document.getElementById('s1k-desc').value.trim();
-            if (!name) return;
-
-            const res = await fetch('/api/forums', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({name, description: desc})
-            });
-            const data = await res.json();
-            alert(data.message);
-            if (data.success) {
-                closeModal('createS1kModal');
-                loadForums();
-            }
-        }
-
-        function showLogoutModal() {
-            const modal = document.createElement('div');
-            modal.className = 'modal';
-            modal.style.display = 'flex';
-            modal.innerHTML = `
-                <div class="modal-content">
-                    <h3>Logout?</h3>
-                    <p>Are you sure you want to logout?</p>
-                    <button class="button" onclick="doLogout()" style="background:#ff4444;">Yes, Logout</button>
-                    <button onclick="this.parentElement.parentElement.remove()">Cancel</button>
-                </div>`;
-            document.body.appendChild(modal);
-        }
-
-        function doLogout() {
+        function logout() {
             localStorage.clear();
-            window.location.href = '/login';
+            window.location.href = '/';
         }
 
-        async function loadForums() {
-            const res = await fetch('/api/forums');
-            const forums = await res.json();
-            const container = document.getElementById('forumsList');
-            if (forums.length === 0) {
-                container.innerHTML = "<p>No boards yet.</p>";
-                return;
-            }
-            let html = '';
-            forums.forEach(f => {
-                html += `
-<div class="board">
-    <strong>
-        <a href="/thread-list.html?id=${f.id}&name=${encodeURIComponent(f.name)}"
-           style="color:white; text-decoration:none;">
-           s1k/${f.name}
-        </a>
-    </strong>
-    <br>
-    <small>${f.description || ''}</small>
-</div>`;
-            });
-            container.innerHTML = html;
-        }
-
-        // Strong Ban Check
-        async function checkBan() {
-            const currentUser = localStorage.getItem('username');
-            if (!currentUser) return;
+        // Load live thread counts
+        async function loadStats() {
             try {
-                const res = await fetch(`/api/check-ban/${currentUser}`);
-                const data = await res.json();
-                if (data.banned) {
-                    localStorage.clear();
-                    window.location.href = `/banned.html?reason=${encodeURIComponent(data.reason || 'No reason')}&type=${data.type || 'permanent'}`;
-                }
-            } catch (e) {}
+                const res = await fetch('/api/forum-stats');
+                const stats = await res.json();
+
+                document.getElementById('pit-threads').textContent = stats.pit || 0;
+                document.getElementById('srs-threads').textContent = stats.srs || 0;
+                document.getElementById('br-threads').textContent = stats.br || 0;
+                document.getElementById('crt-threads').textContent = stats.crt || 0;
+                document.getElementById('cnfs-threads').textContent = stats.cnfs || 0;
+                document.getElementById('ot-threads').textContent = stats.ot || 0;
+            } catch (err) {
+                console.error("Failed to load forum stats:", err);
+            }
         }
 
-        loadForums();
-        checkBan();
-        setInterval(checkBan, 8000);
+        loadStats();
     </script>
 </body>
 </html>

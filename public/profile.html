@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - 20Thousand Forums</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="https://i.imgur.com/oJCfWc8.png">
+    <style>
+        .profile-banner {
+            width: 100%;
+            height: 180px;
+            background: #1e2f4f;
+            background-size: cover;
+            background-position: center;
+            border-radius: 12px 12px 0 0;
+            border: 2px solid #0165fc;
+        }
+        .profile-header {
+            display: flex;
+            align-items: flex-end;
+            gap: 20px;
+            margin-top: -50px;
+            padding: 0 20px;
+        }
+        .profile-pfp {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            border: 4px solid #0165fc;
+            object-fit: cover;
+            background: #0f1b2e;
+        }
+        .profile-info {
+            background: #1e2f4f;
+            padding: 20px;
+            border-radius: 0 0 12px 12px;
+            border: 2px solid #0165fc;
+            border-top: none;
+        }
+        .bio {
+            margin-top: 15px;
+            color: #ccc;
+            white-space: pre-wrap;
+        }
+        .edit-btn {
+            background: #0165fc;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <img src="https://i.imgur.com/oJCfWc8.png" class="logo">
+        <h1>20Thousand Forums</h1>
+    </header>
+
+    <nav>
+        <a href="/">Home</a> |
+        <a href="/forums">Boards</a> |
+        <span id="user-nav"></span>
+    </nav>
+
+    <div class="container" style="max-width:700px; margin:30px auto;">
+        <div class="profile-banner" id="banner"></div>
+
+        <div class="profile-header">
+            <img id="pfp" class="profile-pfp" src="https://i.imgur.com/oJCfWc8.png">
+            <div>
+                <h2 id="username" style="margin:0; color:#fffd01;"></h2>
+                <p id="joined" style="color:#aaa; margin:5px 0 0 0;"></p>
+            </div>
+        </div>
+
+        <div class="profile-info">
+            <div class="bio" id="bio">Loading...</div>
+            <button id="editBtn" class="edit-btn" style="display:none;" onclick="toggleEdit()">Edit Profile</button>
+
+            <!-- Edit form (hidden by default) -->
+            <div id="editForm" style="display:none; margin-top:20px;">
+                <textarea id="editBio" rows="4" style="width:100%;" placeholder="Your bio..."></textarea><br><br>
+                <label>Profile Picture URL:</label><br>
+                <input id="editPfp" style="width:100%; padding:8px;"><br><br>
+                <label>Banner URL:</label><br>
+                <input id="editBanner" style="width:100%; padding:8px;"><br><br>
+                <button onclick="saveProfile()" style="background:#00cc66; color:white; padding:10px 20px;">Save</button>
+                <button onclick="toggleEdit()" style="margin-left:10px;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const profileUser = urlParams.get('user');
+        const currentUser = localStorage.getItem('username');
+
+        document.getElementById('user-nav').innerHTML = currentUser
+            ? `Logged in as: <strong>${currentUser}</strong>`
+            : '<a href="/login">Login</a>';
+
+        async function loadProfile() {
+            if (!profileUser) {
+                document.getElementById('username').textContent = "User not found";
+                return;
+            }
+
+            const res = await fetch(`/api/profile/${profileUser}`);
+            const data = await res.json();
+
+            if (!data.success) {
+                document.getElementById('username').textContent = "User not found";
+                return;
+            }
+
+            document.getElementById('username').textContent = data.username;
+            document.getElementById('pfp').src = data.pfp;
+            document.getElementById('bio').textContent = data.bio;
+            document.getElementById('joined').textContent = data.created_at 
+                ? `Joined ${new Date(data.created_at).toLocaleDateString()}` 
+                : "";
+
+            if (data.banner) {
+                document.getElementById('banner').style.backgroundImage = `url(${data.banner})`;
+            }
+
+            // Show edit button only if it's your own profile
+            if (currentUser === profileUser) {
+                document.getElementById('editBtn').style.display = 'inline-block';
+            }
+        }
+
+        function toggleEdit() {
+            const form = document.getElementById('editForm');
+            const isHidden = form.style.display === 'none';
+            form.style.display = isHidden ? 'block' : 'none';
+
+            if (isHidden) {
+                document.getElementById('editBio').value = document.getElementById('bio').textContent;
+                document.getElementById('editPfp').value = document.getElementById('pfp').src;
+                document.getElementById('editBanner').value = document.getElementById('banner').style.backgroundImage.slice(5, -2) || "";
+            }
+        }
+
+        async function saveProfile() {
+            const bio = document.getElementById('editBio').value.trim();
+            const pfp = document.getElementById('editPfp').value.trim();
+            const banner = document.getElementById('editBanner').value.trim();
+
+            const res = await fetch('/api/profile/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username: currentUser,
+                    bio,
+                    pfp: pfp || undefined,
+                    banner: banner || undefined
+                })
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                alert("Profile updated!");
+                loadProfile();
+                toggleEdit();
+            } else {
+                alert(data.message || "Failed to update");
+            }
+        }
+
+        loadProfile();
+    </script>
+</body>
+</html>

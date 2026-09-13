@@ -6,6 +6,7 @@ const threadSchema = new mongoose.Schema({
     forum_id: String,
     user_id: String,
     pinned: { type: Boolean, default: false },
+    views: { type: Number, default: 0 },   // ← add this
     created_at: { type: Date, default: Date.now }
 });
 

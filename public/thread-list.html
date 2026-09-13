@@ -8,380 +8,178 @@
     <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="https://i.imgur.com/oJCfWc8.png">
     <style>
-        .modal {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); display: none; align-items: center;
-            justify-content: center; z-index: 10000;
-        }
-        .modal-content {
-            background: #1e2f4f; padding: 25px; border-radius: 12px;
-            border: 3px solid #0165fc; width: 90%; max-width: 450px; color: white;
-        }
-        .notification {
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-            padding: 15px 25px; border-radius: 6px; z-index: 20000;
-            color: white; font-weight: bold;
-        }
         .thread {
             background: #1e2f4f;
-            padding: 15px;
-            margin: 12px 0;
+            border: 2px solid #0165fc;
             border-radius: 8px;
-            border-left: 5px solid #0165fc;
-            position: relative;
+            padding: 14px 18px;
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
         }
-        .pinned { 
-            border-left: 5px solid #fffd01; 
-            background: #2a3f5f; 
+        .thread:hover {
+            background: #2a3f5f;
+            border-color: #fffd01;
         }
-        .menu-btn, .pin-btn {
-            position: absolute; top: 10px; right: 10px; background: none; border: none;
-            font-size: 24px; cursor: pointer; color: #aaa;
+        .thread.pinned {
+            border-left: 5px solid #fffd01;
+            background: #2a3f5f;
         }
-        .pin-btn { right: 45px; color: #fffd01; }
-        .dropdown-menu {
-            position: absolute; top: 40px; right: 10px; background: #1e2f4f;
-            border: 2px solid #0165fc; border-radius: 8px; padding: 8px 0;
-            z-index: 1000; display: none; min-width: 160px;
+        .thread-main {
+            flex: 1;
         }
-        .dropdown-menu button {
-            background: none; border: none; width: 100%; text-align: left;
-            padding: 10px 15px; color: white; cursor: pointer;
-        }
-        .dropdown-menu button:hover { background: #0165fc; }
-
-        video, img {
-            max-width: 100%;
-            border-radius: 8px;
-            margin-top: 8px;
-        }
-
         .thread-title {
-            color: white !important;
-            text-decoration: none;
+            font-size: 1.2em;
+            color: white;
+            margin-bottom: 4px;
         }
-        .thread-title:hover {
-            color: #fffd01 !important;
+        .thread-meta {
+            color: #aaa;
+            font-size: 0.9em;
+        }
+        .thread-stats {
+            text-align: right;
+            color: #ccc;
+            font-size: 0.95em;
+            min-width: 110px;
+        }
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 25px;
+            border-radius: 6px;
+            z-index: 20000;
+            color: white;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
     <header>
-        <img src="https://i.imgur.com/oJCfWc8.png" alt="Logo" class="logo">
-        <h1>20Thousand Forums</h1>
+        <img src="https://i.imgur.com/oJCfWc8.png" class="logo">
+        <h1 id="board-title">Loading...</h1>
     </header>
 
-    <nav><a href="/forums">← Back to Boards</a></nav>
-
-    <div id="global-banner" style="display:none; background:#fffd01; color:#162437; padding:12px; text-align:center; font-weight:bold;"></div>
+    <nav>
+        <a href="/forums">← Back to Boards</a> |
+        <span id="user-nav"></span>
+    </nav>
 
     <div class="container">
-        <h2>s1k/<span id="board-name"></span></h2>
-
-        <button class="button" onclick="showCreateModal()">+ Create d1sc</button>
-
-        <div class="sort-options" style="margin:15px 0;">
-            Sort d1scs by: 
-            <select id="sortSelect" onchange="loadThreads()">
-                <option value="newest">Newest First</option>
-                <option value="popular">Most Popular</option>
-            </select>
+        <div style="margin: 15px 0;">
+            <button onclick="showCreateModal()" class="button" style="background:#fffd01; color:#162437;">+ New d1sc</button>
         </div>
 
-        <h3>Discussions</h3>
         <div id="threadsList">Loading discussions...</div>
     </div>
 
-    <!-- Create Modal -->
-    <div id="createModal" class="modal">
-        <div class="modal-content">
-            <h3>+ Create New d1sc</h3>
-            <input id="modal-title" placeholder="Thread Title" style="width:100%; padding:10px; margin:10px 0;"><br>
-            <textarea id="modal-content" placeholder="Write your post here...&#10;Media links will be added automatically when uploaded." rows="6" style="width:100%; padding:10px;"></textarea><br>
+    <!-- Create Modal (kept simple) -->
+    <div id="createModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); align-items:center; justify-content:center; z-index:10000;">
+        <div style="background:#1e2f4f; padding:25px; border-radius:12px; border:3px solid #0165fc; width:90%; max-width:450px; color:white;">
+            <h3>Create New d1sc</h3>
+            <input id="modal-title" placeholder="Title" style="width:100%; padding:10px; margin:8px 0;"><br>
+            <textarea id="modal-content" placeholder="Content" rows="5" style="width:100%; padding:10px;"></textarea><br>
             <input type="file" id="modal-file" accept="image/*,video/*" multiple><br><br>
-            <div id="uploadPreview" style="margin:10px 0; min-height:40px;"></div>
-            <button class="button" onclick="createD1sc()">Create d1sc</button>
-            <button onclick="closeCreateModal()">Cancel</button>
-        </div>
-    </div>
-
-    <!-- Report Modal -->
-    <div id="reportModal" class="modal">
-        <div class="modal-content">
-            <h3>Report d1sc</h3>
-            <textarea id="reportReason" placeholder="Why are you reporting this?" rows="5" style="width:100%;"></textarea><br><br>
-            <button onclick="submitReport()">Submit Report</button>
-            <button onclick="closeReportModal()" style="margin-left:10px; background:#555;">Cancel</button>
-        </div>
-    </div>
-
-    <!-- Delete Confirmation Modal -->
-    <div id="deleteModal" class="modal">
-        <div class="modal-content">
-            <h3>Delete d1sc?</h3>
-            <p style="color:#ff6666;">This cannot be undone. All replies will also be deleted.</p><br>
-            <button onclick="confirmDelete()" style="background:#ff4444;">Yes, Delete</button>
-            <button onclick="closeDeleteModal()">Cancel</button>
+            <button onclick="createD1sc()" style="background:#fffd01; color:#162437; padding:10px 20px;">Create</button>
+            <button onclick="closeCreateModal()" style="margin-left:10px;">Cancel</button>
         </div>
     </div>
 
     <script>
-    const urlParams = new URLSearchParams(window.location.search);
-    const forumId = urlParams.get('id');
-    const forumName = urlParams.get('name');
-    const username = localStorage.getItem('username');
+        const urlParams = new URLSearchParams(window.location.search);
+        const forumId = urlParams.get('id');
+        const forumName = urlParams.get('name') || forumId;
+        const username = localStorage.getItem('username');
 
-    document.getElementById('board-name').textContent = forumName || "board";
+        document.getElementById('board-title').textContent = `/${forumId}/ — ${forumName}`;
+        document.getElementById('user-nav').innerHTML = username 
+            ? `Logged in as: <strong>${username}</strong>` 
+            : '<a href="/login">Login</a>';
 
-    let currentThreadId = null;
-
-    function showNotification(text, color) {
-        const notif = document.createElement('div');
-        notif.className = 'notification';
-        notif.style.background = color;
-        notif.textContent = text;
-        document.body.appendChild(notif);
-        setTimeout(() => notif.remove(), 2800);
-    }
-
-    function showCreateModal() {
-        if (!username) return showNotification("Please login first", "#ff4444");
-        document.getElementById('modal-content').value = "";
-        document.getElementById('uploadPreview').innerHTML = '';
-        document.getElementById('modal-file').value = '';
-        document.getElementById('createModal').style.display = 'flex';
-    }
-
-    function closeCreateModal() {
-        document.getElementById('createModal').style.display = 'none';
-    }
-
-    // Upload files and insert links into textarea
-    document.getElementById('modal-file').addEventListener('change', async (e) => {
-        const files = e.target.files;
-        if (files.length === 0) return;
-
-        const previewDiv = document.getElementById('uploadPreview');
-        previewDiv.innerHTML = `<p style="color:#ffff00;">Uploading ${files.length} file(s)...</p>`;
-
-        let urls = [];
-
-        for (let file of files) {
-            const formData = new FormData();
-            formData.append('file', file);
-
+        async function loadThreads() {
             try {
-                const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData });
-                const uploadData = await uploadRes.json();
+                const res = await fetch(`/api/forums/${forumId}/threads`);
+                const threads = await res.json();
 
-                if (uploadData.success) {
-                    urls.push(uploadData.url);
+                if (!Array.isArray(threads) || threads.length === 0) {
+                    document.getElementById('threadsList').innerHTML = "<p>No discussions yet.</p>";
+                    return;
                 }
+
+                // Sort pinned first
+                threads.sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
+
+                let html = '';
+                threads.forEach(t => {
+                    const date = t.created_at ? new Date(t.created_at).toLocaleDateString() : '';
+                    html += `
+                        <div class="thread ${t.pinned ? 'pinned' : ''}" onclick="window.location.href='/thread.html?id=${t.id}&title=${encodeURIComponent(t.title)}'">
+                            <div class="thread-main">
+                                <div class="thread-title">${t.pinned ? '📌 ' : ''}${t.title}</div>
+                                <div class="thread-meta">
+                                    ${t.user_id || 'Unknown'} • ${date}
+                                </div>
+                            </div>
+                            <div class="thread-stats">
+                                Replies: ${t.postCount || 0}<br>
+                                Views: —
+                            </div>
+                        </div>`;
+                });
+
+                document.getElementById('threadsList').innerHTML = html;
             } catch (err) {
                 console.error(err);
+                document.getElementById('threadsList').innerHTML = "<p>Error loading discussions.</p>";
             }
         }
 
-        previewDiv.innerHTML = `<p style="color:#00cc66;">✅ ${urls.length} file(s) uploaded</p>`;
+        function showCreateModal() {
+            if (!username) return alert("Login first");
+            document.getElementById('createModal').style.display = 'flex';
+        }
 
-        // Insert URLs into textarea
-        const textarea = document.getElementById('modal-content');
-        let currentText = textarea.value.trim();
-        if (currentText) currentText += "\n\n";
-        currentText += urls.join("\n") + "\n";
-        textarea.value = currentText;
-    });
+        function closeCreateModal() {
+            document.getElementById('createModal').style.display = 'none';
+        }
 
-    async function createD1sc() {
-        const title = document.getElementById('modal-title').value.trim();
-        const content = document.getElementById('modal-content').value.trim();
+        async function createD1sc() {
+            const title = document.getElementById('modal-title').value.trim();
+            const content = document.getElementById('modal-content').value.trim();
+            const files = document.getElementById('modal-file').files;
 
-        if (!username) return showNotification("Please login first", "#ff4444");
-        if (!title) return showNotification("Title is required", "#ff4444");
+            if (!title) return alert("Title required");
 
-        try {
-            const res = await fetch('/api/threads', {
+            let fileUrls = [];
+            for (let file of files) {
+                const fd = new FormData();
+                fd.append('file', file);
+                const r = await fetch('/api/upload', { method: 'POST', body: fd });
+                const d = await r.json();
+                if (d.success) fileUrls.push(d.url);
+            }
+
+            await fetch('/api/threads', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    title: title,
-                    content: content,
+                    title,
+                    content,
                     forum_id: forumId,
-                    username: username
+                    username,
+                    fileUrls
                 })
             });
 
-            const data = await res.json();
-            showNotification(data.message, data.success ? "#00cc66" : "#ff4444");
-
-            if (data.success) {
-                closeCreateModal();
-                loadThreads();
-                document.getElementById('modal-title').value = "";
-                document.getElementById('modal-content').value = "";
-                document.getElementById('modal-file').value = "";
-            }
-        } catch (err) {
-            console.error(err);
-            showNotification("Failed to create d1sc", "#ff4444");
+            closeCreateModal();
+            loadThreads();
         }
-    }
 
-    async function loadThreads() {
-        if (!forumId) return;
-
-        const sortMode = document.getElementById('sortSelect').value;
-        const threadsList = document.getElementById('threadsList');
-
-        try {
-            const res = await fetch(`/api/forums/${forumId}/threads`);
-            let threads = await res.json();
-
-            const pinned = threads.filter(t => t.pinned);
-            let normal = threads.filter(t => !t.pinned);
-
-            if (sortMode === "popular") {
-                normal.sort((a, b) => (b.netVotes || 0) - (a.netVotes || 0));
-            } else {
-                normal.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-            }
-
-            threads = [...pinned, ...normal];
-
-            let html = '';
-            threads.forEach(thread => {
-                const isPinned = thread.pinned ? ' pinned' : '';
-
-                let mediaHTML = '';
-                if (thread.fileUrl) {
-                    if (thread.fileUrl.match(/\.(mp4|mov|webm|avi|mkv)$/i)) {
-                        mediaHTML = `<video controls><source src="${thread.fileUrl}" type="video/mp4"></video>`;
-                    } else {
-                        mediaHTML = `<img src="${thread.fileUrl}" style="max-width:100%; border-radius:8px; margin-top:8px;">`;
-                    }
-                }
-
-                html += `
-                    <div class="thread${isPinned}">
-                        <button class="menu-btn" onclick="showDropdown('${thread.id}', event)">⋯</button>
-
-                        ${username === "20k" ? `
-                            <button class="pin-btn" onclick="togglePin('${thread.id}')">
-                                ${thread.pinned ? "📌" : "📍"}
-                            </button>
-                        ` : ''}
-
-                        <strong>
-                            <a href="/thread.html?id=${thread.id}&title=${encodeURIComponent(thread.title)}" class="thread-title">
-                                ${thread.title}
-                            </a>
-                        </strong><br>
-
-                        <small>Created by ${thread.user_id} • ${new Date(thread.created_at).toLocaleString()}</small>
-
-                        ${mediaHTML}
-
-                        <div id="dropdown-${thread.id}" class="dropdown-menu">
-                            <button onclick="openReport('${thread.id}')">Report</button>
-                            ${(username === "20k" || username === thread.user_id) ?
-                                `<button onclick="openDelete('${thread.id}')">Delete d1sc</button>` : ''}
-                        </div>
-                    </div>
-                `;
-            });
-
-            threadsList.innerHTML = html || "<p>No discussions yet. Be the first to create one!</p>";
-
-        } catch (err) {
-            console.error(err);
-            threadsList.innerHTML = `<p style="color:#ff6666;">Failed to load discussions.</p>`;
-        }
-    }
-
-    function showDropdown(threadId, e) {
-        e.stopPropagation();
-        document.querySelectorAll('.dropdown-menu').forEach(m => m.style.display = 'none');
-        document.getElementById(`dropdown-${threadId}`).style.display = 'block';
-    }
-
-    function openReport(threadId) {
-        currentThreadId = threadId;
-        document.getElementById('reportModal').style.display = 'flex';
-    }
-
-    function closeReportModal() {
-        document.getElementById('reportModal').style.display = 'none';
-    }
-
-    function openDelete(threadId) {
-        currentThreadId = threadId;
-        document.getElementById('deleteModal').style.display = 'flex';
-    }
-
-    function closeDeleteModal() {
-        document.getElementById('deleteModal').style.display = 'none';
-    }
-
-    async function submitReport() {
-        const reason = document.getElementById('reportReason').value.trim();
-        if (!reason) return showNotification("Please write a reason", "#ff4444");
-
-        const res = await fetch('/api/report', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ post_id: currentThreadId, reported_by: username, reason })
-        });
-
-        const data = await res.json();
-        showNotification(data.message, data.success ? "#00cc66" : "#ff4444");
-        closeReportModal();
-    }
-
-    async function confirmDelete() {
-        const res = await fetch(`/api/threads/${currentThreadId}`, {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username })
-        });
-
-        const data = await res.json();
-        showNotification(data.message, data.success ? "#00cc66" : "#ff4444");
-        closeDeleteModal();
-        if (data.success) loadThreads();
-    }
-
-    async function togglePin(threadId) {
-        try {
-            const res = await fetch(`/api/threads/${threadId}/pin`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username })
-            });
-            const data = await res.json();
-            showNotification(data.message, data.success ? "#00cc66" : "#ff4444");
-            if (data.success) loadThreads();
-        } catch (err) {
-            showNotification("Pin request failed", "#ff4444");
-        }
-    }
-
-    async function checkBan() {
-        const currentUser = localStorage.getItem('username');
-        if (!currentUser) return;
-        try {
-            const res = await fetch(`/api/check-ban/${currentUser}`);
-            const data = await res.json();
-            if (data.banned) {
-                localStorage.clear();
-                window.location.href = `/banned.html?reason=${encodeURIComponent(data.reason || 'No reason')}&type=${data.type || 'permanent'}`;
-            }
-        } catch (e) {}
-    }
-
-    // Initialize
-    loadThreads();
-    checkBan();
-    setInterval(checkBan, 8000);
+        loadThreads();
     </script>
 </body>
 </html>
