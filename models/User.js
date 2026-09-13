@@ -10,6 +10,7 @@ const userSchema = new mongoose.Schema({
     pfp: { type: String, default: "https://i.imgur.com/oJCfWc8.png" },
     banner: { type: String, default: "" },
     bio: { type: String, default: "No bio yet." },
+    title: { type: String, default: "Member" },
     created_at: { type: Date, default: Date.now }
 }, { strict: false });
 

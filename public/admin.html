@@ -2,53 +2,52 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Panel - 20Thousand Forums</title>
     <link rel="stylesheet" href="/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="https://i.imgur.com/oJCfWc8.png">
     <style>
-        .modal {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); display: none; align-items: center;
-            justify-content: center; z-index: 20000;
+        .admin-section {
+            background: #1e2f4f;
+            border: 2px solid #0165fc;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            max-width: 700px;
         }
-        .modal-content {
-            background: #1e2f4f; 
-            padding: 25px; 
-            border-radius: 12px;
-            border: 3px solid #0165fc; 
-            width: 90%; 
-            max-width: 450px; 
+        .admin-section h2 {
+            color: #fffd01;
+            margin-top: 0;
+        }
+        .admin-section input, .admin-section select, .admin-section textarea {
+            width: 100%;
+            max-width: 420px;
+            padding: 10px;
+            margin: 6px 0 12px 0;
+            border-radius: 6px;
+            border: 1px solid #0165fc;
+            background: #0f1b2e;
             color: white;
-            text-align: center;
         }
-        .button {
-            padding: 10px 20px;
-            margin: 8px;
+        .admin-section button {
+            padding: 10px 18px;
+            margin-right: 8px;
+            margin-bottom: 6px;
             border: none;
             border-radius: 6px;
             cursor: pointer;
             font-weight: bold;
+            background: #0165fc;
+            color: white;
         }
-
-        /* Mobile Improvements */
-        body {
-            font-size: 16px;
+        .admin-section button.danger {
+            background: #ff4444;
         }
-        input, textarea, select, button {
-            font-size: 16px !important;
-        }
-        .container, #content {
-            padding: 10px 15px;
-        }
-        input, textarea {
-            width: 100%;
-            padding: 12px;
-            margin: 8px 0;
-        }
-        h2 {
-            font-size: 1.7em;
+        .hint {
+            color: #aaa;
+            font-size: 0.9em;
+            margin-bottom: 10px;
         }
     </style>
 </head>
@@ -63,11 +62,6 @@
 
     <div id="content"></div>
 
-    <!-- Success Modal -->
-    <div id="successModal" class="modal">
-        <div class="modal-content" style="background:#00cc66; color:white;" id="successContent"></div>
-    </div>
-
     <script>
         const username = localStorage.getItem('username');
 
@@ -79,54 +73,59 @@
                 </h2>`;
         } else {
             document.getElementById('content').innerHTML = `
-                <h2>Global Banner</h2>
-                <input id="bannerText" placeholder="Banner text (HTML allowed)" style="width:100%; padding:12px;"><br><br>
-                <input id="bannerImage" placeholder="Image URL (optional)" style="width:100%; padding:12px;"><br><br>
-                <button onclick="updateBanner()" class="button">Update Banner</button>
-                <button onclick="clearBanner()" class="button" style="background:#666;">Clear Banner</button>
+                <div class="admin-section">
+                    <h2>Global Banner</h2>
+                    <input id="bannerText" placeholder="Banner text (HTML allowed)">
+                    <input id="bannerImage" placeholder="Image URL (optional)">
+                    <button onclick="updateBanner()">Update Banner</button>
+                    <button class="danger" onclick="clearBanner()">Clear Banner</button>
+                </div>
 
-                <hr>
+                <div class="admin-section">
+                    <h2>Set User Title</h2>
+                    <p class="hint">Shows on hover cards & profiles. Examples: Member, Janitor, Mod, Trusted, etc.</p>
+                    <input id="titleUsername" placeholder="Username">
+                    <select id="titlePreset" onchange="if(this.value) document.getElementById('titleCustom').value = this.value">
+                        <option value="">— presets —</option>
+                        <option value="Member">Member</option>
+                        <option value="Janitor">Janitor</option>
+                        <option value="Moderator">Moderator</option>
+                        <option value="Trusted">Trusted</option>
+                        <option value="Owner">Owner</option>
+                    </select>
+                    <input id="titleCustom" placeholder="Custom title (or pick a preset)">
+                    <button onclick="setTitle()">Set Title</button>
+                </div>
 
-                <h2>Ban User</h2>
-                <input id="banUsername" placeholder="Username" style="width:100%; padding:12px;"><br><br>
-                <input id="banReason" placeholder="Reason" style="width:100%; padding:12px;"><br><br>
-                <select id="banType" style="width:100%; padding:12px;">
-                    <option value="temporary">Temporary (7 days)</option>
-                    <option value="permanent" selected>Permanent</option>
-                </select><br><br>
-                <button onclick="banUser()" class="button" style="background:#ff4444;">Ban User</button>
+                <div class="admin-section">
+                    <h2>Ban User</h2>
+                    <input id="banUsername" placeholder="Username to ban">
+                    <input id="banReason" placeholder="Reason">
+                    <select id="banType">
+                        <option value="permanent">Permanent</option>
+                        <option value="temporary">Temporary</option>
+                    </select>
+                    <button class="danger" onclick="banUser()">Ban User</button>
+                </div>
 
-                <hr>
-
-                <h2>Delete Thread</h2>
-                <input id="deleteThreadId" placeholder="Thread ID" style="width:100%; padding:12px;"><br><br>
-                <button onclick="deleteThread()" class="button">Delete Thread</button>
-
-                <hr>
-
-                <h2>Reports</h2>
-                <p><a href="/reports.html">📋 View All Reports</a></p>
+                <div class="admin-section">
+                    <h2>Delete Thread</h2>
+                    <input id="deleteThreadId" placeholder="Thread ID">
+                    <button class="danger" onclick="deleteThread()">Delete Thread</button>
+                </div>
             `;
         }
 
-        function showSuccessModal(message) {
-            const modal = document.getElementById('successModal');
-            document.getElementById('successContent').innerHTML = `<strong>${message}</strong>`;
-            modal.style.display = 'flex';
-            setTimeout(() => modal.style.display = 'none', 2500);
-        }
-
         async function updateBanner() {
-            const text = document.getElementById('bannerText').value.trim();
-            const imageUrl = document.getElementById('bannerImage').value.trim();
-
+            const text = document.getElementById('bannerText').value;
+            const imageUrl = document.getElementById('bannerImage').value;
             const res = await fetch('/api/admin/banner', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username: "20k", text, imageUrl })
             });
             const data = await res.json();
-            showSuccessModal(data.message || "Banner updated!");
+            alert(data.message || "Done");
         }
 
         async function clearBanner() {
@@ -136,14 +135,27 @@
                 body: JSON.stringify({ username: "20k", text: "", imageUrl: "" })
             });
             const data = await res.json();
-            showSuccessModal(data.message || "Banner cleared!");
+            alert(data.message || "Banner cleared");
+        }
+
+        async function setTitle() {
+            const targetUsername = document.getElementById('titleUsername').value.trim();
+            const title = document.getElementById('titleCustom').value.trim() || "Member";
+            if (!targetUsername) return alert("Enter username");
+
+            const res = await fetch('/api/admin/title', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ admin: "20k", targetUsername, title })
+            });
+            const data = await res.json();
+            alert(data.message);
         }
 
         async function banUser() {
             const target = document.getElementById('banUsername').value.trim();
             const reason = document.getElementById('banReason').value.trim();
             const type = document.getElementById('banType').value;
-
             if (!target) return alert("Enter username");
 
             const res = await fetch('/api/admin/ban', {
@@ -152,7 +164,7 @@
                 body: JSON.stringify({ admin: "20k", targetUsername: target, reason, type })
             });
             const data = await res.json();
-            showSuccessModal(data.message || "User banned!");
+            alert(data.message);
         }
 
         async function deleteThread() {
@@ -165,7 +177,7 @@
                 body: JSON.stringify({ username: "20k" })
             });
             const data = await res.json();
-            showSuccessModal(data.message || "Thread deleted");
+            alert(data.message);
         }
     </script>
 </body>

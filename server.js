@@ -686,6 +686,160 @@ app.get('/api/profile/:username/activity', async (req, res) => {
     }
 });
 
+app.post('/api/admin/title', async (req, res) => {
+    try {
+        const { admin, targetUsername, title } = req.body;
+
+        if (admin !== "20k") {
+            return res.json({ success: false, message: "No permission" });
+        }
+        if (!targetUsername) {
+            return res.json({ success: false, message: "Enter a username" });
+        }
+
+        const cleanTitle = (title || "Member").trim().slice(0, 40);
+
+        const result = await User.collection.updateOne(
+            { username: targetUsername },
+            { $set: { title: cleanTitle } }
+        );
+
+        if (result.matchedCount === 0) {
+            return res.json({ success: false, message: "User not found" });
+        }
+
+        res.json({ success: true, message: `Title for ${targetUsername} set to "${cleanTitle}"` });
+    } catch (err) {
+        console.error(err);
+        res.json({ success: false, message: "Server error" });
+    }
+});
+
+// =====================================================
+// SEARCH
+// =====================================================
+app.get('/api/search', async (req, res) => {
+    try {
+        const raw = (req.query.q || "").trim();
+        if (!raw) return res.json({ users: [], threads: [] });
+
+        const lower = raw.toLowerCase();
+        let users = [];
+        let threads = [];
+
+        // user: query
+        if (lower.startsWith("user:")) {
+            const term = raw.slice(5).trim();
+            if (term) {
+                const exact = await User.findOne({ username: term });
+                const partial = await User.find({
+                    username: { $regex: term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), $options: "i" }
+                }).limit(30);
+
+                const seen = new Set();
+                const list = [];
+                if (exact) {
+                    seen.add(exact.username);
+                    list.push(exact);
+                }
+                for (const u of partial) {
+                    if (!seen.has(u.username)) {
+                        seen.add(u.username);
+                        list.push(u);
+                    }
+                }
+
+                for (const u of list) {
+                    const postCount = await Post.countDocuments({ user_id: u.username });
+                    users.push({
+                        username: u.username,
+                        pfp: u.pfp || "https://i.imgur.com/oJCfWc8.png",
+                        title: u.title || (u.username === "20k" ? "Owner" : "Member"),
+                        bio: u.bio || "",
+                        postCount,
+                        created_at: u.created_at
+                    });
+                }
+            }
+            return res.json({ users, threads: [] });
+        }
+
+        // d1sc: query
+        if (lower.startsWith("d1sc:")) {
+            const term = raw.slice(5).trim();
+            if (term) {
+                const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+                const exact = await Thread.find({ title: term }).limit(20);
+                const partial = await Thread.find({
+                    title: { $regex: escaped, $options: "i" }
+                }).sort({ created_at: -1 }).limit(40);
+
+                const seen = new Set();
+                const list = [];
+                for (const t of exact) {
+                    if (!seen.has(t.id)) {
+                        seen.add(t.id);
+                        list.push(t);
+                    }
+                }
+                for (const t of partial) {
+                    if (!seen.has(t.id)) {
+                        seen.add(t.id);
+                        list.push(t);
+                    }
+                }
+
+                threads = list.map(t => ({
+                    id: t.id,
+                    title: t.title,
+                    forum_id: t.forum_id,
+                    user_id: t.user_id,
+                    created_at: t.created_at,
+                    pinned: t.pinned || false
+                }));
+            }
+            return res.json({ users: [], threads });
+        }
+
+        // plain query → both
+        const escaped = raw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+        const userHits = await User.find({
+            username: { $regex: escaped, $options: "i" }
+        }).limit(15);
+
+        for (const u of userHits) {
+            const postCount = await Post.countDocuments({ user_id: u.username });
+            users.push({
+                username: u.username,
+                pfp: u.pfp || "https://i.imgur.com/oJCfWc8.png",
+                title: u.title || (u.username === "20k" ? "Owner" : "Member"),
+                bio: u.bio || "",
+                postCount,
+                created_at: u.created_at
+            });
+        }
+
+        const threadHits = await Thread.find({
+            title: { $regex: escaped, $options: "i" }
+        }).sort({ created_at: -1 }).limit(30);
+
+        threads = threadHits.map(t => ({
+            id: t.id,
+            title: t.title,
+            forum_id: t.forum_id,
+            user_id: t.user_id,
+            created_at: t.created_at,
+            pinned: t.pinned || false
+        }));
+
+        res.json({ users, threads });
+    } catch (err) {
+        console.error("Search error:", err);
+        res.json({ users: [], threads: [] });
+    }
+});
+
 // =====================================================
 // REMAINING ROUTES
 // =====================================================
