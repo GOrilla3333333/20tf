@@ -494,25 +494,6 @@ app.post('/api/profile/update', async (req, res) => {
 
 app.get('/api/profile/:username', async (req, res) => {
     try {
-        const user = await User.collection.findOne({ username: req.params.username });
-        if (!user) return res.json({ success: false, message: "User not found" });
-
-        res.json({
-            success: true,
-            username: user.username,
-            pfp: user.pfp || "https://i.imgur.com/oJCfWc8.png",
-            banner: user.banner || "",
-            bio: user.bio || "No bio yet.",
-            created_at: user.created_at
-        });
-    } catch (err) {
-        console.error(err);
-        res.json({ success: false, message: "Server error" });
-    }
-});
-
-app.get('/api/profile/:username', async (req, res) => {
-    try {
         const user = await User.findOne({ username: req.params.username });
         if (!user) return res.json({ success: false, message: "User not found" });
 
@@ -526,39 +507,6 @@ app.get('/api/profile/:username', async (req, res) => {
         });
     } catch (err) {
         console.error(err);
-        res.json({ success: false, message: "Server error" });
-    }
-});
-
-app.post('/api/profile/update', async (req, res) => {
-    try {
-        const { username, bio, pfp, banner } = req.body;
-        if (!username) return res.json({ success: false, message: "Missing username" });
-
-        const update = {};
-        if (typeof bio === 'string') update.bio = bio;
-        if (typeof pfp === 'string' && pfp.trim()) update.pfp = pfp.trim();
-        if (typeof banner === 'string' && banner.trim()) update.banner = banner.trim();
-
-        const user = await User.findOneAndUpdate(
-            { username },
-            { $set: update },
-            { new: true }
-        );
-
-        if (!user) return res.json({ success: false, message: "User not found" });
-
-        console.log("PROFILE UPDATED:", username, update);
-
-        res.json({
-            success: true,
-            message: "Profile updated!",
-            pfp: user.pfp,
-            banner: user.banner,
-            bio: user.bio
-        });
-    } catch (err) {
-        console.error("PROFILE UPDATE ERROR:", err);
         res.json({ success: false, message: "Server error" });
     }
 });
