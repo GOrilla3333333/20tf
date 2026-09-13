@@ -40,26 +40,8 @@
             position: relative;
         }
 
-        .edit-btn, .del-btn {
-            position: absolute;
-            top: 10px;
-            background: none;
-            border: none;
-            font-size: 18px;
-            cursor: pointer;
-            color: #aaa;
-        }
-
-        .edit-btn { right: 40px; }
-        .del-btn { right: 10px; color: #ff4444; }
-
-        .reply-btn {
-            margin-top: 8px;
-            background: none;
-            border: none;
-            color: #aaa;
-            cursor: pointer;
-            font-size: 12px;
+        .post.highlight-post {
+            outline: 2px solid #fffd01;
         }
 
         .user-row {
@@ -88,6 +70,88 @@
             color: #fffd01;
         }
 
+        .reply-btn {
+            margin-top: 8px;
+            background: none;
+            border: none;
+            color: #aaa;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .menu-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: none;
+            border: none;
+            font-size: 22px;
+            cursor: pointer;
+            color: #aaa;
+            line-height: 1;
+        }
+
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 36px;
+            right: 8px;
+            background: #0f1b2e;
+            border: 2px solid #0165fc;
+            border-radius: 8px;
+            min-width: 140px;
+            z-index: 50;
+            overflow: hidden;
+        }
+
+        .dropdown-menu button {
+            display: block;
+            width: 100%;
+            background: none;
+            border: none;
+            color: white;
+            text-align: left;
+            padding: 10px 14px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .dropdown-menu button:hover {
+            background: #1e2f4f;
+        }
+
+        .thread-header {
+            position: relative;
+            margin-bottom: 10px;
+        }
+
+        .thread-header .menu-btn {
+            position: absolute;
+            top: 0;
+            right: 0;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+
+        .modal-content {
+            background: #1e2f4f;
+            padding: 25px;
+            border-radius: 12px;
+            border: 3px solid #0165fc;
+            width: 90%;
+            max-width: 450px;
+            color: white;
+        }
+
         img, video {
             max-width: 100%;
             border-radius: 8px;
@@ -104,11 +168,21 @@
         <h1>20Thousand Forums</h1>
     </header>
 
-    <nav><a href="/forums">← Back to Boards</a></nav>
+    <nav>
+        <a href="/forums">← Back to Boards</a> |
+        <span id="user-nav"></span>
+    </nav>
     <hr>
 
-    <h2 id="thread-title">Loading...</h2>
-    <p><small>Created by <strong id="thread-creator">...</strong></small></p>
+    <div class="thread-header">
+        <h2 id="thread-title">Loading...</h2>
+        <p><small>Created by <strong id="thread-creator">...</strong></small></p>
+        <button class="menu-btn" onclick="showThreadDropdown(event)">⋮</button>
+        <div id="thread-dropdown" class="dropdown-menu">
+            <button onclick="openReportModal('thread')">Report thread</button>
+            <button id="delete-thread-btn" onclick="openDeleteThreadModal()" style="display:none; color:#ff6666;">Delete thread</button>
+        </div>
+    </div>
 
     <div id="postsList">Loading posts...</div>
 
@@ -127,12 +201,43 @@
     </div>
 
     <!-- EDIT MODAL -->
-    <div id="editModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
-background:#1e2f4f; padding:25px; border:3px solid #0165fc; border-radius:12px; z-index:20000; width:90%; max-width:500px; color:white;">
-        <h3>Edit Post</h3>
-        <textarea id="editContent" rows="8" style="width:100%;"></textarea><br><br>
-        <button onclick="saveEdit()">Save</button>
-        <button onclick="closeEditModal()">Cancel</button>
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <h3>Edit Post</h3>
+            <textarea id="editContent" rows="8" style="width:100%;"></textarea><br><br>
+            <button onclick="saveEdit()">Save</button>
+            <button onclick="closeEditModal()">Cancel</button>
+        </div>
+    </div>
+
+    <!-- REPORT MODAL -->
+    <div id="reportModal" class="modal">
+        <div class="modal-content">
+            <h3>Report</h3>
+            <textarea id="reportReason" rows="4" style="width:100%;" placeholder="Why are you reporting this?"></textarea><br><br>
+            <button onclick="submitReport()">Submit Report</button>
+            <button onclick="closeReportModal()">Cancel</button>
+        </div>
+    </div>
+
+    <!-- DELETE POST MODAL -->
+    <div id="deletePostModal" class="modal">
+        <div class="modal-content">
+            <h3>Delete this reply?</h3>
+            <p>This cannot be undone.</p>
+            <button onclick="confirmDeletePost()" style="background:#ff4444; color:white;">Delete</button>
+            <button onclick="closeDeletePostModal()">Cancel</button>
+        </div>
+    </div>
+
+    <!-- DELETE THREAD MODAL -->
+    <div id="deleteThreadModal" class="modal">
+        <div class="modal-content">
+            <h3>Delete this thread?</h3>
+            <p>All replies will be deleted too.</p>
+            <button onclick="confirmDeleteThread()" style="background:#ff4444; color:white;">Delete thread</button>
+            <button onclick="closeDeleteThreadModal()">Cancel</button>
+        </div>
     </div>
 
     <script>
@@ -141,7 +246,15 @@ background:#1e2f4f; padding:25px; border:3px solid #0165fc; border-radius:12px; 
 
         let currentReplyParent = null;
         let currentEditId = null;
+        let currentDeleteId = null;
+        let currentReportId = null;
         let rootPostId = null;
+        let threadCreator = null;
+        const postContentMap = {};
+
+        document.getElementById('user-nav').innerHTML = username
+            ? `Logged in as: <a href="/profile.html?user=${encodeURIComponent(username)}" style="color:inherit; text-decoration:none;"><strong>${username}</strong></a>`
+            : '<a href="/login">Login</a>';
 
         async function loadThreadInfo() {
             try {
@@ -149,6 +262,11 @@ background:#1e2f4f; padding:25px; border:3px solid #0165fc; border-radius:12px; 
                 const data = await res.json();
                 document.getElementById('thread-title').textContent = data.title || "Thread not found";
                 document.getElementById('thread-creator').textContent = data.creator || "Unknown";
+                threadCreator = data.creator;
+
+                if (username === "20k" || username === threadCreator) {
+                    document.getElementById('delete-thread-btn').style.display = 'block';
+                }
             } catch(e) {}
         }
 
@@ -159,6 +277,13 @@ background:#1e2f4f; padding:25px; border:3px solid #0165fc; border-radius:12px; 
                     return `<video controls><source src="${url}" type="video/mp4"></video>`;
                 }
                 return `<img src="${url}" alt="Media">`;
+            });
+        }
+
+        function storePosts(posts) {
+            posts.forEach(post => {
+                postContentMap[post.id] = post.content || "";
+                if (post.replies && post.replies.length) storePosts(post.replies);
             });
         }
 
@@ -177,18 +302,18 @@ background:#1e2f4f; padding:25px; border:3px solid #0165fc; border-radius:12px; 
 
                 let text = (post.content || '').replace(/\n/g, '<br>');
                 const isOriginal = post.id === rootPostId;
-
-                // Default pfp if backend doesn't send one yet
                 const pfp = post.pfp || "https://i.imgur.com/oJCfWc8.png";
+                const canEdit = post.user_id === username || username === "20k";
+                const canDelete = canEdit && !isOriginal;
 
                 html += `
-                <div class="post ${isOriginal ? 'original-post' : 'reply-post'}" style="margin-left:${depth*20}px">
-
-                    ${post.user_id === username || username === "20k"
-                        ? `<button class="edit-btn" onclick="editPost('${post.id}')">✏️</button>
-                           ${!isOriginal ? `<button class="del-btn" onclick="deletePost('${post.id}')">🗑</button>` : ''}`
-                        : ''
-                    }
+                <div class="post ${isOriginal ? 'original-post' : 'reply-post'}" id="post-${post.id}" style="margin-left:${depth*20}px">
+                    <button class="menu-btn" onclick="showDropdown('${post.id}', event)">⋮</button>
+                    <div id="dropdown-${post.id}" class="dropdown-menu">
+                        ${canEdit ? `<button onclick="editPost('${post.id}')">Edit</button>` : ''}
+                        ${canDelete ? `<button onclick="openDeletePostModal('${post.id}')" style="color:#ff6666;">Delete</button>` : ''}
+                        <button onclick="openReportModal('${post.id}')">Report</button>
+                    </div>
 
                     <div class="user-row">
                         <img src="${pfp}" class="user-pfp" alt="pfp">
@@ -207,19 +332,50 @@ background:#1e2f4f; padding:25px; border:3px solid #0165fc; border-radius:12px; 
             return html;
         }
 
+        function jumpToHash() {
+            const hash = window.location.hash;
+            if (!hash) return;
+            const el = document.querySelector(hash);
+            if (!el) return;
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            el.classList.add('highlight-post');
+            setTimeout(() => el.classList.remove('highlight-post'), 2500);
+        }
+
         async function loadPosts() {
             try {
                 const res = await fetch(`/api/threads/${threadId}/posts`);
                 const posts = await res.json();
 
                 if (posts.length > 0) rootPostId = posts[0].id;
+                storePosts(posts);
 
-                document.getElementById('postsList').innerHTML = 
+                document.getElementById('postsList').innerHTML =
                     posts.length ? render(posts) : "<p>No posts yet.</p>";
+
+                jumpToHash();
             } catch(e) {
                 console.error(e);
             }
         }
+
+        function hideAllDropdowns() {
+            document.querySelectorAll('.dropdown-menu').forEach(m => m.style.display = 'none');
+        }
+
+        function showDropdown(postId, e) {
+            e.stopPropagation();
+            hideAllDropdowns();
+            document.getElementById(`dropdown-${postId}`).style.display = 'block';
+        }
+
+        function showThreadDropdown(e) {
+            e.stopPropagation();
+            hideAllDropdowns();
+            document.getElementById('thread-dropdown').style.display = 'block';
+        }
+
+        document.addEventListener('click', hideAllDropdowns);
 
         function setReply(id, user) {
             currentReplyParent = id;
@@ -277,41 +433,120 @@ background:#1e2f4f; padding:25px; border:3px solid #0165fc; border-radius:12px; 
             setTimeout(() => notif.remove(), 3000);
         }
 
-        function editPost(id){
+        function editPost(id) {
+            hideAllDropdowns();
             currentEditId = id;
-            document.getElementById('editModal').style.display='block';
+            document.getElementById('editContent').value = postContentMap[id] || '';
+            document.getElementById('editModal').style.display = 'flex';
         }
 
-        function closeEditModal(){
-            document.getElementById('editModal').style.display='none';
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
         }
 
-        async function saveEdit(){
-            await fetch(`/api/posts/${currentEditId}`,{
-                method:'PUT',
-                headers:{'Content-Type':'application/json'},
-                body:JSON.stringify({
+        async function saveEdit() {
+            await fetch(`/api/posts/${currentEditId}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
                     username,
-                    content:document.getElementById('editContent').value
+                    content: document.getElementById('editContent').value
                 })
             });
             closeEditModal();
             loadPosts();
         }
 
-        async function deletePost(id){
-            if (!confirm("Delete this reply?")) return;
+        function openDeletePostModal(id) {
+            hideAllDropdowns();
+            currentDeleteId = id;
+            document.getElementById('deletePostModal').style.display = 'flex';
+        }
 
-            await fetch(`/api/posts/${id}`,{
-                method:'DELETE',
-                headers:{'Content-Type':'application/json'},
-                body:JSON.stringify({username})
+        function closeDeletePostModal() {
+            document.getElementById('deletePostModal').style.display = 'none';
+        }
+
+        async function confirmDeletePost() {
+            await fetch(`/api/posts/${currentDeleteId}`, {
+                method: 'DELETE',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ username })
             });
+            closeDeletePostModal();
             loadPosts();
+        }
+
+        function openDeleteThreadModal() {
+            hideAllDropdowns();
+            document.getElementById('deleteThreadModal').style.display = 'flex';
+        }
+
+        function closeDeleteThreadModal() {
+            document.getElementById('deleteThreadModal').style.display = 'none';
+        }
+
+        async function confirmDeleteThread() {
+            const res = await fetch(`/api/threads/${threadId}`, {
+                method: 'DELETE',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ username })
+            });
+            const data = await res.json();
+            if (data.success) {
+                window.location.href = '/forums';
+            } else {
+                showNotification(data.message || "Could not delete thread", "#ff4444");
+                closeDeleteThreadModal();
+            }
+        }
+
+        function openReportModal(id) {
+            hideAllDropdowns();
+            currentReportId = id === 'thread' ? threadId : id;
+            document.getElementById('reportReason').value = '';
+            document.getElementById('reportModal').style.display = 'flex';
+        }
+
+        function closeReportModal() {
+            document.getElementById('reportModal').style.display = 'none';
+        }
+
+        async function submitReport() {
+            const reason = document.getElementById('reportReason').value.trim();
+            if (!reason) return showNotification("Enter a reason", "#ff4444");
+
+            await fetch('/api/report', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    post_id: currentReportId,
+                    reported_by: username,
+                    reason
+                })
+            });
+
+            closeReportModal();
+            showNotification("Report submitted", "#00cc66");
+        }
+
+        async function checkBan() {
+            const currentUser = localStorage.getItem('username');
+            if (!currentUser) return;
+            try {
+                const res = await fetch(`/api/check-ban/${currentUser}`);
+                const data = await res.json();
+                if (data.banned) {
+                    localStorage.clear();
+                    window.location.href = `/banned.html?reason=${encodeURIComponent(data.reason || 'No reason')}&type=${data.type || 'permanent'}`;
+                }
+            } catch (e) {}
         }
 
         loadThreadInfo();
         loadPosts();
+        checkBan();
+        setInterval(checkBan, 8000);
     </script>
 </body>
 </html>

@@ -49,6 +49,7 @@ const Post = require('./models/Post');
 const GlobalBanner = require('./models/GlobalBanner');
 const Report = require('./models/Report');
 const Announcement = require('./models/Announcement');
+const ProfileComment = require('./models/ProfileComment');
 
 // =====================================================
 // HTML ROUTES
@@ -450,7 +451,66 @@ app.post('/api/threads', async (req, res) => {
 // PROFILE
 // =====================================================
 
-// Get public profile
+app.post('/api/profile/update', async (req, res) => {
+    try {
+        const { username, bio, pfp, banner } = req.body;
+        console.log("PROFILE UPDATE BODY:", req.body);
+
+        if (!username) return res.json({ success: false, message: "Missing username" });
+
+        const $set = {};
+        if (typeof bio === "string") $set.bio = bio;
+        if (typeof pfp === "string" && pfp) $set.pfp = pfp;
+        if (typeof banner === "string" && banner) $set.banner = banner;
+
+        if (!Object.keys($set).length) {
+            return res.json({ success: false, message: "Nothing to update" });
+        }
+
+        const result = await User.collection.updateOne(
+            { username },
+            { $set }
+        );
+
+        console.log("PROFILE UPDATE RESULT:", result);
+
+        const user = await User.collection.findOne({ username });
+        console.log("PROFILE AFTER SAVE:", user && { username: user.username, pfp: user.pfp, banner: user.banner });
+
+        if (!user) return res.json({ success: false, message: "User not found" });
+
+        res.json({
+            success: true,
+            message: "Profile updated!",
+            pfp: user.pfp || "",
+            banner: user.banner || "",
+            bio: user.bio || ""
+        });
+    } catch (err) {
+        console.error("PROFILE UPDATE ERROR:", err);
+        res.json({ success: false, message: "Server error" });
+    }
+});
+
+app.get('/api/profile/:username', async (req, res) => {
+    try {
+        const user = await User.collection.findOne({ username: req.params.username });
+        if (!user) return res.json({ success: false, message: "User not found" });
+
+        res.json({
+            success: true,
+            username: user.username,
+            pfp: user.pfp || "https://i.imgur.com/oJCfWc8.png",
+            banner: user.banner || "",
+            bio: user.bio || "No bio yet.",
+            created_at: user.created_at
+        });
+    } catch (err) {
+        console.error(err);
+        res.json({ success: false, message: "Server error" });
+    }
+});
+
 app.get('/api/profile/:username', async (req, res) => {
     try {
         const user = await User.findOne({ username: req.params.username });
@@ -466,6 +526,39 @@ app.get('/api/profile/:username', async (req, res) => {
         });
     } catch (err) {
         console.error(err);
+        res.json({ success: false, message: "Server error" });
+    }
+});
+
+app.post('/api/profile/update', async (req, res) => {
+    try {
+        const { username, bio, pfp, banner } = req.body;
+        if (!username) return res.json({ success: false, message: "Missing username" });
+
+        const update = {};
+        if (typeof bio === 'string') update.bio = bio;
+        if (typeof pfp === 'string' && pfp.trim()) update.pfp = pfp.trim();
+        if (typeof banner === 'string' && banner.trim()) update.banner = banner.trim();
+
+        const user = await User.findOneAndUpdate(
+            { username },
+            { $set: update },
+            { new: true }
+        );
+
+        if (!user) return res.json({ success: false, message: "User not found" });
+
+        console.log("PROFILE UPDATED:", username, update);
+
+        res.json({
+            success: true,
+            message: "Profile updated!",
+            pfp: user.pfp,
+            banner: user.banner,
+            bio: user.bio
+        });
+    } catch (err) {
+        console.error("PROFILE UPDATE ERROR:", err);
         res.json({ success: false, message: "Server error" });
     }
 });
@@ -488,6 +581,121 @@ app.post('/api/profile/update', async (req, res) => {
     } catch (err) {
         console.error(err);
         res.json({ success: false, message: "Server error" });
+    }
+});
+
+// =====================================================
+// PROFILE COMMENTS + ACTIVITY
+// =====================================================
+
+app.get('/api/profile/:username/comments', async (req, res) => {
+    try {
+        const comments = await ProfileComment.find({
+            profile_username: req.params.username
+        }).sort({ created_at: -1 });
+
+        const result = [];
+        for (const c of comments) {
+            const user = await User.findOne({ username: c.user_id });
+            result.push({
+                id: c.id,
+                user_id: c.user_id,
+                pfp: user?.pfp || "https://i.imgur.com/oJCfWc8.png",
+                content: c.content,
+                created_at: c.created_at
+            });
+        }
+        res.json(result);
+    } catch (err) {
+        console.error(err);
+        res.json([]);
+    }
+});
+
+app.post('/api/profile/:username/comments', async (req, res) => {
+    try {
+        const { username, content } = req.body;
+        if (!username || !content || !content.trim()) {
+            return res.json({ success: false, message: "Add some words" });
+        }
+
+        const target = await User.findOne({ username: req.params.username });
+        if (!target) return res.json({ success: false, message: "User not found" });
+
+        await new ProfileComment({
+            id: Date.now().toString(36),
+            profile_username: req.params.username,
+            user_id: username,
+            content: content.trim(),
+            created_at: new Date()
+        }).save();
+
+        res.json({ success: true, message: "Comment posted" });
+    } catch (err) {
+        console.error(err);
+        res.json({ success: false, message: "Server error" });
+    }
+});
+
+app.delete('/api/profile/comments/:id', async (req, res) => {
+    try {
+        const { username } = req.body;
+        const comment = await ProfileComment.findOne({ id: req.params.id });
+        if (!comment) return res.json({ success: false, message: "Not found" });
+
+        if (username !== "20k" && username !== comment.user_id && username !== comment.profile_username) {
+            return res.json({ success: false, message: "No permission" });
+        }
+
+        await ProfileComment.deleteOne({ id: req.params.id });
+        res.json({ success: true, message: "Deleted" });
+    } catch (err) {
+        res.json({ success: false, message: "Server error" });
+    }
+});
+
+app.get('/api/profile/:username/activity', async (req, res) => {
+    try {
+        const name = req.params.username;
+        const threads = await Thread.find({ user_id: name }).sort({ created_at: -1 }).limit(40);
+        const posts = await Post.find({ user_id: name }).sort({ created_at: -1 }).limit(60);
+
+        const activity = [];
+
+        for (const t of threads) {
+            activity.push({
+                type: "thread",
+                id: t.id,
+                title: t.title,
+                created_at: t.created_at,
+                url: `/thread.html?id=${t.id}&title=${encodeURIComponent(t.title || "")}`
+            });
+        }
+
+        for (const p of posts) {
+            const thread = await Thread.findOne({ id: p.thread_id });
+            // skip the OP post of their own thread (already listed as a thread)
+            if (!p.parent_id && thread && thread.user_id === name && thread.id === p.thread_id) {
+                continue;
+            }
+
+            const title = thread ? thread.title : "Unknown thread";
+            activity.push({
+                type: "comment",
+                id: p.id,
+                thread_id: p.thread_id,
+                title: title,
+                preview: (p.content || "").slice(0, 140),
+                created_at: p.created_at,
+                url: `/thread.html?id=${p.thread_id}&title=${encodeURIComponent(title)}#post-${p.id}`
+            });
+        }
+
+        activity.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        res.json(activity.slice(0, 80));
+    } catch (err) {
+        console.error(err);
+        res.json([]);
     }
 });
 

@@ -39,19 +39,31 @@
             border: 2px solid #0165fc;
             border-top: none;
         }
-        .bio {
-            margin-top: 15px;
-            color: #ccc;
-            white-space: pre-wrap;
-        }
-        .edit-btn {
-            background: #0165fc;
+        .bio { margin-top: 15px; color: #ccc; white-space: pre-wrap; }
+        .tabs { display: flex; gap: 8px; margin: 22px 0 12px 0; }
+        .tab {
+            background: #1e2f4f;
+            border: 2px solid #0165fc;
             color: white;
-            border: none;
             padding: 8px 16px;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
-            margin-top: 10px;
+        }
+        .tab.active { background: #0165fc; }
+        .item {
+            background: #1e2f4f;
+            border: 2px solid #0165fc;
+            border-radius: 8px;
+            padding: 14px;
+            margin: 10px 0;
+        }
+        .item a { color: #fffd01; text-decoration: none; }
+        .item a:hover { text-decoration: underline; }
+        .comment-user { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+        .comment-pfp { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+        .edit-btn {
+            background: #0165fc; color: white; border: none;
+            padding: 8px 16px; border-radius: 6px; cursor: pointer; margin-top: 10px;
         }
     </style>
 </head>
@@ -67,7 +79,7 @@
         <span id="user-nav"></span>
     </nav>
 
-    <div class="container" style="max-width:700px; margin:30px auto;">
+    <div class="container" style="max-width:750px; margin:30px auto;">
         <div class="profile-banner" id="banner"></div>
 
         <div class="profile-header">
@@ -82,16 +94,37 @@
             <div class="bio" id="bio">Loading...</div>
             <button id="editBtn" class="edit-btn" style="display:none;" onclick="toggleEdit()">Edit Profile</button>
 
-            <!-- Edit form (hidden by default) -->
             <div id="editForm" style="display:none; margin-top:20px;">
                 <textarea id="editBio" rows="4" style="width:100%;" placeholder="Your bio..."></textarea><br><br>
-                <label>Profile Picture URL:</label><br>
-                <input id="editPfp" style="width:100%; padding:8px;"><br><br>
-                <label>Banner URL:</label><br>
-                <input id="editBanner" style="width:100%; padding:8px;"><br><br>
+
+                <label>Profile Picture (png / jpg / webp / gif):</label><br>
+                <input type="file" id="editPfpFile" accept="image/png,image/jpeg,image/webp,image/gif"><br>
+                <small id="pfpStatus" style="color:#aaa;"></small><br><br>
+
+                <label>Banner (png / jpg / webp / gif):</label><br>
+                <input type="file" id="editBannerFile" accept="image/png,image/jpeg,image/webp,image/gif"><br>
+                <small id="bannerStatus" style="color:#aaa;"></small><br><br>
+
                 <button onclick="saveProfile()" style="background:#00cc66; color:white; padding:10px 20px;">Save</button>
                 <button onclick="toggleEdit()" style="margin-left:10px;">Cancel</button>
             </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('activity')">Activity</button>
+            <button class="tab" onclick="showTab('comments')">Profile Comments</button>
+        </div>
+
+        <div id="activityTab">
+            <div id="activityList">Loading activity...</div>
+        </div>
+
+        <div id="commentsTab" style="display:none;">
+            <div id="commentBox" style="display:none; margin-bottom:15px;">
+                <textarea id="commentContent" rows="3" style="width:100%;" placeholder="Leave a comment on this profile..."></textarea><br>
+                <button onclick="postComment()" style="margin-top:8px; background:#0165fc; color:white; padding:8px 16px; border:none; border-radius:6px; cursor:pointer;">Post comment</button>
+            </div>
+            <div id="commentsList">Loading comments...</div>
         </div>
     </div>
 
@@ -100,8 +133,13 @@
         const profileUser = urlParams.get('user');
         const currentUser = localStorage.getItem('username');
 
+        let pendingPfpFile = null;
+        let pendingBannerFile = null;
+        let originalPfp = "";
+        let originalBanner = "";
+
         document.getElementById('user-nav').innerHTML = currentUser
-            ? `Logged in as: <strong>${currentUser}</strong>`
+            ? `Logged in as: <a href="/profile.html?user=${encodeURIComponent(currentUser)}" style="color:inherit; text-decoration:none;"><strong>${currentUser}</strong></a>`
             : '<a href="/login">Login</a>';
 
         async function loadProfile() {
@@ -121,18 +159,36 @@
             document.getElementById('username').textContent = data.username;
             document.getElementById('pfp').src = data.pfp;
             document.getElementById('bio').textContent = data.bio;
-            document.getElementById('joined').textContent = data.created_at 
-                ? `Joined ${new Date(data.created_at).toLocaleDateString()}` 
+            document.getElementById('joined').textContent = data.created_at
+                ? `Joined ${new Date(data.created_at).toLocaleDateString()}`
                 : "";
+
+            originalPfp = data.pfp || "";
+            originalBanner = data.banner || "";
 
             if (data.banner) {
                 document.getElementById('banner').style.backgroundImage = `url(${data.banner})`;
+            } else {
+                document.getElementById('banner').style.backgroundImage = "";
             }
 
-            // Show edit button only if it's your own profile
             if (currentUser === profileUser) {
                 document.getElementById('editBtn').style.display = 'inline-block';
             }
+            if (currentUser) {
+                document.getElementById('commentBox').style.display = 'block';
+            }
+
+            loadActivity();
+            loadComments();
+        }
+
+        function showTab(name) {
+            document.getElementById('activityTab').style.display = name === 'activity' ? 'block' : 'none';
+            document.getElementById('commentsTab').style.display = name === 'comments' ? 'block' : 'none';
+            document.querySelectorAll('.tab').forEach((t, i) => {
+                t.classList.toggle('active', (name === 'activity' && i === 0) || (name === 'comments' && i === 1));
+            });
         }
 
         function toggleEdit() {
@@ -142,35 +198,227 @@
 
             if (isHidden) {
                 document.getElementById('editBio').value = document.getElementById('bio').textContent;
-                document.getElementById('editPfp').value = document.getElementById('pfp').src;
-                document.getElementById('editBanner').value = document.getElementById('banner').style.backgroundImage.slice(5, -2) || "";
+                document.getElementById('editPfpFile').value = '';
+                document.getElementById('editBannerFile').value = '';
+                document.getElementById('pfpStatus').textContent = '';
+                document.getElementById('bannerStatus').textContent = '';
+                pendingPfpFile = null;
+                pendingBannerFile = null;
+            } else {
+                // cancel: restore original images
+                document.getElementById('pfp').src = originalPfp || "https://i.imgur.com/oJCfWc8.png";
+                document.getElementById('banner').style.backgroundImage = originalBanner ? `url(${originalBanner})` : "";
+                pendingPfpFile = null;
+                pendingBannerFile = null;
             }
         }
 
-        async function saveProfile() {
-            const bio = document.getElementById('editBio').value.trim();
-            const pfp = document.getElementById('editPfp').value.trim();
-            const banner = document.getElementById('editBanner').value.trim();
+        function resizeImage(file, maxW, maxH, square) {
+            return new Promise((resolve, reject) => {
+                if (file.type === 'image/gif') {
+                    resolve(file);
+                    return;
+                }
 
-            const res = await fetch('/api/profile/update', {
+                const img = new Image();
+                const url = URL.createObjectURL(file);
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+
+                    if (square) {
+                        const size = Math.min(img.width, img.height);
+                        const sx = (img.width - size) / 2;
+                        const sy = (img.height - size) / 2;
+                        canvas.width = maxW;
+                        canvas.height = maxW;
+                        ctx.drawImage(img, sx, sy, size, size, 0, 0, maxW, maxW);
+                    } else {
+                        let w = img.width;
+                        let h = img.height;
+                        const ratio = Math.min(maxW / w, maxH / h, 1);
+                        canvas.width = Math.max(1, Math.round(w * ratio));
+                        canvas.height = Math.max(1, Math.round(h * ratio));
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    }
+
+                    canvas.toBlob((blob) => {
+                        URL.revokeObjectURL(url);
+                        if (!blob) return reject(new Error("Resize failed"));
+                        resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' }));
+                    }, 'image/jpeg', 0.85);
+                };
+                img.onerror = () => reject(new Error("Could not read image"));
+                img.src = url;
+            });
+        }
+
+        async function uploadFile(file, statusEl) {
+            statusEl.textContent = "Uploading...";
+            const fd = new FormData();
+            fd.append('file', file);
+            const r = await fetch('/api/upload', { method: 'POST', body: fd });
+            const d = await r.json();
+            if (d.success) {
+                statusEl.textContent = "Uploaded";
+                return d.url;
+            }
+            statusEl.textContent = d.message || "Upload failed";
+            return null;
+        }
+
+        document.getElementById('editPfpFile').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            document.getElementById('pfpStatus').textContent = "Resizing...";
+            try {
+                pendingPfpFile = await resizeImage(file, 256, 256, true);
+                document.getElementById('pfp').src = URL.createObjectURL(pendingPfpFile);
+                document.getElementById('pfpStatus').textContent = "Ready (will save on Save)";
+            } catch (err) {
+                document.getElementById('pfpStatus').textContent = "Could not process image";
+            }
+        });
+
+        document.getElementById('editBannerFile').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            document.getElementById('bannerStatus').textContent = "Resizing...";
+            try {
+                pendingBannerFile = await resizeImage(file, 1500, 400, false);
+                document.getElementById('banner').style.backgroundImage = `url(${URL.createObjectURL(pendingBannerFile)})`;
+                document.getElementById('bannerStatus').textContent = "Ready (will save on Save)";
+            } catch (err) {
+                document.getElementById('bannerStatus').textContent = "Could not process image";
+            }
+        });
+
+        async function saveProfile() {
+    const bio = document.getElementById('editBio').value.trim();
+    const body = { username: currentUser, bio };
+
+    if (pendingPfpFile) {
+        const url = await uploadFile(pendingPfpFile, document.getElementById('pfpStatus'));
+        if (!url) return alert("PFP upload failed — check the terminal");
+        body.pfp = url;
+    }
+    if (pendingBannerFile) {
+        const url = await uploadFile(pendingBannerFile, document.getElementById('bannerStatus'));
+        if (!url) return alert("Banner upload failed — check the terminal");
+        body.banner = url;
+    }
+
+    console.log("SENDING PROFILE UPDATE:", body);
+
+    const res = await fetch('/api/profile/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    console.log("PROFILE UPDATE RESPONSE:", data);
+
+    if (!data.success) {
+        alert(data.message || "Failed to update");
+        return;
+    }
+
+    // confirm what the DB now has
+    const check = await fetch(`/api/profile/${currentUser}`);
+    const saved = await check.json();
+    console.log("PROFILE AFTER RELOAD:", saved);
+
+    document.getElementById('bio').textContent = saved.bio || bio;
+    document.getElementById('pfp').src = saved.pfp || originalPfp;
+    originalPfp = saved.pfp || originalPfp;
+    originalBanner = saved.banner || originalBanner;
+    document.getElementById('banner').style.backgroundImage = saved.banner ? `url(${saved.banner})` : "";
+
+    pendingPfpFile = null;
+    pendingBannerFile = null;
+    document.getElementById('editForm').style.display = 'none';
+}
+
+        async function loadActivity() {
+            const res = await fetch(`/api/profile/${profileUser}/activity`);
+            const items = await res.json();
+            const list = document.getElementById('activityList');
+
+            if (!items.length) {
+                list.innerHTML = "<p>No activity yet.</p>";
+                return;
+            }
+
+            list.innerHTML = items.map(a => {
+                if (a.type === 'thread') {
+                    return `
+                    <div class="item">
+                        <div>Started a d1sc</div>
+                        <a href="${a.url}">${a.title}</a>
+                        <div style="color:#aaa; font-size:0.9em; margin-top:4px;">${new Date(a.created_at).toLocaleString()}</div>
+                    </div>`;
+                }
+                return `
+                <div class="item">
+                    <div>Replied in</div>
+                    <a href="${a.url}">${a.title}</a>
+                    <div style="color:#ccc; margin-top:6px;">${(a.preview || '').replace(/</g,'&lt;')}</div>
+                    <div style="color:#aaa; font-size:0.9em; margin-top:4px;">${new Date(a.created_at).toLocaleString()}</div>
+                </div>`;
+            }).join('');
+        }
+
+        async function loadComments() {
+            const res = await fetch(`/api/profile/${profileUser}/comments`);
+            const comments = await res.json();
+            const list = document.getElementById('commentsList');
+
+            if (!comments.length) {
+                list.innerHTML = "<p>No profile comments yet.</p>";
+                return;
+            }
+
+            list.innerHTML = comments.map(c => {
+                const canDelete = currentUser === "20k" || currentUser === c.user_id || currentUser === profileUser;
+                return `
+                <div class="item">
+                    <div class="comment-user">
+                        <img class="comment-pfp" src="${c.pfp}">
+                        <a href="/profile.html?user=${c.user_id}" style="color:inherit; text-decoration:none;"><strong>${c.user_id}</strong></a>
+                        <small style="color:#aaa;">${new Date(c.created_at).toLocaleString()}</small>
+                        ${canDelete ? `<button onclick="deleteComment('${c.id}')" style="margin-left:auto; background:none; border:none; color:#ff6666; cursor:pointer;">🗑</button>` : ''}
+                    </div>
+                    <div>${(c.content || '').replace(/</g,'&lt;').replace(/\n/g,'<br>')}</div>
+                </div>`;
+            }).join('');
+        }
+
+        async function postComment() {
+            const content = document.getElementById('commentContent').value.trim();
+            if (!content) return alert("Add some words");
+
+            const res = await fetch(`/api/profile/${profileUser}/comments`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    username: currentUser,
-                    bio,
-                    pfp: pfp || undefined,
-                    banner: banner || undefined
-                })
+                body: JSON.stringify({ username: currentUser, content })
             });
-
             const data = await res.json();
             if (data.success) {
-                alert("Profile updated!");
-                loadProfile();
-                toggleEdit();
+                document.getElementById('commentContent').value = '';
+                loadComments();
             } else {
-                alert(data.message || "Failed to update");
+                alert(data.message || "Failed");
             }
+        }
+
+        async function deleteComment(id) {
+            if (!confirm("Delete this comment?")) return;
+            await fetch(`/api/profile/comments/${id}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: currentUser })
+            });
+            loadComments();
         }
 
         loadProfile();
