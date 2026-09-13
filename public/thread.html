@@ -159,9 +159,67 @@
             display: block;
         }
 
+        .user-card {
+    display: none;
+    position: fixed;
+    z-index: 30000;
+    width: 280px;
+    background: #1e2f4f;
+    border: 2px solid #0165fc;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    pointer-events: none;
+}
+.user-card.show { display: block; }
+.user-card-banner {
+    height: 70px;
+    background: #0f1b2e center/cover no-repeat;
+}
+.user-card-body {
+    padding: 12px 14px 14px;
+    position: relative;
+}
+.user-card-pfp {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: 3px solid #0165fc;
+    object-fit: cover;
+    margin-top: -36px;
+    background: #0f1b2e;
+}
+.user-card-name {
+    color: #fffd01;
+    font-weight: bold;
+    font-size: 1.15em;
+    margin-top: 6px;
+}
+.user-card-title {
+    color: #aaa;
+    font-size: 0.9em;
+}
+.user-card-meta {
+    margin-top: 10px;
+    color: #ccc;
+    font-size: 0.88em;
+    line-height: 1.5;
+}
+
         a { color: #0165fc; text-decoration: underline; }
     </style>
 </head>
+
+<div id="userCard" class="user-card">
+    <div class="user-card-banner" id="uc-banner"></div>
+    <div class="user-card-body">
+        <img class="user-card-pfp" id="uc-pfp" src="https://i.imgur.com/oJCfWc8.png">
+        <div class="user-card-name" id="uc-name"></div>
+        <div class="user-card-title" id="uc-title"></div>
+        <div class="user-card-meta" id="uc-meta"></div>
+    </div>
+</div>
+
 <body>
     <header>
         <img src="https://i.imgur.com/oJCfWc8.png" class="logo">
@@ -544,6 +602,56 @@
                 }
             } catch (e) {}
         }
+
+        const cardCache = {};
+let cardHideTimer = null;
+
+async function fetchUserCard(name) {
+    if (cardCache[name]) return cardCache[name];
+    try {
+        const res = await fetch(`/api/profile/${encodeURIComponent(name)}`);
+        if (!res.ok) return null;
+        const data = await res.json();
+        if (!data.success) return null;
+        cardCache[name] = data;
+        return data;
+    } catch (e) {
+        return null;
+    }
+}
+
+function showUserCard(e, name) {
+    clearTimeout(cardHideTimer);
+    fetchUserCard(name).then(data => {
+        if (!data) return;
+        const card = document.getElementById('userCard');
+        document.getElementById('uc-pfp').src = data.pfp;
+        document.getElementById('uc-name').textContent = data.username;
+        document.getElementById('uc-title').textContent = data.title || "Member";
+        document.getElementById('uc-meta').innerHTML = `
+            Joined: ${data.created_at ? new Date(data.created_at).toLocaleDateString() : "—"}<br>
+            Posts: ${data.postCount || 0}
+        `;
+        if (data.banner) {
+            document.getElementById('uc-banner').style.backgroundImage = `url(${data.banner})`;
+        } else {
+            document.getElementById('uc-banner').style.backgroundImage = "none";
+            document.getElementById('uc-banner').style.background = "#0f1b2e";
+        }
+
+        const x = Math.min(e.clientX + 12, window.innerWidth - 300);
+        const y = Math.min(e.clientY + 12, window.innerHeight - 200);
+        card.style.left = x + "px";
+        card.style.top = y + "px";
+        card.classList.add("show");
+    });
+}
+
+function hideUserCard() {
+    cardHideTimer = setTimeout(() => {
+        document.getElementById('userCard').classList.remove("show");
+    }, 120);
+}
 
         loadThreadInfo();
         loadPosts();

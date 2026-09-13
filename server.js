@@ -167,8 +167,39 @@ app.get('/api/forum-stats', async (req, res) => {
         const stats = {};
 
         for (const id of forums) {
-            const count = await Thread.countDocuments({ forum_id: id });
-            stats[id] = count;
+            const threads = await Thread.find({ forum_id: id });
+            const threadCount = threads.length;
+
+            let last = null;
+
+            if (threadCount > 0) {
+                const threadIds = threads.map(t => t.id);
+                const lastPost = await Post.findOne({ thread_id: { $in: threadIds } })
+                    .sort({ created_at: -1 });
+
+                if (lastPost) {
+                    const thread = threads.find(t => t.id === lastPost.thread_id);
+                    last = {
+                        title: thread ? thread.title : "Unknown",
+                        user: lastPost.user_id,
+                        at: lastPost.created_at,
+                        threadId: lastPost.thread_id
+                    };
+                } else {
+                    // fallback: newest thread with no posts yet
+                    const newest = [...threads].sort(
+                        (a, b) => new Date(b.created_at) - new Date(a.created_at)
+                    )[0];
+                    last = {
+                        title: newest.title,
+                        user: newest.user_id,
+                        at: newest.created_at,
+                        threadId: newest.id
+                    };
+                }
+            }
+
+            stats[id] = { threads: threadCount, last };
         }
 
         res.json(stats);
@@ -494,8 +525,14 @@ app.post('/api/profile/update', async (req, res) => {
 
 app.get('/api/profile/:username', async (req, res) => {
     try {
-        const user = await User.findOne({ username: req.params.username });
+        const user = await User.collection.findOne({ username: req.params.username });
         if (!user) return res.json({ success: false, message: "User not found" });
+
+        const postCount = await Post.countDocuments({ user_id: user.username });
+
+        let title = "Member";
+        if (user.username === "20k") title = "Owner";
+        else if (user.title) title = user.title;
 
         res.json({
             success: true,
@@ -503,6 +540,8 @@ app.get('/api/profile/:username', async (req, res) => {
             pfp: user.pfp || "https://i.imgur.com/oJCfWc8.png",
             banner: user.banner || "",
             bio: user.bio || "No bio yet.",
+            title,
+            postCount,
             created_at: user.created_at
         });
     } catch (err) {

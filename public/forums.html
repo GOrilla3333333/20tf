@@ -26,6 +26,7 @@
             margin-bottom: 10px;
             display: flex;
             align-items: center;
+            gap: 12px;
             cursor: pointer;
             transition: all 0.2s;
         }
@@ -37,6 +38,7 @@
             flex: 1;
             font-size: 1.2em;
             color: white;
+            min-width: 140px;
         }
         .board-desc {
             flex: 2;
@@ -46,7 +48,24 @@
             text-align: right;
             color: #ccc;
             font-size: 0.95em;
-            min-width: 100px;
+            min-width: 90px;
+        }
+        .board-latest {
+            text-align: right;
+            min-width: 170px;
+            color: #aaa;
+            font-size: 0.9em;
+            line-height: 1.35;
+        }
+        .board-latest a {
+            color: #fffd01;
+            text-decoration: none;
+        }
+        .board-latest a:hover {
+            text-decoration: underline;
+        }
+        .board-latest strong {
+            color: #e2e8f0;
         }
     </style>
 </head>
@@ -75,12 +94,14 @@
                 <div class="board-name">/pit/ — The Pit</div>
                 <div class="board-desc">Main board • Everything goes</div>
                 <div class="board-stats">Threads: <span id="pit-threads">—</span></div>
+                <div class="board-latest" id="pit-latest">—</div>
             </div>
 
             <div class="board" onclick="window.location.href='/thread-list.html?id=srs&name=Serious'">
                 <div class="board-name">/srs/ — Serious</div>
                 <div class="board-desc">Real talk, debates & long posts</div>
                 <div class="board-stats">Threads: <span id="srs-threads">—</span></div>
+                <div class="board-latest" id="srs-latest">—</div>
             </div>
         </div>
 
@@ -92,6 +113,7 @@
                 <div class="board-name">/br/ — Brainrot</div>
                 <div class="board-desc">Memes, crapposting & degeneracy</div>
                 <div class="board-stats">Threads: <span id="br-threads">—</span></div>
+                <div class="board-latest" id="br-latest">—</div>
             </div>
         </div>
 
@@ -103,6 +125,7 @@
                 <div class="board-name">/crt/ — Creativity</div>
                 <div class="board-desc">Art, edits, music & OC</div>
                 <div class="board-stats">Threads: <span id="crt-threads">—</span></div>
+                <div class="board-latest" id="crt-latest">—</div>
             </div>
         </div>
 
@@ -114,12 +137,14 @@
                 <div class="board-name">/cnfs/ — Confessions</div>
                 <div class="board-desc">Anonymous vents, stories & thoughts</div>
                 <div class="board-stats">Threads: <span id="cnfs-threads">—</span></div>
+                <div class="board-latest" id="cnfs-latest">—</div>
             </div>
 
             <div class="board" onclick="window.location.href='/thread-list.html?id=ot&name=Off-Topic'">
                 <div class="board-name">/ot/ — Off-Topic</div>
                 <div class="board-desc">Random nonsense & tangents</div>
                 <div class="board-stats">Threads: <span id="ot-threads">—</span></div>
+                <div class="board-latest" id="ot-latest">—</div>
             </div>
         </div>
 
@@ -127,8 +152,8 @@
 
     <script>
         const username = localStorage.getItem('username');
-        document.getElementById('user-nav').innerHTML = username 
-            ? `Logged in as: <strong>${username}</strong> | <a href="#" onclick="logout()">Logout</a>`
+        document.getElementById('user-nav').innerHTML = username
+            ? `Logged in as: <a href="/profile.html?user=${encodeURIComponent(username)}" style="color:inherit; text-decoration:none;"><strong>${username}</strong></a> | <a href="#" onclick="logout()">Logout</a>`
             : '<a href="/login">Login</a> | <a href="/register">Register</a>';
 
         function logout() {
@@ -136,63 +161,93 @@
             window.location.href = '/';
         }
 
-        // Load live thread counts
+        function timeAgo(date) {
+            const s = Math.floor((Date.now() - new Date(date)) / 1000);
+            if (s < 60) return "just now";
+            if (s < 3600) return Math.floor(s / 60) + "m ago";
+            if (s < 86400) return Math.floor(s / 3600) + "h ago";
+            if (s < 604800) return Math.floor(s / 86400) + "d ago";
+            return new Date(date).toLocaleDateString();
+        }
+
         async function loadStats() {
             try {
                 const res = await fetch('/api/forum-stats');
+                if (!res.ok) return;
                 const stats = await res.json();
 
-                document.getElementById('pit-threads').textContent = stats.pit || 0;
-                document.getElementById('srs-threads').textContent = stats.srs || 0;
-                document.getElementById('br-threads').textContent = stats.br || 0;
-                document.getElementById('crt-threads').textContent = stats.crt || 0;
-                document.getElementById('cnfs-threads').textContent = stats.cnfs || 0;
-                document.getElementById('ot-threads').textContent = stats.ot || 0;
+                ['pit', 'srs', 'br', 'crt', 'cnfs', 'ot'].forEach(id => {
+                    const data = stats[id];
+
+                    // support both old format (number) and new format ({ threads, last })
+                    const threads = typeof data === 'number' ? data : (data && data.threads) || 0;
+                    const last = typeof data === 'object' && data ? data.last : null;
+
+                    const countEl = document.getElementById(`${id}-threads`);
+                    const lastEl = document.getElementById(`${id}-latest`);
+
+                    if (countEl) countEl.textContent = threads;
+
+                    if (lastEl) {
+                        if (last) {
+                            const title = last.title.length > 32 ? last.title.slice(0, 32) + "…" : last.title;
+                            lastEl.innerHTML = `
+                                <a href="/thread.html?id=${last.threadId}&title=${encodeURIComponent(last.title)}"
+                                   onclick="event.stopPropagation()">
+                                    ${title}
+                                </a><br>
+                                <strong>${last.user}</strong> · ${timeAgo(last.at)}
+                            `;
+                        } else {
+                            lastEl.textContent = "No posts yet";
+                        }
+                    }
+                });
             } catch (err) {
                 console.error("Failed to load forum stats:", err);
             }
         }
 
-        loadStats();
-
         async function loadGlobalBanner() {
-    try {
-        const res = await fetch('/api/global-banner');
-        const data = await res.json();
-        const el = document.getElementById('global-banner');
-        if (!el) return;
+            try {
+                const res = await fetch('/api/global-banner');
+                if (!res.ok) return;
+                const data = await res.json();
+                const el = document.getElementById('global-banner');
+                if (!el) return;
 
-        if (data && data.active && (data.text || data.imageUrl)) {
-            let content = data.text || "";
-            if (data.imageUrl) {
-                content += `<br><img src="${data.imageUrl}" style="max-width:100%; margin-top:8px;">`;
-            }
-            el.innerHTML = content;
-            el.style.display = 'block';
-        } else {
-            el.style.display = 'none';
+                if (data && data.active && (data.text || data.imageUrl)) {
+                    let content = data.text || "";
+                    if (data.imageUrl) {
+                        content += `<br><img src="${data.imageUrl}" style="max-width:100%; margin-top:8px;">`;
+                    }
+                    el.innerHTML = content;
+                    el.style.display = 'block';
+                } else {
+                    el.style.display = 'none';
+                }
+            } catch (e) {}
         }
-    } catch (e) {}
-}
 
-async function checkBan() {
-    const currentUser = localStorage.getItem('username');
-    if (!currentUser) return;
+        async function checkBan() {
+            const currentUser = localStorage.getItem('username');
+            if (!currentUser) return;
 
-    try {
-        const res = await fetch(`/api/check-ban/${encodeURIComponent(currentUser)}`);
-        const data = await res.json();
-        if (data.banned) {
-            localStorage.clear();
-            window.location.href = `/banned.html?reason=${encodeURIComponent(data.reason || 'No reason')}&type=${data.type || 'permanent'}`;
+            try {
+                const res = await fetch(`/api/check-ban/${encodeURIComponent(currentUser)}`);
+                if (!res.ok) return;
+                const data = await res.json();
+                if (data.banned) {
+                    localStorage.clear();
+                    window.location.href = `/banned.html?reason=${encodeURIComponent(data.reason || 'No reason')}&type=${data.type || 'permanent'}`;
+                }
+            } catch (e) {}
         }
-    } catch (e) {}
-}
 
-loadGlobalBanner();
-checkBan();
-setInterval(checkBan, 8000);
-
+        loadStats();
+        loadGlobalBanner();
+        checkBan();
+        setInterval(checkBan, 8000);
     </script>
 </body>
 </html>
