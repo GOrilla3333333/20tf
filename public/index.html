@@ -74,6 +74,8 @@
     <nav>
         <a href="/">Home</a> |
         <a href="/forums">Boards</a> |
+        <a href="/search.html">Search</a> |
+        <a href="/alerts.html">Alerts <span id="alert-badge" style="display:none; background:#ff4444; color:white; border-radius:10px; padding:1px 7px; font-size:12px; margin-left:4px;">0</span></a> |
         <span id="user-nav"></span>
     </nav>
 
@@ -252,6 +254,26 @@
                     }
                 } catch (e) {}
             }
+
+            async function loadAlertBadge() {
+    const u = localStorage.getItem('username');
+    if (!u) return;
+    try {
+        const res = await fetch(`/api/alerts/${encodeURIComponent(u)}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const badge = document.getElementById('alert-badge');
+        if (!badge) return;
+        if (data.unread > 0) {
+            badge.style.display = 'inline';
+            badge.textContent = data.unread > 99 ? '99+' : data.unread;
+        } else {
+            badge.style.display = 'none';
+        }
+    } catch (e) {}
+}
+loadAlertBadge();
+setInterval(loadAlertBadge, 15000);
 
             // Initialize
             loadGlobalBanner();

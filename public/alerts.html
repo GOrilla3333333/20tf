@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alerts - 20Thousand Forums</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="https://i.imgur.com/oJCfWc8.png">
+    <style>
+        .alert-item {
+            background: #1e2f4f;
+            border: 2px solid #0165fc;
+            border-radius: 8px;
+            padding: 14px;
+            margin: 10px 0;
+        }
+        .alert-item.unread {
+            border-color: #fffd01;
+            background: #2a3f5f;
+        }
+        .alert-item a {
+            color: #fffd01;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .alert-item a:hover { text-decoration: underline; }
+        .meta { color: #aaa; font-size: 0.9em; margin-top: 6px; }
+        .top-actions { margin: 15px 0; }
+        .top-actions button {
+            background: #0165fc;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <img src="https://i.imgur.com/oJCfWc8.png" class="logo">
+        <h1>20Thousand Forums</h1>
+    </header>
+
+    <nav>
+        <a href="/">Home</a> |
+        <a href="/forums">Boards</a> |
+        <a href="/search.html">Search</a> |
+        <a href="/alerts.html">Alerts</a> |
+        <span id="user-nav"></span>
+    </nav>
+
+    <div class="container" style="max-width:700px; margin:30px auto;">
+        <h2>Alerts</h2>
+        <div class="top-actions">
+            <button onclick="markAllRead()">Mark all read</button>
+        </div>
+        <div id="list">Loading...</div>
+    </div>
+
+    <script>
+        const username = localStorage.getItem('username');
+        if (!username) window.location.href = '/login';
+
+        document.getElementById('user-nav').innerHTML =
+            `Logged in as: <a href="/profile.html?user=${encodeURIComponent(username)}" style="color:inherit;text-decoration:none;"><strong>${username}</strong></a>`;
+
+        function renderAlertText(a) {
+            const from = a.from_user
+                ? `<a href="/profile.html?user=${encodeURIComponent(a.from_user)}">${a.from_user}</a>`
+                : "Someone";
+            const link = a.link || "/";
+            const title = a.threadTitle || "";
+
+            if (a.type === "thread_reply" || a.type === "reply") {
+                if (title) {
+                    return `${from} replied in your d1sc <a href="${link}">"${title}"</a>`;
+                }
+                return `${from} replied to your post — <a href="${link}">view</a>`;
+            }
+            if (a.type === "profile_comment") {
+                return `${from} commented on your <a href="${link}">profile</a>`;
+            }
+            return `${from} — <a href="${link}">${a.message || "view"}</a>`;
+        }
+
+        async function loadAlerts() {
+            try {
+                const res = await fetch(`/api/alerts/${encodeURIComponent(username)}`);
+                const data = await res.json();
+                console.log("Alerts API:", data);
+                const list = document.getElementById('list');
+
+                if (!data.alerts || !data.alerts.length) {
+                    list.innerHTML = "<p>No alerts yet.</p>";
+                    return;
+                }
+
+                list.innerHTML = data.alerts.map(a => `
+                    <div class="alert-item ${a.read ? '' : 'unread'}">
+                        <div>${renderAlertText(a)}</div>
+                        <div class="meta">
+                            ${new Date(a.created_at).toLocaleString()}${a.read ? '' : ' · unread'}
+                            · <a href="#" onclick="event.preventDefault(); markOne('${a.id}')">mark read</a>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                console.error(e);
+                document.getElementById('list').innerHTML = "<p>Failed to load alerts.</p>";
+            }
+        }
+
+        async function markOne(id) {
+            await fetch(`/api/alerts/${id}/read`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username })
+            });
+            loadAlerts();
+        }
+
+        async function markAllRead() {
+            await fetch('/api/alerts/read-all', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username })
+            });
+            loadAlerts();
+        }
+
+        loadAlerts();
+    </script>
+</body>
+</html>

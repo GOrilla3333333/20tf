@@ -7,10 +7,15 @@ require('dotenv').config();
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ================= CLOUDINARY STORAGE =================
 const storage = new CloudinaryStorage({
     cloudinary,
     params: async (req, file) => {
@@ -25,23 +30,19 @@ const storage = new CloudinaryStorage({
     }
 });
 
-// ================= MULTER =================
 const upload = multer({
     storage,
     limits: { fileSize: 100 * 1024 * 1024 }
 });
 
-// ================= MIDDLEWARE =================
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
-// ================= DB =================
 mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log("✅ MongoDB connected"))
     .catch(err => console.log("MongoDB connection error:", err));
 
-// ================= MODELS =================
 const User = require('./models/User');
 const Forum = require('./models/Forum');
 const Thread = require('./models/Thread');
@@ -50,11 +51,36 @@ const GlobalBanner = require('./models/GlobalBanner');
 const Report = require('./models/Report');
 const Announcement = require('./models/Announcement');
 const ProfileComment = require('./models/ProfileComment');
+const Alert = require('./models/Alert');
 
-// =====================================================
-// HTML ROUTES
-// =====================================================
+async function createAlert({ to_user, from_user, type, message, link, threadTitle }) {
+    if (!to_user || !from_user) {
+        console.log("Alert skipped (missing user):", { to_user, from_user });
+        return;
+    }
+    if (to_user === from_user) {
+        console.log("Alert skipped (same user):", to_user);
+        return;
+    }
+    try {
+        const alert = await new Alert({
+            id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+            to_user,
+            from_user,
+            type: type || "reply",
+            message: message || "",
+            link: link || "/",
+            threadTitle: threadTitle || "",
+            read: false,
+            created_at: new Date()
+        }).save();
+        console.log("✅ Alert created:", alert.id, "→", to_user, "|", message, threadTitle || "");
+    } catch (e) {
+        console.error("createAlert error:", e);
+    }
+}
 
+// HTML
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 app.get('/register', (req, res) => res.sendFile(path.join(__dirname, 'public', 'register.html')));
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
@@ -62,20 +88,20 @@ app.get('/forums', (req, res) => res.sendFile(path.join(__dirname, 'public', 'fo
 app.get('/thread.html', (req, res) => res.sendFile(path.join(__dirname, 'public', 'thread.html')));
 app.get('/tos.html', (req, res) => res.sendFile(path.join(__dirname, 'public', 'tos.html')));
 app.get('/commandments.html', (req, res) => res.sendFile(path.join(__dirname, 'public', 'commandments.html')));
+app.get('/profile.html', (req, res) => res.sendFile(path.join(__dirname, 'public', 'profile.html')));
+app.get('/admin.html', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
+app.get('/banned.html', (req, res) => res.sendFile(path.join(__dirname, 'public', 'banned.html')));
+app.get('/search.html', (req, res) => res.sendFile(path.join(__dirname, 'public', 'search.html')));
+app.get('/alerts.html', (req, res) => res.sendFile(path.join(__dirname, 'public', 'alerts.html')));
 
-// =====================================================
 // AUTH
-// =====================================================
-
 app.post('/api/register', async (req, res) => {
     try {
         const { username, password } = req.body;
         if (!username || !password) return res.json({ success: false, message: "Missing fields" });
-
         const exists = await User.findOne({ username });
         if (exists) return res.json({ success: false, message: "User already exists" });
-
-        await new User({ username, password, banned: false, tosAccepted: false }).save();
+        await new User({ username, password, banned: false, tosAccepted: false, title: "Member" }).save();
         res.json({ success: true, message: "Account created" });
     } catch (err) {
         console.error(err);
@@ -87,12 +113,9 @@ app.post('/api/login', async (req, res) => {
     try {
         const { username, password } = req.body;
         const user = await User.findOne({ username, password });
-
         if (!user) return res.json({ success: false, message: "Invalid credentials" });
         if (user.banned) return res.json({ success: false, message: "User is banned" });
-
         if (!user.tosAccepted) return res.json({ success: true, redirect: "/tos.html" });
-
         res.json({ success: true, message: "Login successful" });
     } catch (err) {
         console.error(err);
@@ -100,9 +123,6 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-// =====================================================
-// TOS
-// =====================================================
 app.post('/api/accept-tos', async (req, res) => {
     try {
         const { username } = req.body;
@@ -115,27 +135,17 @@ app.post('/api/accept-tos', async (req, res) => {
     }
 });
 
-// =====================================================
 // UPLOAD
-// =====================================================
 app.post('/api/upload', (req, res) => {
-    upload.single('file')(req, res, async function(err) {
+    upload.single('file')(req, res, async function (err) {
         try {
             if (err) {
                 console.error("Upload error:", err);
                 return res.json({ success: false, message: "Upload error: " + err.message });
             }
-
-            if (!req.file) {
-                return res.json({ success: false, message: "No file received" });
-            }
-
+            if (!req.file) return res.json({ success: false, message: "No file received" });
             console.log("✅ File uploaded:", req.file.path);
-
-            res.json({
-                success: true,
-                url: req.file.path
-            });
+            res.json({ success: true, url: req.file.path });
         } catch (e) {
             console.error(e);
             res.json({ success: false, message: "Upload failed" });
@@ -143,40 +153,28 @@ app.post('/api/upload', (req, res) => {
     });
 });
 
-// =====================================================
 // FORUMS
-// =====================================================
 app.get('/api/forums', async (req, res) => {
-    const forums = await Forum.find();
-    res.json(forums);
+    res.json(await Forum.find());
 });
 
 app.post('/api/forums', async (req, res) => {
     const { name, description } = req.body;
-    const forum = new Forum({ id: Date.now().toString(36), name, description });
-    await forum.save();
+    await new Forum({ id: Date.now().toString(36), name, description }).save();
     res.json({ success: true, message: "Forum created" });
 });
 
-// =====================================================
-// NEW: FORUM STATS (for forums.html counters)
-// =====================================================
 app.get('/api/forum-stats', async (req, res) => {
     try {
         const forums = ['pit', 'srs', 'br', 'crt', 'cnfs', 'ot'];
         const stats = {};
-
         for (const id of forums) {
             const threads = await Thread.find({ forum_id: id });
             const threadCount = threads.length;
-
             let last = null;
-
             if (threadCount > 0) {
                 const threadIds = threads.map(t => t.id);
-                const lastPost = await Post.findOne({ thread_id: { $in: threadIds } })
-                    .sort({ created_at: -1 });
-
+                const lastPost = await Post.findOne({ thread_id: { $in: threadIds } }).sort({ created_at: -1 });
                 if (lastPost) {
                     const thread = threads.find(t => t.id === lastPost.thread_id);
                     last = {
@@ -186,10 +184,7 @@ app.get('/api/forum-stats', async (req, res) => {
                         threadId: lastPost.thread_id
                     };
                 } else {
-                    // fallback: newest thread with no posts yet
-                    const newest = [...threads].sort(
-                        (a, b) => new Date(b.created_at) - new Date(a.created_at)
-                    )[0];
+                    const newest = [...threads].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
                     last = {
                         title: newest.title,
                         user: newest.user_id,
@@ -198,10 +193,8 @@ app.get('/api/forum-stats', async (req, res) => {
                     };
                 }
             }
-
             stats[id] = { threads: threadCount, last };
         }
-
         res.json(stats);
     } catch (err) {
         console.error(err);
@@ -209,22 +202,17 @@ app.get('/api/forum-stats', async (req, res) => {
     }
 });
 
-// =====================================================
-// THREADS BY FORUM
-// =====================================================
 app.get('/api/forums/:forumId/threads', async (req, res) => {
     try {
         const forumId = String(req.params.forumId);
-        const threads = await Thread.find({ forum_id: forumId })
-            .sort({ pinned: -1, created_at: -1 });
-
+        const threads = await Thread.find({ forum_id: forumId }).sort({ pinned: -1, created_at: -1 });
         const result = [];
         for (const thread of threads) {
             const posts = await Post.find({ thread_id: thread.id });
             result.push({
                 ...thread.toObject(),
-                postCount: posts.length,          // real reply count
-                views: thread.views || 0          // real views
+                postCount: posts.length,
+                views: thread.views || 0
             });
         }
         res.json(result);
@@ -234,15 +222,11 @@ app.get('/api/forums/:forumId/threads', async (req, res) => {
     }
 });
 
-// =====================================================
 // ANNOUNCEMENTS
-// =====================================================
 app.get('/api/announcements', async (req, res) => {
     try {
-        const announcements = await Announcement.find().sort({ pinned: -1, created_at: -1 });
-        res.json(announcements);
+        res.json(await Announcement.find().sort({ pinned: -1, created_at: -1 }));
     } catch (err) {
-        console.error(err);
         res.json([]);
     }
 });
@@ -251,7 +235,6 @@ app.post('/api/announcements', async (req, res) => {
     try {
         const { content, author } = req.body;
         if (author !== "20k") return res.json({ success: false, message: "Only 20k can post announcements" });
-
         await new Announcement({
             id: Date.now().toString(36),
             content: content.trim(),
@@ -259,21 +242,17 @@ app.post('/api/announcements', async (req, res) => {
             pinned: false,
             created_at: new Date()
         }).save();
-
         res.json({ success: true, message: "Announcement posted!" });
     } catch (err) {
-        console.error(err);
         res.json({ success: false, message: "Server error" });
     }
 });
 
 app.put('/api/announcements/:id', async (req, res) => {
     try {
-        const { content } = req.body;
         const ann = await Announcement.findOne({ id: req.params.id });
         if (!ann) return res.json({ success: false, message: "Announcement not found" });
-
-        ann.content = content.trim();
+        ann.content = (req.body.content || "").trim();
         await ann.save();
         res.json({ success: true, message: "Announcement updated!" });
     } catch (err) {
@@ -294,36 +273,26 @@ app.post('/api/announcements/:id/pin', async (req, res) => {
     try {
         const ann = await Announcement.findOne({ id: req.params.id });
         if (!ann) return res.json({ success: false, message: "Announcement not found" });
-
         ann.pinned = !ann.pinned;
         await ann.save();
-
-        res.json({ 
-            success: true, 
-            message: ann.pinned ? "📌 Announcement pinned!" : "📌 Announcement unpinned!" 
-        });
+        res.json({ success: true, message: ann.pinned ? "📌 Announcement pinned!" : "📌 Announcement unpinned!" });
     } catch (err) {
         res.json({ success: false, message: "Server error" });
     }
 });
 
-// =====================================================
-// GLOBAL BANNER
-// =====================================================
+// BANNER
 app.post('/api/admin/banner', async (req, res) => {
     try {
         const { username, text, imageUrl } = req.body;
         if (username !== "20k") return res.json({ success: false, message: "No permission" });
-
         await GlobalBanner.findOneAndUpdate(
             { active: true },
             { active: !!(text || imageUrl), text: text || "", imageUrl: imageUrl || "" },
             { upsert: true }
         );
-
         res.json({ success: true, message: text ? "Banner updated successfully!" : "Banner cleared!" });
     } catch (err) {
-        console.error(err);
         res.json({ success: false, message: "Server error" });
     }
 });
@@ -333,18 +302,13 @@ app.get('/api/global-banner', async (req, res) => {
     res.json(banner || { active: false });
 });
 
-// =====================================================
-// THREAD INFO + INCREMENT VIEWS
-// =====================================================
+// THREADS / POSTS
 app.get('/api/threads/:threadId', async (req, res) => {
     try {
         const thread = await Thread.findOne({ id: String(req.params.threadId) });
         if (!thread) return res.json({ success: false, title: "Thread not found", creator: "Unknown" });
-
-        // Increment views
         thread.views = (thread.views || 0) + 1;
         await thread.save();
-
         res.json({
             success: true,
             id: thread.id,
@@ -354,22 +318,16 @@ app.get('/api/threads/:threadId', async (req, res) => {
             views: thread.views
         });
     } catch (err) {
-        console.error(err);
         res.json({ success: false, title: "Thread not found", creator: "Unknown" });
     }
 });
 
-// ================= CREATE POST =================
 app.post('/api/posts', async (req, res) => {
     try {
         const { content, thread_id, username, fileUrl, fileUrls, parent_id } = req.body;
-
-        if (!thread_id || !username) {
-            return res.json({ success: false, message: "Missing required fields" });
-        }
+        if (!thread_id || !username) return res.json({ success: false, message: "Missing required fields" });
 
         const allFiles = Array.isArray(fileUrls) ? fileUrls : (fileUrl ? [fileUrl] : []);
-
         const post = new Post({
             id: Date.now().toString(36),
             content: content ? content.trim() : "",
@@ -380,9 +338,43 @@ app.post('/api/posts', async (req, res) => {
             parent_id: parent_id ? String(parent_id) : null,
             created_at: new Date()
         });
-
         await post.save();
-        console.log("✅ Post saved with files:", allFiles);
+        console.log("✅ Post saved:", post.id, "by", username, "thread", thread_id);
+
+        try {
+            console.log("Creating alerts for post by", username, "thread", thread_id);
+            const thread = await Thread.findOne({ id: String(thread_id) });
+            console.log("Thread for alert:", thread ? { id: thread.id, user_id: thread.user_id, title: thread.title } : "NOT FOUND");
+
+            if (thread && thread.user_id) {
+                await createAlert({
+                    to_user: thread.user_id,
+                    from_user: username,
+                    type: "thread_reply",
+                    message: `${username} replied in your d1sc`,
+                    threadTitle: thread.title || "Untitled",
+                    link: `/thread.html?id=${thread.id}&title=${encodeURIComponent(thread.title || "")}`
+                });
+            }
+
+            if (parent_id) {
+                const parent = await Post.findOne({ id: String(parent_id) });
+                console.log("Parent post for alert:", parent ? parent.user_id : "NOT FOUND");
+                if (parent && parent.user_id && parent.user_id !== (thread && thread.user_id)) {
+                    await createAlert({
+                        to_user: parent.user_id,
+                        from_user: username,
+                        type: "reply",
+                        message: `${username} replied to your post`,
+                        threadTitle: (thread && thread.title) || "",
+                        link: `/thread.html?id=${thread_id}#post-${parent_id}`
+                    });
+                }
+            }
+        } catch (e) {
+            console.error("Alert error:", e);
+        }
+
         res.json({ success: true, message: parent_id ? "Reply posted!" : "Post created!" });
     } catch (err) {
         console.error("Post creation error:", err);
@@ -390,24 +382,18 @@ app.post('/api/posts', async (req, res) => {
     }
 });
 
-// ================= GET POSTS (with pfp) =================
 app.get('/api/threads/:threadId/posts', async (req, res) => {
     try {
         const posts = await Post.find({ thread_id: String(req.params.threadId) }).sort({ created_at: 1 });
-
         const cleaned = [];
-
         for (const p of posts) {
-            // Get the user's profile picture
             const user = await User.findOne({ username: p.user_id });
-            const pfp = user?.pfp || "https://i.imgur.com/oJCfWc8.png";
-
             cleaned.push({
                 id: String(p.id),
                 content: p.content || "",
                 thread_id: String(p.thread_id),
                 user_id: p.user_id,
-                pfp: pfp,                                    // ← profile picture
+                pfp: user?.pfp || "https://i.imgur.com/oJCfWc8.png",
                 fileUrl: p.fileUrl,
                 fileUrls: p.fileUrls || (p.fileUrl ? [p.fileUrl] : []),
                 parent_id: p.parent_id ? String(p.parent_id) : null,
@@ -415,37 +401,24 @@ app.get('/api/threads/:threadId/posts', async (req, res) => {
                 replies: []
             });
         }
-
-        // Build reply tree
         const map = new Map();
         cleaned.forEach(p => map.set(p.id, p));
-
         const tree = [];
         cleaned.forEach(p => {
-            if (p.parent_id && map.has(p.parent_id)) {
-                map.get(p.parent_id).replies.push(p);
-            } else {
-                tree.push(p);
-            }
+            if (p.parent_id && map.has(p.parent_id)) map.get(p.parent_id).replies.push(p);
+            else tree.push(p);
         });
-
         res.json(tree);
     } catch (err) {
-        console.error("Get posts error:", err);
+        console.error(err);
         res.json([]);
     }
 });
 
-// =====================================================
-// CREATE THREAD
-// =====================================================
 app.post('/api/threads', async (req, res) => {
     try {
         const { title, content, forum_id, username, fileUrl, fileUrls } = req.body;
-
-        if (!title || !forum_id || !username) {
-            return res.json({ success: false, message: "Missing fields" });
-        }
+        if (!title || !forum_id || !username) return res.json({ success: false, message: "Missing fields" });
 
         const thread = new Thread({
             id: Date.now().toString(36),
@@ -453,13 +426,12 @@ app.post('/api/threads', async (req, res) => {
             forum_id: String(forum_id),
             user_id: username,
             pinned: false,
-            views: 0,                    // start at 0
+            views: 0,
             created_at: new Date()
         });
         await thread.save();
 
         const allFiles = fileUrls || (fileUrl ? [fileUrl] : []);
-
         await new Post({
             id: Date.now().toString(36) + "p",
             thread_id: thread.id,
@@ -478,38 +450,19 @@ app.post('/api/threads', async (req, res) => {
     }
 });
 
-// =====================================================
 // PROFILE
-// =====================================================
-
 app.post('/api/profile/update', async (req, res) => {
     try {
         const { username, bio, pfp, banner } = req.body;
-        console.log("PROFILE UPDATE BODY:", req.body);
-
         if (!username) return res.json({ success: false, message: "Missing username" });
-
         const $set = {};
         if (typeof bio === "string") $set.bio = bio;
         if (typeof pfp === "string" && pfp) $set.pfp = pfp;
         if (typeof banner === "string" && banner) $set.banner = banner;
-
-        if (!Object.keys($set).length) {
-            return res.json({ success: false, message: "Nothing to update" });
-        }
-
-        const result = await User.collection.updateOne(
-            { username },
-            { $set }
-        );
-
-        console.log("PROFILE UPDATE RESULT:", result);
-
+        if (!Object.keys($set).length) return res.json({ success: false, message: "Nothing to update" });
+        await User.collection.updateOne({ username }, { $set });
         const user = await User.collection.findOne({ username });
-        console.log("PROFILE AFTER SAVE:", user && { username: user.username, pfp: user.pfp, banner: user.banner });
-
         if (!user) return res.json({ success: false, message: "User not found" });
-
         res.json({
             success: true,
             message: "Profile updated!",
@@ -518,7 +471,7 @@ app.post('/api/profile/update', async (req, res) => {
             bio: user.bio || ""
         });
     } catch (err) {
-        console.error("PROFILE UPDATE ERROR:", err);
+        console.error(err);
         res.json({ success: false, message: "Server error" });
     }
 });
@@ -527,13 +480,9 @@ app.get('/api/profile/:username', async (req, res) => {
     try {
         const user = await User.collection.findOne({ username: req.params.username });
         if (!user) return res.json({ success: false, message: "User not found" });
-
         const postCount = await Post.countDocuments({ user_id: user.username });
-
-        let title = "Member";
-        if (user.username === "20k") title = "Owner";
-        else if (user.title) title = user.title;
-
+        let title = user.title || "Member";
+        if (user.username === "20k" && !user.title) title = "Owner";
         res.json({
             success: true,
             username: user.username,
@@ -550,37 +499,9 @@ app.get('/api/profile/:username', async (req, res) => {
     }
 });
 
-// Update profile (only own profile)
-app.post('/api/profile/update', async (req, res) => {
-    try {
-        const { username, bio, pfp, banner } = req.body;
-        if (!username) return res.json({ success: false, message: "Missing username" });
-
-        const user = await User.findOne({ username });
-        if (!user) return res.json({ success: false, message: "User not found" });
-
-        if (bio !== undefined) user.bio = bio;
-        if (pfp !== undefined) user.pfp = pfp;
-        if (banner !== undefined) user.banner = banner;
-
-        await user.save();
-        res.json({ success: true, message: "Profile updated!" });
-    } catch (err) {
-        console.error(err);
-        res.json({ success: false, message: "Server error" });
-    }
-});
-
-// =====================================================
-// PROFILE COMMENTS + ACTIVITY
-// =====================================================
-
 app.get('/api/profile/:username/comments', async (req, res) => {
     try {
-        const comments = await ProfileComment.find({
-            profile_username: req.params.username
-        }).sort({ created_at: -1 });
-
+        const comments = await ProfileComment.find({ profile_username: req.params.username }).sort({ created_at: -1 });
         const result = [];
         for (const c of comments) {
             const user = await User.findOne({ username: c.user_id });
@@ -594,7 +515,6 @@ app.get('/api/profile/:username/comments', async (req, res) => {
         }
         res.json(result);
     } catch (err) {
-        console.error(err);
         res.json([]);
     }
 });
@@ -605,7 +525,6 @@ app.post('/api/profile/:username/comments', async (req, res) => {
         if (!username || !content || !content.trim()) {
             return res.json({ success: false, message: "Add some words" });
         }
-
         const target = await User.findOne({ username: req.params.username });
         if (!target) return res.json({ success: false, message: "User not found" });
 
@@ -616,6 +535,15 @@ app.post('/api/profile/:username/comments', async (req, res) => {
             content: content.trim(),
             created_at: new Date()
         }).save();
+
+        await createAlert({
+            to_user: req.params.username,
+            from_user: username,
+            type: "profile_comment",
+            message: `${username} commented on your profile`,
+            threadTitle: "",
+            link: `/profile.html?user=${encodeURIComponent(req.params.username)}`
+        });
 
         res.json({ success: true, message: "Comment posted" });
     } catch (err) {
@@ -629,11 +557,9 @@ app.delete('/api/profile/comments/:id', async (req, res) => {
         const { username } = req.body;
         const comment = await ProfileComment.findOne({ id: req.params.id });
         if (!comment) return res.json({ success: false, message: "Not found" });
-
         if (username !== "20k" && username !== comment.user_id && username !== comment.profile_username) {
             return res.json({ success: false, message: "No permission" });
         }
-
         await ProfileComment.deleteOne({ id: req.params.id });
         res.json({ success: true, message: "Deleted" });
     } catch (err) {
@@ -646,9 +572,7 @@ app.get('/api/profile/:username/activity', async (req, res) => {
         const name = req.params.username;
         const threads = await Thread.find({ user_id: name }).sort({ created_at: -1 }).limit(40);
         const posts = await Post.find({ user_id: name }).sort({ created_at: -1 }).limit(60);
-
         const activity = [];
-
         for (const t of threads) {
             activity.push({
                 type: "thread",
@@ -658,56 +582,72 @@ app.get('/api/profile/:username/activity', async (req, res) => {
                 url: `/thread.html?id=${t.id}&title=${encodeURIComponent(t.title || "")}`
             });
         }
-
         for (const p of posts) {
             const thread = await Thread.findOne({ id: p.thread_id });
-            // skip the OP post of their own thread (already listed as a thread)
-            if (!p.parent_id && thread && thread.user_id === name && thread.id === p.thread_id) {
-                continue;
-            }
-
+            if (!p.parent_id && thread && thread.user_id === name && thread.id === p.thread_id) continue;
             const title = thread ? thread.title : "Unknown thread";
             activity.push({
                 type: "comment",
                 id: p.id,
                 thread_id: p.thread_id,
-                title: title,
+                title,
                 preview: (p.content || "").slice(0, 140),
                 created_at: p.created_at,
                 url: `/thread.html?id=${p.thread_id}&title=${encodeURIComponent(title)}#post-${p.id}`
             });
         }
-
         activity.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
         res.json(activity.slice(0, 80));
     } catch (err) {
-        console.error(err);
         res.json([]);
     }
 });
 
+// ALERTS
+app.get('/api/alerts/:username', async (req, res) => {
+    try {
+        const alerts = await Alert.find({ to_user: req.params.username }).sort({ created_at: -1 }).limit(50);
+        const unread = await Alert.countDocuments({ to_user: req.params.username, read: false });
+        res.json({ alerts, unread });
+    } catch (err) {
+        console.error(err);
+        res.json({ alerts: [], unread: 0 });
+    }
+});
+
+app.post('/api/alerts/read-all', async (req, res) => {
+    try {
+        const { username } = req.body;
+        if (!username) return res.json({ success: false });
+        await Alert.updateMany({ to_user: username, read: false }, { $set: { read: true } });
+        res.json({ success: true });
+    } catch (err) {
+        res.json({ success: false });
+    }
+});
+
+app.post('/api/alerts/:id/read', async (req, res) => {
+    try {
+        const { username } = req.body;
+        await Alert.updateOne({ id: req.params.id, to_user: username }, { $set: { read: true } });
+        res.json({ success: true });
+    } catch (err) {
+        res.json({ success: false });
+    }
+});
+
+// ADMIN TITLE
 app.post('/api/admin/title', async (req, res) => {
     try {
         const { admin, targetUsername, title } = req.body;
-
-        if (admin !== "20k") {
-            return res.json({ success: false, message: "No permission" });
-        }
-        if (!targetUsername) {
-            return res.json({ success: false, message: "Enter a username" });
-        }
-
+        if (admin !== "20k") return res.json({ success: false, message: "No permission" });
+        if (!targetUsername) return res.json({ success: false, message: "Enter a username" });
         const cleanTitle = (title || "Member").trim().slice(0, 40);
-
         const result = await User.collection.updateOne(
             { username: targetUsername },
             { $set: { title: cleanTitle } }
         );
-
-        if (result.matchedCount === 0) {
-            return res.json({ success: false, message: "User not found" });
-        }
-
+        if (result.matchedCount === 0) return res.json({ success: false, message: "User not found" });
         res.json({ success: true, message: `Title for ${targetUsername} set to "${cleanTitle}"` });
     } catch (err) {
         console.error(err);
@@ -715,19 +655,15 @@ app.post('/api/admin/title', async (req, res) => {
     }
 });
 
-// =====================================================
 // SEARCH
-// =====================================================
 app.get('/api/search', async (req, res) => {
     try {
         const raw = (req.query.q || "").trim();
         if (!raw) return res.json({ users: [], threads: [] });
-
         const lower = raw.toLowerCase();
         let users = [];
         let threads = [];
 
-        // user: query
         if (lower.startsWith("user:")) {
             const term = raw.slice(5).trim();
             if (term) {
@@ -735,20 +671,12 @@ app.get('/api/search', async (req, res) => {
                 const partial = await User.find({
                     username: { $regex: term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), $options: "i" }
                 }).limit(30);
-
                 const seen = new Set();
                 const list = [];
-                if (exact) {
-                    seen.add(exact.username);
-                    list.push(exact);
-                }
+                if (exact) { seen.add(exact.username); list.push(exact); }
                 for (const u of partial) {
-                    if (!seen.has(u.username)) {
-                        seen.add(u.username);
-                        list.push(u);
-                    }
+                    if (!seen.has(u.username)) { seen.add(u.username); list.push(u); }
                 }
-
                 for (const u of list) {
                     const postCount = await Post.countDocuments({ user_id: u.username });
                     users.push({
@@ -764,7 +692,6 @@ app.get('/api/search', async (req, res) => {
             return res.json({ users, threads: [] });
         }
 
-        // d1sc: query
         if (lower.startsWith("d1sc:")) {
             const term = raw.slice(5).trim();
             if (term) {
@@ -773,22 +700,10 @@ app.get('/api/search', async (req, res) => {
                 const partial = await Thread.find({
                     title: { $regex: escaped, $options: "i" }
                 }).sort({ created_at: -1 }).limit(40);
-
                 const seen = new Set();
                 const list = [];
-                for (const t of exact) {
-                    if (!seen.has(t.id)) {
-                        seen.add(t.id);
-                        list.push(t);
-                    }
-                }
-                for (const t of partial) {
-                    if (!seen.has(t.id)) {
-                        seen.add(t.id);
-                        list.push(t);
-                    }
-                }
-
+                for (const t of exact) { if (!seen.has(t.id)) { seen.add(t.id); list.push(t); } }
+                for (const t of partial) { if (!seen.has(t.id)) { seen.add(t.id); list.push(t); } }
                 threads = list.map(t => ({
                     id: t.id,
                     title: t.title,
@@ -801,13 +716,8 @@ app.get('/api/search', async (req, res) => {
             return res.json({ users: [], threads });
         }
 
-        // plain query → both
         const escaped = raw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-        const userHits = await User.find({
-            username: { $regex: escaped, $options: "i" }
-        }).limit(15);
-
+        const userHits = await User.find({ username: { $regex: escaped, $options: "i" } }).limit(15);
         for (const u of userHits) {
             const postCount = await Post.countDocuments({ user_id: u.username });
             users.push({
@@ -819,11 +729,7 @@ app.get('/api/search', async (req, res) => {
                 created_at: u.created_at
             });
         }
-
-        const threadHits = await Thread.find({
-            title: { $regex: escaped, $options: "i" }
-        }).sort({ created_at: -1 }).limit(30);
-
+        const threadHits = await Thread.find({ title: { $regex: escaped, $options: "i" } }).sort({ created_at: -1 }).limit(30);
         threads = threadHits.map(t => ({
             id: t.id,
             title: t.title,
@@ -832,7 +738,6 @@ app.get('/api/search', async (req, res) => {
             created_at: t.created_at,
             pinned: t.pinned || false
         }));
-
         res.json({ users, threads });
     } catch (err) {
         console.error("Search error:", err);
@@ -840,10 +745,7 @@ app.get('/api/search', async (req, res) => {
     }
 });
 
-// =====================================================
-// REMAINING ROUTES
-// =====================================================
-
+// OTHER
 app.put('/api/posts/:postId', async (req, res) => {
     const { username, content } = req.body;
     const post = await Post.findOne({ id: req.params.postId });
@@ -868,11 +770,9 @@ app.delete('/api/threads/:threadId', async (req, res) => {
     const thread = await Thread.findOne({ id: req.params.threadId });
     if (!thread) return res.json({ success: false, message: "Thread not found" });
     if (username !== "20k" && thread.user_id !== username) return res.json({ success: false, message: "No permission" });
-
     await Post.deleteMany({ thread_id: thread.id });
     await Thread.deleteOne({ id: thread.id });
     await Report.deleteMany({ post_id: thread.id });
-
     res.json({ success: true, message: "Thread deleted" });
 });
 
@@ -890,8 +790,7 @@ app.post('/api/report', async (req, res) => {
 });
 
 app.get('/api/reports', async (req, res) => {
-    const reports = await Report.find().sort({ created_at: -1 });
-    res.json(reports);
+    res.json(await Report.find().sort({ created_at: -1 }));
 });
 
 app.post('/api/reports/:id/review', async (req, res) => {
@@ -903,35 +802,33 @@ app.post('/api/reports/:id/review', async (req, res) => {
 });
 
 app.get('/api/check-ban/:username', async (req, res) => {
-    const user = await User.findOne({ username: req.params.username });
-    if (user && user.banned) {
-        return res.json({
-            banned: true,
-            type: user.banType || "permanent",
-            reason: user.banReason || "No reason"
-        });
+    try {
+        const user = await User.findOne({ username: req.params.username });
+        if (user && user.banned) {
+            return res.json({
+                banned: true,
+                type: user.banType || "permanent",
+                reason: user.banReason || "No reason"
+            });
+        }
+        res.json({ banned: false });
+    } catch (err) {
+        res.status(500).json({ banned: false, error: true });
     }
-    res.json({ banned: false });
 });
 
 app.post('/api/admin/ban', async (req, res) => {
     try {
         const { admin, targetUsername, reason, type } = req.body;
-
         if (admin !== "20k") return res.json({ success: false, message: "No permission" });
-
         const user = await User.findOne({ username: targetUsername });
         if (!user) return res.json({ success: false, message: "User not found" });
-
         user.banned = true;
         user.banReason = reason || "No reason given";
         user.banType = type || "permanent";
-
         await user.save();
-
         res.json({ success: true, message: `User ${targetUsername} has been banned.` });
     } catch (err) {
-        console.error(err);
         res.json({ success: false, message: "Server error" });
     }
 });
@@ -939,14 +836,11 @@ app.post('/api/admin/ban', async (req, res) => {
 app.delete('/api/admin/thread/:threadId', async (req, res) => {
     const { username } = req.body;
     if (username !== "20k") return res.json({ success: false, message: "No permission" });
-
     const thread = await Thread.findOne({ id: req.params.threadId });
     if (!thread) return res.json({ success: false, message: "Thread not found" });
-
     await Post.deleteMany({ thread_id: thread.id });
     await Thread.deleteOne({ id: thread.id });
     await Report.deleteMany({ post_id: thread.id });
-
     res.json({ success: true, message: "Thread deleted" });
 });
 
@@ -954,26 +848,16 @@ app.post('/api/threads/:threadId/pin', async (req, res) => {
     try {
         const { username } = req.body;
         if (username !== "20k") return res.json({ success: false, message: "Only admin can pin" });
-
         const thread = await Thread.findOne({ id: req.params.threadId });
         if (!thread) return res.json({ success: false, message: "Thread not found" });
-
         thread.pinned = !thread.pinned;
         await thread.save();
-
-        res.json({
-            success: true,
-            message: thread.pinned ? "📌 Pinned" : "📌 Unpinned"
-        });
+        res.json({ success: true, message: thread.pinned ? "📌 Pinned" : "📌 Unpinned" });
     } catch (err) {
-        console.error("PIN ERROR:", err);
         res.json({ success: false, message: "Server error" });
     }
 });
 
-// =====================================================
-// START SERVER
-// =====================================================
 app.listen(PORT, () => {
     console.log(`🚀 Running on http://localhost:${PORT}`);
 });
