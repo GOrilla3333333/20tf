@@ -16,7 +16,7 @@
         .modal-content {
             background: #1e2f4f; padding: 25px; border-radius: 12px;
             border: 3px solid #0165fc; width: 90%; max-width: 450px; color: white;
-            max-height: 90vh; overflow-y: auto;
+            max-height: 90vh; overflow-y: auto; position: relative;
         }
         .notification {
             position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
@@ -24,19 +24,11 @@
             color: white; font-weight: bold;
         }
         .thread {
-            background: #1e2f4f;
-            padding: 15px;
-            margin: 12px 0;
-            border-radius: 8px;
-            border-left: 5px solid #0165fc;
-            position: relative;
-            cursor: pointer;
+            background: #1e2f4f; padding: 15px; margin: 12px 0; border-radius: 8px;
+            border-left: 5px solid #0165fc; position: relative; cursor: pointer;
         }
         .thread:hover { background: #2a3f5f; }
-        .pinned {
-            border-left: 5px solid #fffd01;
-            background: #2a3f5f;
-        }
+        .pinned { border-left: 5px solid #fffd01; background: #2a3f5f; }
         .menu-btn {
             position: absolute; top: 10px; right: 10px; background: none; border: none;
             font-size: 22px; cursor: pointer; color: #aaa;
@@ -52,26 +44,13 @@
         }
         .dropdown-menu button:hover { background: #1e2f4f; }
         .prefix-badge {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 0.75em;
-            font-weight: bold;
-            margin-right: 6px;
-            color: #fff;
-            vertical-align: middle;
+            display: inline-block; padding: 2px 8px; border-radius: 4px;
+            font-size: 0.75em; font-weight: bold; margin-right: 6px; color: #fff;
         }
         .prefix-select, .modal-content input, .modal-content textarea {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 12px;
-            border-radius: 6px;
-            border: 2px solid #0165fc;
-            background: #0f1b2e;
-            color: white;
-            font-size: 15px;
-            box-sizing: border-box;
-            font-family: inherit;
+            width: 100%; padding: 10px; margin-bottom: 12px; border-radius: 6px;
+            border: 2px solid #0165fc; background: #0f1b2e; color: white;
+            font-size: 15px; box-sizing: border-box; font-family: inherit;
         }
         .modal-content textarea { min-height: 100px; resize: vertical; }
         .upload-status { font-size: 13px; color: #aaa; margin-bottom: 10px; min-height: 18px; }
@@ -81,6 +60,20 @@
         }
         .thread-title-line { color: white; font-size: 1.1em; font-weight: bold; word-break: break-word; }
         .thread-meta { color: #aaa; font-size: 0.9em; margin-top: 6px; }
+        .mention-dropdown {
+            position: fixed; z-index: 30000; background: #0f1b2e;
+            border: 2px solid #0165fc; border-radius: 8px; max-height: 220px;
+            overflow-y: auto; min-width: 200px; box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+            display: none;
+        }
+        .mention-item {
+            display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+            cursor: pointer; color: white;
+        }
+        .mention-item:hover, .mention-item.active { background: #1e2f4f; }
+        .mention-item img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; }
+        .mention-item .mi-name { font-weight: bold; }
+        .mention-item .mi-title { font-size: 0.75em; color: #aaa; }
     </style>
 </head>
 <body>
@@ -126,13 +119,15 @@
                 <option value="Announcement">Announcement</option>
             </select>
             <input type="text" id="threadTitle" placeholder="Title" maxlength="120">
-            <textarea id="threadContent" placeholder="Description (optional) — paste image/video links to embed"></textarea>
+            <textarea id="threadContent" placeholder="Description — type @ to tag someone"></textarea>
             <input type="file" id="threadFiles" multiple accept="image/*,video/*">
             <div class="upload-status" id="uploadStatus"></div>
             <button class="button" onclick="createThread()">Create d1sc</button>
             <button class="button" style="background:#555;" onclick="closeCreateModal()">Cancel</button>
         </div>
     </div>
+
+    <div id="mentionDropdown" class="mention-dropdown"></div>
 
     <div id="deleteModal" class="modal">
         <div class="modal-content" style="text-align:center;">
@@ -160,20 +155,13 @@
         let pendingDeleteId = null;
         let pendingReportId = null;
         let uploadedUrls = [];
+        let mentionState = { active: false, start: -1, query: '', index: 0, list: [], boxId: 'threadContent' };
 
         const PREFIX_COLORS = {
-            "News": "#2ecc71",
-            "Serious": "#3498db",
-            "Discussion": "#9b59b6",
-            "Question": "#1abc9c",
-            "Vent": "#8e44ad",
-            "Media": "#e67e22",
-            "Art": "#e91e63",
-            "Tech": "#00bcd4",
-            "Brainrot": "#ff5722",
-            "NSFW": "#e74c3c",
-            "Story": "#16a085",
-            "Help": "#f39c12",
+            "News": "#2ecc71", "Serious": "#3498db", "Discussion": "#9b59b6",
+            "Question": "#1abc9c", "Vent": "#8e44ad", "Media": "#e67e22",
+            "Art": "#e91e63", "Tech": "#00bcd4", "Brainrot": "#ff5722",
+            "NSFW": "#e74c3c", "Story": "#16a085", "Help": "#f39c12",
             "Announcement": "#fffd01"
         };
 
@@ -182,10 +170,14 @@
             ? 'Logged in as: <a href="/profile.html?user=' + encodeURIComponent(username) + '" style="color:inherit;text-decoration:none;"><strong>' + username + '</strong></a> | <a href="#" onclick="showLogoutModal();return false;">Logout</a>'
             : '<a href="/register">Register</a> | <a href="/login">Login</a>';
 
+        function escapeHtml(s) {
+            return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
         function prefixBadge(prefix) {
-            if (!prefix) return "";
-            const color = PREFIX_COLORS[prefix] || "#0165fc";
-            const textColor = prefix === "Announcement" ? "#162437" : "#fff";
+            if (!prefix) return '';
+            const color = PREFIX_COLORS[prefix] || '#0165fc';
+            const textColor = prefix === 'Announcement' ? '#162437' : '#fff';
             return '<span class="prefix-badge" style="background:' + color + ';color:' + textColor + '">' + prefix + '</span>';
         }
 
@@ -195,16 +187,94 @@
             notif.style.background = color;
             notif.textContent = text;
             document.body.appendChild(notif);
-            setTimeout(function() { notif.remove(); }, 2500);
+            setTimeout(function () { notif.remove(); }, 2500);
         }
 
         function showLogoutModal() {
             const modal = document.createElement('div');
             modal.className = 'modal';
             modal.style.display = 'flex';
-            modal.innerHTML = '<div class="modal-content" style="text-align:center;"><h3>Logout?</h3><p>Are you sure you want to logout?</p><button class="button" style="background:#ff4444;" onclick="localStorage.removeItem(\'username\');location.href=\'/\'">Yes, Logout</button><button class="button" style="background:#555;" onclick="this.parentElement.parentElement.remove()">Cancel</button></div>';
+            modal.innerHTML = '<div class="modal-content" style="text-align:center;"><h3>Logout?</h3><p>Are you sure?</p><button class="button" style="background:#ff4444;" onclick="localStorage.removeItem(\'username\');location.href=\'/\'">Yes, Logout</button><button class="button" style="background:#555;" onclick="this.parentElement.parentElement.remove()">Cancel</button></div>';
             document.body.appendChild(modal);
         }
+
+        // ——— Mentions ———
+        function hideMentionDropdown() {
+            mentionState.active = false;
+            document.getElementById('mentionDropdown').style.display = 'none';
+        }
+
+        async function updateMentionDropdown(textarea) {
+            const val = textarea.value;
+            const pos = textarea.selectionStart;
+            const before = val.slice(0, pos);
+            const match = before.match(/@([a-zA-Z0-9_]*)$/);
+            if (!match) { hideMentionDropdown(); return; }
+            mentionState.active = true;
+            mentionState.start = pos - match[0].length;
+            mentionState.query = match[1];
+            mentionState.boxId = textarea.id;
+            try {
+                const res = await fetch('/api/users/suggest?q=' + encodeURIComponent(mentionState.query));
+                mentionState.list = await res.json() || [];
+                mentionState.index = 0;
+            } catch (e) { mentionState.list = []; }
+            const dd = document.getElementById('mentionDropdown');
+            if (!mentionState.list.length) { dd.style.display = 'none'; return; }
+            dd.innerHTML = mentionState.list.map(function (u, i) {
+                return '<div class="mention-item ' + (i === 0 ? 'active' : '') + '" onmousedown="event.preventDefault();pickMention(' + i + ')">' +
+                    '<img src="' + escapeHtml(u.pfp) + '" alt=""><div><div class="mi-name">@' + escapeHtml(u.username) + '</div>' +
+                    '<div class="mi-title">' + escapeHtml(u.title || 'Member') + '</div></div></div>';
+            }).join('');
+            const rect = textarea.getBoundingClientRect();
+            dd.style.left = rect.left + 'px';
+            dd.style.top = (rect.bottom + 4) + 'px';
+            dd.style.width = Math.min(rect.width, 280) + 'px';
+            dd.style.display = 'block';
+        }
+
+        function pickMention(i) {
+            const u = mentionState.list[i];
+            if (!u) return;
+            const box = document.getElementById(mentionState.boxId);
+            const val = box.value;
+            const pos = box.selectionStart;
+            const before = val.slice(0, mentionState.start);
+            const after = val.slice(pos);
+            const insert = '@' + u.username + ' ';
+            box.value = before + insert + after;
+            const newPos = before.length + insert.length;
+            box.focus();
+            box.setSelectionRange(newPos, newPos);
+            hideMentionDropdown();
+        }
+
+        function bindMentionBox(id) {
+            const box = document.getElementById(id);
+            if (!box) return;
+            box.addEventListener('input', function () { updateMentionDropdown(this); });
+            box.addEventListener('blur', function () { setTimeout(hideMentionDropdown, 150); });
+            box.addEventListener('keydown', function (e) {
+                if (!mentionState.active || !mentionState.list.length) return;
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    mentionState.index = (mentionState.index + 1) % mentionState.list.length;
+                    document.querySelectorAll('.mention-item').forEach(function (el, i) {
+                        el.classList.toggle('active', i === mentionState.index);
+                    });
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    mentionState.index = (mentionState.index - 1 + mentionState.list.length) % mentionState.list.length;
+                    document.querySelectorAll('.mention-item').forEach(function (el, i) {
+                        el.classList.toggle('active', i === mentionState.index);
+                    });
+                } else if (e.key === 'Enter' || e.key === 'Tab') {
+                    e.preventDefault();
+                    pickMention(mentionState.index);
+                } else if (e.key === 'Escape') hideMentionDropdown();
+            });
+        }
+        bindMentionBox('threadContent');
 
         async function canPostHere() {
             if (forumId !== 'news') return true;
@@ -215,9 +285,7 @@
                 const d = await r.json();
                 const t = (d.title || '').toLowerCase();
                 return t === 'owner' || t === 'moderator' || t === 'mod' || t === 'janitor';
-            } catch (e) {
-                return false;
-            }
+            } catch (e) { return false; }
         }
 
         async function setupCreateArea() {
@@ -228,7 +296,7 @@
             }
             const allowed = await canPostHere();
             if (!allowed) {
-                area.innerHTML = '<p style="color:#ffaa00;">Only staff (Owner / Moderator / Janitor) can post in News & Announcements.</p>';
+                area.innerHTML = '<p style="color:#ffaa00;">Only staff can post in News & Announcements.</p>';
                 return;
             }
             area.innerHTML = '<button class="button" onclick="openCreateModal()">+ Create d1sc</button>';
@@ -243,38 +311,30 @@
             document.getElementById('uploadStatus').textContent = '';
             document.getElementById('createModal').style.display = 'flex';
         }
-
         function closeCreateModal() {
+            hideMentionDropdown();
             document.getElementById('createModal').style.display = 'none';
         }
 
         document.getElementById('threadFiles').addEventListener('change', async function () {
             const files = this.files;
             if (!files.length) return;
-
             const status = document.getElementById('uploadStatus');
             const contentBox = document.getElementById('threadContent');
             status.textContent = 'Uploading file(s)...';
             uploadedUrls = [];
-
             for (let i = 0; i < files.length; i++) {
-                const file = files[i];
                 const fd = new FormData();
-                fd.append('file', file);
+                fd.append('file', files[i]);
                 try {
                     const r = await fetch('/api/upload', { method: 'POST', body: fd });
                     const d = await r.json();
                     if (d.success && d.url) {
                         uploadedUrls.push(d.url);
                         contentBox.value = (contentBox.value ? contentBox.value + '\n\n' : '') + d.url;
-                    } else {
-                        console.error('Upload failed:', d);
                     }
-                } catch (e) {
-                    console.error('Upload error:', e);
-                }
+                } catch (e) {}
             }
-
             status.textContent = uploadedUrls.length
                 ? 'Uploaded ' + uploadedUrls.length + ' file(s) — links added below'
                 : 'Upload failed (check Cloudinary keys / terminal)';
@@ -286,29 +346,19 @@
             const prefix = document.getElementById('threadPrefix').value;
             if (!title) return showNotification('Enter a title', '#ff4444');
             if (!username) return showNotification('Login required', '#ff4444');
-
             try {
                 const res = await fetch('/api/threads', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        title: title,
-                        content: content,
-                        forum_id: forumId,
-                        username: username,
-                        fileUrls: uploadedUrls,
-                        prefix: prefix
+                        title: title, content: content, forum_id: forumId,
+                        username: username, fileUrls: uploadedUrls, prefix: prefix
                     })
                 });
                 const data = await res.json();
                 showNotification(data.message || (data.success ? 'Created!' : 'Failed'), data.success ? '#00cc66' : '#ff4444');
-                if (data.success) {
-                    closeCreateModal();
-                    loadThreads();
-                }
-            } catch (e) {
-                showNotification('Server error', '#ff4444');
-            }
+                if (data.success) { closeCreateModal(); loadThreads(); }
+            } catch (e) { showNotification('Server error', '#ff4444'); }
         }
 
         async function loadThreads() {
@@ -323,29 +373,21 @@
                     document.getElementById('threadsList').innerHTML = '<p>No discussions yet.</p>';
                     return;
                 }
-
                 let html = '';
-                threads.forEach(function(t) {
+                threads.forEach(function (t) {
                     const canManage = username === '20k' || username === t.user_id;
                     const safeTitle = String(t.title || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-                    html += '<div class="thread ' + (t.pinned ? 'pinned' : '') + '" onclick="goThread(\'' + t.id + '\', \'' + safeTitle + '\')">';
-                    html += '<div class="thread-title-line">';
-                    html += prefixBadge(t.prefix);
-                    html += escapeHtml(t.title || 'Untitled');
+                    html += '<div class="thread ' + (t.pinned ? 'pinned' : '') + '" onclick="goThread(\'' + t.id + '\',\'' + safeTitle + '\')">';
+                    html += '<div class="thread-title-line">' + prefixBadge(t.prefix) + escapeHtml(t.title || 'Untitled');
                     if (t.locked) html += ' 🔒';
                     if (t.pinned) html += ' 📌';
-                    html += '</div>';
-                    html += '<div class="thread-meta">by ' + escapeHtml(t.user_id || 'Unknown') + ' • replies: ' + ((t.postCount || 1) - 1) + ' • views: ' + (t.views || 0) + '</div>';
-                    html += '<button class="menu-btn" onclick="event.stopPropagation();showDropdown(\'' + t.id + '\', event)">⋮</button>';
+                    html += '</div><div class="thread-meta">by ' + escapeHtml(t.user_id || 'Unknown') +
+                        ' • replies: ' + ((t.postCount || 1) - 1) + ' • views: ' + (t.views || 0) + '</div>';
+                    html += '<button class="menu-btn" onclick="event.stopPropagation();showDropdown(\'' + t.id + '\',event)">⋮</button>';
                     html += '<div class="dropdown-menu" id="dropdown-' + t.id + '">';
-                    if (username === '20k') {
-                        html += '<button onclick="event.stopPropagation();togglePin(\'' + t.id + '\')">' + (t.pinned ? 'Unpin' : 'Pin') + '</button>';
-                    }
-                    if (canManage) {
-                        html += '<button onclick="event.stopPropagation();openDeleteModal(\'' + t.id + '\')">Delete</button>';
-                    }
-                    html += '<button onclick="event.stopPropagation();openReportModal(\'' + t.id + '\')">Report</button>';
-                    html += '</div></div>';
+                    if (username === '20k') html += '<button onclick="event.stopPropagation();togglePin(\'' + t.id + '\')">' + (t.pinned ? 'Unpin' : 'Pin') + '</button>';
+                    if (canManage) html += '<button onclick="event.stopPropagation();openDeleteModal(\'' + t.id + '\')">Delete</button>';
+                    html += '<button onclick="event.stopPropagation();openReportModal(\'' + t.id + '\')">Report</button></div></div>';
                 });
                 document.getElementById('threadsList').innerHTML = html;
             } catch (err) {
@@ -353,27 +395,17 @@
             }
         }
 
-        function escapeHtml(s) {
-            return String(s)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;');
-        }
-
         function goThread(id, title) {
             window.location.href = '/thread.html?id=' + encodeURIComponent(id) + '&title=' + encodeURIComponent(title || '');
         }
-
         function showDropdown(threadId, e) {
             e.stopPropagation();
-            document.querySelectorAll('.dropdown-menu').forEach(function(m) { m.style.display = 'none'; });
+            document.querySelectorAll('.dropdown-menu').forEach(function (m) { m.style.display = 'none'; });
             const el = document.getElementById('dropdown-' + threadId);
             if (el) el.style.display = 'block';
         }
-
-        document.addEventListener('click', function() {
-            document.querySelectorAll('.dropdown-menu').forEach(function(m) { m.style.display = 'none'; });
+        document.addEventListener('click', function () {
+            document.querySelectorAll('.dropdown-menu').forEach(function (m) { m.style.display = 'none'; });
         });
 
         async function togglePin(threadId) {
@@ -386,9 +418,7 @@
                 const data = await res.json();
                 showNotification(data.message, data.success ? '#00cc66' : '#ff4444');
                 if (data.success) loadThreads();
-            } catch (err) {
-                showNotification('Pin failed', '#ff4444');
-            }
+            } catch (err) { showNotification('Pin failed', '#ff4444'); }
         }
 
         function openDeleteModal(id) {

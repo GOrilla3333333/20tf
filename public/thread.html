@@ -17,7 +17,7 @@
             background: #fff3d9; color: #000; border-left: 5px solid #fffd01;
         }
         .reply-post {
-            background: #1e2f4f; color: rgb(255, 255, 255); border-left: 5px solid #0165fc;
+            background: #1e2f4f; color: #fff; border-left: 5px solid #0165fc;
         }
         .post {
             padding: 15px; margin: 12px 0; border-radius: 8px; position: relative;
@@ -43,11 +43,14 @@
             color: inherit; font-weight: bold; text-decoration: none; cursor: pointer;
         }
         .username-link:hover { text-decoration: underline; color: #fffd01; }
-        .edit-btn, .del-btn, .menu-btn {
-            position: absolute; top: 10px; background: none; border: none;
+        .post-body .mention {
+            color: #fffd01; font-weight: bold; text-decoration: none;
+        }
+        .original-post .post-body .mention { color: #b8860b; }
+        .menu-btn {
+            position: absolute; top: 10px; right: 10px; background: none; border: none;
             font-size: 18px; cursor: pointer; color: #aaa;
         }
-        .menu-btn { right: 10px; }
         .dropdown-menu {
             display: none; position: absolute; top: 36px; right: 10px;
             background: #0f1b2e; border: 2px solid #0165fc; border-radius: 8px;
@@ -64,7 +67,7 @@
         }
         .reply-box textarea {
             width: 100%; min-height: 70px; box-sizing: border-box;
-            background: #1e2f4f; color: rgb(248, 248, 248); border: 2px solid #0165fc;
+            background: #1e2f4f; color: #f8f8f8; border: 2px solid #0165fc;
             border-radius: 6px; padding: 10px; font-family: inherit;
         }
         .modal {
@@ -85,70 +88,44 @@
             display: inline-block; padding: 2px 8px; border-radius: 4px;
             font-size: 0.75em; font-weight: bold; margin-right: 6px; color: #fff;
         }
-        .nested { margin-left: 24px; border-left: 2px solid #0165fc; padding-left: 10px; }
         .upload-status { font-size: 12px; color: #aaa; margin: 4px 0; }
 
-        /* Hover profile card */
         #profile-hover {
-            display: none;
-            position: fixed;
-            z-index: 30000;
-            width: 260px;
-            background: #0f1b2e;
-            border: 2px solid #0165fc;
-            border-radius: 10px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-            color: white;
-            overflow: hidden;
+            display: none; position: fixed; z-index: 30000; width: 260px;
+            background: #0f1b2e; border: 2px solid #0165fc; border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5); color: white; overflow: hidden;
             pointer-events: none;
         }
         #profile-hover .ph-banner {
-            height: 54px;
-            background: #1e2f4f;
-            background-size: cover;
-            background-position: center;
+            height: 54px; background: #1e2f4f; background-size: cover; background-position: center;
         }
-        #profile-hover .ph-body {
-            padding: 10px 12px 14px;
-            position: relative;
-        }
+        #profile-hover .ph-body { padding: 10px 12px 14px; }
         #profile-hover .ph-pfp {
-            width: 52px;
-            height: 52px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 3px solid #0165fc;
-            margin-top: -28px;
-            background: #1e2f4f;
+            width: 52px; height: 52px; border-radius: 50%; object-fit: cover;
+            border: 3px solid #0165fc; margin-top: -28px; background: #1e2f4f;
         }
-        #profile-hover .ph-name {
-            font-weight: bold;
-            font-size: 1.05em;
-            margin-top: 6px;
-            color: #fffd01;
-        }
+        #profile-hover .ph-name { font-weight: bold; font-size: 1.05em; margin-top: 6px; color: #fffd01; }
         #profile-hover .ph-title {
-            display: inline-block;
-            margin-top: 4px;
-            padding: 2px 8px;
-            border-radius: 4px;
-            background: #0165fc;
-            font-size: 0.75em;
-            font-weight: bold;
+            display: inline-block; margin-top: 4px; padding: 2px 8px; border-radius: 4px;
+            background: #0165fc; font-size: 0.75em; font-weight: bold;
         }
-        #profile-hover .ph-stats {
-            margin-top: 10px;
-            font-size: 0.85em;
-            color: #ccc;
-            line-height: 1.5;
+        #profile-hover .ph-stats { margin-top: 10px; font-size: 0.85em; color: #ccc; line-height: 1.5; }
+        #profile-hover .ph-bio { margin-top: 8px; font-size: 0.8em; color: #aaa; max-height: 48px; overflow: hidden; }
+
+        .mention-dropdown {
+            position: absolute; z-index: 15000; background: #0f1b2e;
+            border: 2px solid #0165fc; border-radius: 8px; max-height: 220px;
+            overflow-y: auto; min-width: 200px; box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+            display: none;
         }
-        #profile-hover .ph-bio {
-            margin-top: 8px;
-            font-size: 0.8em;
-            color: #aaa;
-            max-height: 48px;
-            overflow: hidden;
+        .mention-item {
+            display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+            cursor: pointer; color: white;
         }
+        .mention-item:hover, .mention-item.active { background: #1e2f4f; }
+        .mention-item img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; }
+        .mention-item .mi-name { font-weight: bold; }
+        .mention-item .mi-title { font-size: 0.75em; color: #aaa; }
     </style>
 </head>
 <body>
@@ -171,15 +148,17 @@
     <div id="postsList">Loading posts...</div>
 
     <div class="reply-box" id="replyBox">
-        <div id="replyTarget" class="reply-target" style="display:none;font-size:12px;color:#f8f8f8;margin-bottom:5px;"></div>
+        <div id="replyTarget" style="display:none;font-size:12px;color:#f8f8f8;margin-bottom:5px;"></div>
         <form id="replyForm">
-            <textarea id="postContent" placeholder="Write a reply... (paste image/video links to embed)"></textarea>
+            <textarea id="postContent" placeholder="Write a reply... @ to tag someone"></textarea>
             <input type="file" id="mediaFile" multiple accept="image/*,video/*">
             <div class="upload-status" id="uploadStatus"></div>
             <button type="submit" class="button">Post reply</button>
             <button type="button" class="button" style="background:#555;display:none;" id="cancelReplyBtn" onclick="cancelReply()">Cancel reply</button>
         </form>
     </div>
+
+    <div id="mentionDropdown" class="mention-dropdown"></div>
 
     <div id="editModal" class="modal">
         <div class="modal-content">
@@ -207,7 +186,6 @@
         </div>
     </div>
 
-    <!-- Hover profile card -->
     <div id="profile-hover">
         <div class="ph-banner" id="ph-banner"></div>
         <div class="ph-body">
@@ -232,6 +210,7 @@
         const profileCache = {};
         let hoverTimer = null;
         let hideTimer = null;
+        let mentionState = { active: false, start: -1, query: '', index: 0, list: [] };
 
         const PREFIX_COLORS = {
             "News": "#2ecc71", "Serious": "#3498db", "Discussion": "#9b59b6",
@@ -242,7 +221,7 @@
         };
 
         document.getElementById('user-nav').innerHTML = username
-            ? `Logged in as: <a href="/profile.html?user=${encodeURIComponent(username)}" style="color:inherit;text-decoration:none;"><strong>${username}</strong></a>`
+            ? 'Logged in as: <a href="/profile.html?user=' + encodeURIComponent(username) + '" style="color:inherit;text-decoration:none;"><strong>' + username + '</strong></a>'
             : '<a href="/login">Login</a>';
 
         function showNotification(text, color) {
@@ -251,7 +230,7 @@
             n.style.background = color;
             n.textContent = text;
             document.body.appendChild(n);
-            setTimeout(() => n.remove(), 2800);
+            setTimeout(function () { n.remove(); }, 2800);
         }
 
         function escapeHtml(s) {
@@ -264,14 +243,9 @@
 
         function formatDate(d) {
             if (!d) return '—';
-            try {
-                return new Date(d).toLocaleDateString();
-            } catch (e) {
-                return '—';
-            }
+            try { return new Date(d).toLocaleDateString(); } catch (e) { return '—'; }
         }
 
-        // ——— Hover profile card ———
         async function fetchProfile(user) {
             if (profileCache[user]) return profileCache[user];
             try {
@@ -288,13 +262,10 @@
         function showProfileHover(user, event) {
             clearTimeout(hideTimer);
             clearTimeout(hoverTimer);
-            hoverTimer = setTimeout(async () => {
+            hoverTimer = setTimeout(async function () {
                 const data = await fetchProfile(user);
                 const card = document.getElementById('profile-hover');
-                if (!data) {
-                    card.style.display = 'none';
-                    return;
-                }
+                if (!data) { card.style.display = 'none'; return; }
                 document.getElementById('ph-name').textContent = data.username || user;
                 document.getElementById('ph-title').textContent = data.title || 'Member';
                 document.getElementById('ph-pfp').src = data.pfp || 'https://i.imgur.com/oJCfWc8.png';
@@ -306,10 +277,8 @@
                     banner.style.background = '#1e2f4f';
                 }
                 document.getElementById('ph-stats').innerHTML =
-                    'Posts: <strong>' + (data.postCount || 0) + '</strong><br>' +
-                    'Joined: <strong>' + formatDate(data.created_at) + '</strong>';
+                    'Posts: <strong>' + (data.postCount || 0) + '</strong><br>Joined: <strong>' + formatDate(data.created_at) + '</strong>';
                 document.getElementById('ph-bio').textContent = (data.bio || '').slice(0, 120);
-
                 const pad = 12;
                 let x = event.clientX + 14;
                 let y = event.clientY + 14;
@@ -326,7 +295,7 @@
 
         function hideProfileHover() {
             clearTimeout(hoverTimer);
-            hideTimer = setTimeout(() => {
+            hideTimer = setTimeout(function () {
                 document.getElementById('profile-hover').style.display = 'none';
             }, 150);
         }
@@ -334,33 +303,29 @@
         function formatContent(text) {
             if (!text) return '';
             let escaped = escapeHtml(text);
-            const urlRegex = /(https?:\/\/[^\s<]+)/g;
-            escaped = escaped.replace(urlRegex, (url) => {
+            escaped = escaped.replace(/(https?:\/\/[^\s<]+)/g, function (url) {
                 const clean = url.replace(/[.,);!?]+$/, '');
                 const trailing = url.slice(clean.length);
-                const lower = clean.toLowerCase();
-
                 const isImage =
                     /\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i.test(clean) ||
                     /res\.cloudinary\.com\/[^/]+\/image\//i.test(clean) ||
                     /i\.imgur\.com\//i.test(clean) ||
                     /imgur\.com\/[a-z0-9]+$/i.test(clean);
-
                 const isVideo =
                     /\.(mp4|webm|mov)(\?.*)?$/i.test(clean) ||
                     /res\.cloudinary\.com\/[^/]+\/video\//i.test(clean);
-
-                if (isVideo) {
-                    return `<video class="embed-media" controls src="${clean}"></video>${trailing}`;
-                }
+                if (isVideo) return '<video class="embed-media" controls src="' + clean + '"></video>' + trailing;
                 if (isImage) {
                     let src = clean;
                     if (/imgur\.com\/[a-z0-9]+$/i.test(clean) && !/i\.imgur\.com/i.test(clean)) {
                         src = clean.replace('imgur.com/', 'i.imgur.com/') + '.jpg';
                     }
-                    return `<img class="embed-media" src="${src}" alt="embedded" loading="lazy">${trailing}`;
+                    return '<img class="embed-media" src="' + src + '" alt="embedded" loading="lazy">' + trailing;
                 }
-                return `<a href="${clean}" target="_blank" rel="noopener noreferrer">${clean}</a>${trailing}`;
+                return '<a href="' + clean + '" target="_blank" rel="noopener noreferrer">' + clean + '</a>' + trailing;
+            });
+            escaped = escaped.replace(/@([a-zA-Z0-9_]{1,32})/g, function (full, name) {
+                return '<a class="mention" href="/profile.html?user=' + encodeURIComponent(name) + '">@' + name + '</a>';
             });
             escaped = escaped.replace(/\n/g, '<br>');
             return escaped;
@@ -370,7 +335,7 @@
             if (!fileUrls || !fileUrls.length) return '';
             const text = content || '';
             let html = '';
-            fileUrls.forEach(url => {
+            fileUrls.forEach(function (url) {
                 if (!url) return;
                 if (text.indexOf(url) !== -1) return;
                 const lower = url.toLowerCase();
@@ -387,15 +352,101 @@
             if (!prefix) return '';
             const color = PREFIX_COLORS[prefix] || '#0165fc';
             const textColor = prefix === 'Announcement' ? '#162437' : '#fff';
-            return `<span class="prefix-badge" style="background:${color};color:${textColor}">${prefix}</span> `;
+            return '<span class="prefix-badge" style="background:' + color + ';color:' + textColor + '">' + prefix + '</span> ';
         }
+
+        // ——— @mention autocomplete ———
+        function hideMentionDropdown() {
+            mentionState.active = false;
+            document.getElementById('mentionDropdown').style.display = 'none';
+        }
+
+        async function updateMentionDropdown(textarea) {
+            const val = textarea.value;
+            const pos = textarea.selectionStart;
+            const before = val.slice(0, pos);
+            const match = before.match(/@([a-zA-Z0-9_]*)$/);
+            if (!match) {
+                hideMentionDropdown();
+                return;
+            }
+            mentionState.active = true;
+            mentionState.start = pos - match[0].length;
+            mentionState.query = match[1];
+            try {
+                const res = await fetch('/api/users/suggest?q=' + encodeURIComponent(mentionState.query));
+                mentionState.list = await res.json() || [];
+                mentionState.index = 0;
+            } catch (e) {
+                mentionState.list = [];
+            }
+            const dd = document.getElementById('mentionDropdown');
+            if (!mentionState.list.length) {
+                dd.style.display = 'none';
+                return;
+            }
+            dd.innerHTML = mentionState.list.map(function (u, i) {
+                return '<div class="mention-item ' + (i === 0 ? 'active' : '') + '" data-i="' + i + '" onmousedown="event.preventDefault();pickMention(' + i + ')">' +
+                    '<img src="' + escapeHtml(u.pfp) + '" alt="">' +
+                    '<div><div class="mi-name">@' + escapeHtml(u.username) + '</div>' +
+                    '<div class="mi-title">' + escapeHtml(u.title || 'Member') + '</div></div></div>';
+            }).join('');
+            const rect = textarea.getBoundingClientRect();
+            dd.style.left = rect.left + 'px';
+            dd.style.top = (rect.bottom + window.scrollY + 4) + 'px';
+            dd.style.width = Math.min(rect.width, 280) + 'px';
+            dd.style.display = 'block';
+        }
+
+        function pickMention(i) {
+            const u = mentionState.list[i];
+            if (!u) return;
+            const box = document.getElementById('postContent');
+            const val = box.value;
+            const pos = box.selectionStart;
+            const before = val.slice(0, mentionState.start);
+            const after = val.slice(pos);
+            const insert = '@' + u.username + ' ';
+            box.value = before + insert + after;
+            const newPos = before.length + insert.length;
+            box.focus();
+            box.setSelectionRange(newPos, newPos);
+            hideMentionDropdown();
+        }
+
+        document.getElementById('postContent').addEventListener('keydown', function (e) {
+            if (!mentionState.active || !mentionState.list.length) return;
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                mentionState.index = (mentionState.index + 1) % mentionState.list.length;
+                document.querySelectorAll('.mention-item').forEach(function (el, i) {
+                    el.classList.toggle('active', i === mentionState.index);
+                });
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                mentionState.index = (mentionState.index - 1 + mentionState.list.length) % mentionState.list.length;
+                document.querySelectorAll('.mention-item').forEach(function (el, i) {
+                    el.classList.toggle('active', i === mentionState.index);
+                });
+            } else if (e.key === 'Enter' || e.key === 'Tab') {
+                e.preventDefault();
+                pickMention(mentionState.index);
+            } else if (e.key === 'Escape') {
+                hideMentionDropdown();
+            }
+        });
+        document.getElementById('postContent').addEventListener('input', function () {
+            updateMentionDropdown(this);
+        });
+        document.getElementById('postContent').addEventListener('blur', function () {
+            setTimeout(hideMentionDropdown, 150);
+        });
 
         async function loadThreadInfo() {
             try {
-                const res = await fetch(`/api/threads/${encodeURIComponent(threadId)}`);
+                const res = await fetch('/api/threads/' + encodeURIComponent(threadId));
                 const data = await res.json();
-                const badge = prefixBadge(data.prefix);
-                document.getElementById('thread-title').innerHTML = badge + escapeHtml(data.title || 'Untitled');
+                document.getElementById('thread-title').innerHTML = prefixBadge(data.prefix) + escapeHtml(data.title || 'Untitled');
                 document.getElementById('thread-creator').textContent = data.creator || 'Unknown';
                 document.getElementById('thread-views').textContent = (data.views || 0) + ' views';
                 threadLocked = !!data.locked;
@@ -409,49 +460,42 @@
             depth = depth || 0;
             if (!posts || !posts.length) return depth === 0 ? '<p>No posts yet.</p>' : '';
             let html = '';
-            posts.forEach((p, i) => {
+            posts.forEach(function (p, i) {
                 const isOp = depth === 0 && i === 0 && !p.parent_id;
                 const cls = isOp ? 'original-post post' : 'reply-post post';
                 const canEdit = username && (username === p.user_id || username === '20k');
                 const files = p.fileUrls && p.fileUrls.length ? p.fileUrls : (p.fileUrl ? [p.fileUrl] : []);
                 const safeUser = escapeHtml(p.user_id);
+                const jsUser = String(p.user_id || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 
-                html += `
-                <div class="${cls}" id="post-${p.id}" style="${depth ? 'margin-left:' + Math.min(depth * 20, 60) + 'px' : ''}">
-                    <div class="user-row">
-                        <img class="user-pfp" src="${escapeHtml(p.pfp || 'https://i.imgur.com/oJCfWc8.png')}" alt="">
-                        <div>
-                            <a class="username-link"
-                               href="/profile.html?user=${encodeURIComponent(p.user_id)}"
-                               data-user="${safeUser}"
-                               onmouseenter="showProfileHover('${safeUser.replace(/'/g, "\\'")}', event)"
-                               onmouseleave="hideProfileHover()">${safeUser}</a>
-                        </div>
-                    </div>
-                    <div class="post-body">${formatContent(p.content)}${renderMediaFiles(files, p.content)}</div>
-                    <div style="margin-top:8px;">
-                        ${username ? `<button class="button" style="padding:4px 10px;font-size:12px;background:transparent;border:1px solid #0165fc;color:#ccc;" onclick="setReply('${p.id}','${safeUser}')">Reply</button>` : ''}
-                    </div>
-                    ${canEdit || username ? `
-                    <button class="menu-btn" onclick="event.stopPropagation();toggleMenu('${p.id}')">⋮</button>
-                    <div class="dropdown-menu" id="menu-${p.id}">
-                        ${canEdit ? `<button onclick="editPost('${p.id}', ${JSON.stringify(p.content || '').replace(/</g, '\\u003c')})">Edit</button>` : ''}
-                        ${canEdit ? `<button onclick="openDeleteModal('${p.id}')">Delete</button>` : ''}
-                        <button onclick="openReportModal('${p.id}')">Report</button>
-                    </div>` : ''}
-                    ${p.replies && p.replies.length ? renderPosts(p.replies, depth + 1) : ''}
-                </div>`;
+                html += '<div class="' + cls + '" id="post-' + p.id + '" style="' + (depth ? 'margin-left:' + Math.min(depth * 20, 60) + 'px' : '') + '">';
+                html += '<div class="user-row"><img class="user-pfp" src="' + escapeHtml(p.pfp || 'https://i.imgur.com/oJCfWc8.png') + '" alt="">';
+                html += '<div><a class="username-link" href="/profile.html?user=' + encodeURIComponent(p.user_id) + '" ';
+                html += 'onmouseenter="showProfileHover(\'' + jsUser + '\', event)" onmouseleave="hideProfileHover()">' + safeUser + '</a></div></div>';
+                html += '<div class="post-body">' + formatContent(p.content) + renderMediaFiles(files, p.content) + '</div>';
+                html += '<div style="margin-top:8px;">';
+                if (username) {
+                    html += '<button class="button" style="padding:4px 10px;font-size:12px;background:transparent;border:1px solid #0165fc;color:#ccc;" onclick="setReply(\'' + p.id + '\',\'' + jsUser + '\')">Reply</button>';
+                }
+                html += '</div>';
+                if (canEdit || username) {
+                    html += '<button class="menu-btn" onclick="event.stopPropagation();toggleMenu(\'' + p.id + '\')">⋮</button>';
+                    html += '<div class="dropdown-menu" id="menu-' + p.id + '">';
+                    if (canEdit) {
+                        html += '<button onclick="editPost(\'' + p.id + '\', ' + JSON.stringify(p.content || '').replace(/</g, '\\u003c') + ')">Edit</button>';
+                        html += '<button onclick="openDeleteModal(\'' + p.id + '\')">Delete</button>';
+                    }
+                    html += '<button onclick="openReportModal(\'' + p.id + '\')">Report</button></div>';
+                }
+                if (p.replies && p.replies.length) html += renderPosts(p.replies, depth + 1);
+                html += '</div>';
             });
             return html;
         }
 
         async function loadPosts() {
             try {
-                const res = await fetch(`/api/threads/${encodeURIComponent(threadId)}`);
-                // fixed: posts endpoint
-            } catch (e) {}
-            try {
-                const res = await fetch(`/api/threads/${encodeURIComponent(threadId)}/posts`);
+                const res = await fetch('/api/threads/' + encodeURIComponent(threadId) + '/posts');
                 const posts = await res.json();
                 document.getElementById('postsList').innerHTML = renderPosts(posts);
             } catch (e) {
@@ -460,21 +504,21 @@
         }
 
         function toggleMenu(id) {
-            document.querySelectorAll('.dropdown-menu').forEach(m => {
+            document.querySelectorAll('.dropdown-menu').forEach(function (m) {
                 if (m.id !== 'menu-' + id) m.style.display = 'none';
             });
             const el = document.getElementById('menu-' + id);
             if (el) el.style.display = el.style.display === 'block' ? 'none' : 'block';
         }
-        document.addEventListener('click', () => {
-            document.querySelectorAll('.dropdown-menu').forEach(m => m.style.display = 'none');
+        document.addEventListener('click', function () {
+            document.querySelectorAll('.dropdown-menu').forEach(function (m) { m.style.display = 'none'; });
         });
 
         function setReply(parentId, user) {
             replyParentId = parentId;
             const t = document.getElementById('replyTarget');
             t.style.display = 'block';
-            t.innerHTML = `Replying to <strong>${user}</strong> <span class="cancel-reply" style="color:#ff4444;cursor:pointer;" onclick="cancelReply()">[cancel]</span>`;
+            t.innerHTML = 'Replying to <strong>' + escapeHtml(user) + '</strong> <span style="color:#ff4444;cursor:pointer;" onclick="cancelReply()">[cancel]</span>';
             document.getElementById('cancelReplyBtn').style.display = 'inline-block';
             document.getElementById('postContent').focus();
         }
@@ -491,9 +535,9 @@
             const box = document.getElementById('postContent');
             status.textContent = 'Uploading...';
             uploadedUrls = [];
-            for (let file of files) {
+            for (let i = 0; i < files.length; i++) {
                 const fd = new FormData();
-                fd.append('file', file);
+                fd.append('file', files[i]);
                 try {
                     const r = await fetch('/api/upload', { method: 'POST', body: fd });
                     const d = await r.json();
@@ -504,26 +548,25 @@
                 } catch (e) {}
             }
             status.textContent = uploadedUrls.length
-                ? `Uploaded ${uploadedUrls.length} file(s) — links added`
+                ? 'Uploaded ' + uploadedUrls.length + ' file(s) — links added'
                 : 'Upload failed (check Cloudinary keys)';
         });
 
-        document.getElementById('replyForm').addEventListener('submit', async (e) => {
+        document.getElementById('replyForm').addEventListener('submit', async function (e) {
             e.preventDefault();
             if (!username) return showNotification('Login required', '#ff4444');
             const content = document.getElementById('postContent').value.trim();
             if (!content && !uploadedUrls.length) {
                 return showNotification('Add some words to post the reply!', '#ff4444');
             }
-
             try {
                 const res = await fetch('/api/posts', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        content,
+                        content: content,
                         thread_id: threadId,
-                        username,
+                        username: username,
                         fileUrls: uploadedUrls,
                         parent_id: replyParentId
                     })
@@ -554,13 +597,10 @@
             currentEditId = null;
         }
         async function saveEdit() {
-            await fetch(`/api/posts/${currentEditId}`, {
+            await fetch('/api/posts/' + currentEditId, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    username,
-                    content: document.getElementById('editContent').value
-                })
+                body: JSON.stringify({ username: username, content: document.getElementById('editContent').value })
             });
             closeEditModal();
             loadPosts();
@@ -576,10 +616,10 @@
         }
         async function confirmDeletePost() {
             if (!currentDeleteId) return;
-            await fetch(`/api/posts/${currentDeleteId}`, {
+            await fetch('/api/posts/' + currentDeleteId, {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username })
+                body: JSON.stringify({ username: username })
             });
             closeDeleteModal();
             loadPosts();
@@ -599,7 +639,7 @@
             await fetch('/api/report', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ post_id: currentReportId, reported_by: username, reason })
+                body: JSON.stringify({ post_id: currentReportId, reported_by: username, reason: reason })
             });
             closeReportModal();
             showNotification('Report submitted', '#00cc66');
@@ -608,11 +648,11 @@
         async function checkBan() {
             if (!username) return;
             try {
-                const res = await fetch(`/api/check-ban/${encodeURIComponent(username)}`);
+                const res = await fetch('/api/check-ban/' + encodeURIComponent(username));
                 const data = await res.json();
                 if (data.banned) {
                     localStorage.clear();
-                    window.location.href = `/banned.html?reason=${encodeURIComponent(data.reason || 'No reason')}&type=${data.type || 'permanent'}`;
+                    window.location.href = '/banned.html?reason=' + encodeURIComponent(data.reason || 'No reason') + '&type=' + (data.type || 'permanent');
                 }
             } catch (e) {}
         }

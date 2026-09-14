@@ -101,6 +101,27 @@ async function createAlert({ to_user, from_user, type, message, link, threadTitl
     }
 }
 
+async function notifyMentions(text, fromUser, link, threadTitle) {
+    if (!text || !fromUser) return;
+    const mentionRegex = /@([a-zA-Z0-9_]{1,32})/g;
+    const mentioned = new Set();
+    let m;
+    while ((m = mentionRegex.exec(text)) !== null) mentioned.add(m[1]);
+    for (const name of mentioned) {
+        if (name === fromUser) continue;
+        const exists = await User.findOne({ username: name });
+        if (!exists) continue;
+        await createAlert({
+            to_user: name,
+            from_user: fromUser,
+            type: 'mention',
+            message: fromUser + ' tagged you',
+            threadTitle: threadTitle || '',
+            link: link || '/'
+        });
+    }
+}
+
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 app.get('/register', (req, res) => res.sendFile(path.join(__dirname, 'public', 'register.html')));
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
@@ -243,6 +264,7 @@ app.post('/api/announcements', async (req, res) => {
     try {
         const { content, author } = req.body;
         if (author !== "20k") return res.json({ success: false, message: "Only 20k can post announcements" });
+        await notifyMentions(content, '20k', '/', 'Announcement');
         await new Announcement({
             id: Date.now().toString(36),
             content: content.trim(),
@@ -292,6 +314,7 @@ app.post('/api/announcements/:id/pin', async (req, res) => {
 app.post('/api/admin/banner', async (req, res) => {
     try {
         const { username, text, imageUrl } = req.body;
+        if (text) await notifyMentions(text, '20k', '/', 'Global banner');
         if (username !== "20k") return res.json({ success: false, message: "No permission" });
         await GlobalBanner.findOneAndUpdate(
             { active: true },
@@ -377,6 +400,40 @@ app.post('/api/posts', async (req, res) => {
                         threadTitle: (thread && thread.title) || "",
                         link: `/thread.html?id=${thread_id}#post-${parent_id}`
                     });
+
+                            // @mentions → alerts
+
+    await notifyMentions(
+    content,
+    username,
+    '/thread.html?id=' + thread_id + '&title=' + encodeURIComponent((threadCheck && threadCheck.title) || ''),
+    (threadCheck && threadCheck.title) || ''
+);
+        try {
+            const mentionRegex = /@([a-zA-Z0-9_]{1,32})/g;
+            const mentioned = new Set();
+            let m;
+            const text = content || '';
+            while ((m = mentionRegex.exec(text)) !== null) {
+                mentioned.add(m[1]);
+            }
+            for (const name of mentioned) {
+                if (name === username) continue;
+                const exists = await User.findOne({ username: name });
+                if (!exists) continue;
+                await createAlert({
+                    to_user: name,
+                    from_user: username,
+                    type: 'mention',
+                    message: `${username} tagged you`,
+                    threadTitle: (threadCheck && threadCheck.title) || '',
+                    link: `/thread.html?id=${thread_id}&title=${encodeURIComponent((threadCheck && threadCheck.title) || '')}`
+                });
+            }
+        } catch (e) {
+            console.error('Mention alert error:', e);
+        }
+
                 }
             }
         } catch (e) {}
@@ -429,6 +486,13 @@ app.post('/api/threads', async (req, res) => {
                 return res.json({ success: false, message: "Only Owner, Moderator, and Janitor can post in News & Announcements" });
             }
         }
+
+        await notifyMentions(
+    content || '',
+    username,
+    '/thread.html?id=' + thread.id + '&title=' + encodeURIComponent(title || ''),
+    title || ''
+);
 
         const thread = new Thread({
             id: Date.now().toString(36),
@@ -908,6 +972,42 @@ app.post('/api/threads/:threadId/pin', async (req, res) => {
         res.json({ success: true, message: thread.pinned ? "📌 Pinned" : "📌 Unpinned" });
     } catch (err) {
         res.json({ success: false, message: "Server error" });
+    }
+});
+
+app.get('/api/users/suggest', async (req, res) => {
+    try {
+        const q = (req.query.q || '').trim();
+        if (!q || q.length < 1) return res.json([]);
+        const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const users = await User.find({
+            username: { $regex: '^' + escaped, $options: 'i' }
+        }).limit(8).select('username pfp title');
+        res.json(users.map(u => ({
+            username: u.username,
+            pfp: u.pfp || 'https://i.imgur.com/oJCfWc8.png',
+            title: u.title || (u.username === '20k' ? 'Owner' : 'Member')
+        })));
+    } catch (err) {
+        res.json([]);
+    }
+});
+
+app.get('/api/users/suggest', async (req, res) => {
+    try {
+        const q = (req.query.q || '').trim();
+        if (!q) return res.json([]);
+        const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const users = await User.find({
+            username: { $regex: '^' + escaped, $options: 'i' }
+        }).limit(8).select('username pfp title');
+        res.json(users.map(u => ({
+            username: u.username,
+            pfp: u.pfp || 'https://i.imgur.com/oJCfWc8.png',
+            title: u.title || (u.username === '20k' ? 'Owner' : 'Member')
+        })));
+    } catch (e) {
+        res.json([]);
     }
 });
 
