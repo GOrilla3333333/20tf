@@ -961,6 +961,34 @@ app.delete('/api/admin/thread/:threadId', async (req, res) => {
     res.json({ success: true, message: "Thread deleted" });
 });
 
+app.get('/api/admin/users', async (req, res) => {
+    try {
+        const admin = (req.query.admin || '').trim();
+        if (admin !== '20k') {
+            return res.json({ success: false, message: 'No permission', users: [] });
+        }
+        const users = await User.find({})
+            .select('username title banned banReason banType created_at pfp')
+            .sort({ created_at: -1 })
+            .lean();
+        res.json({
+            success: true,
+            users: users.map(u => ({
+                username: u.username,
+                title: u.title || (u.username === '20k' ? 'Owner' : 'Member'),
+                banned: !!u.banned,
+                banReason: u.banReason || '',
+                banType: u.banType || '',
+                pfp: u.pfp || 'https://i.imgur.com/oJCfWc8.png',
+                created_at: u.created_at
+            }))
+        });
+    } catch (err) {
+        console.error(err);
+        res.json({ success: false, message: 'Server error', users: [] });
+    }
+});
+
 app.post('/api/threads/:threadId/pin', async (req, res) => {
     try {
         const { username } = req.body;
