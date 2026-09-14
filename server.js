@@ -53,17 +53,39 @@ const Announcement = require('./models/Announcement');
 const ProfileComment = require('./models/ProfileComment');
 const Alert = require('./models/Alert');
 
-async function createAlert({ to_user, from_user, type, message, link, threadTitle }) {
-    if (!to_user || !from_user) {
-        console.log("Alert skipped (missing user):", { to_user, from_user });
-        return;
-    }
-    if (to_user === from_user) {
-        console.log("Alert skipped (same user):", to_user);
-        return;
-    }
+async function canMod(username) {
+    if (!username) return false;
+    if (username === "20k") return true;
+    const user = await User.findOne({ username });
+    if (!user) return false;
+    const t = (user.title || "").toLowerCase();
+    return t === "owner" || t === "moderator" || t === "mod";
+}
+
+async function canStaff(username) {
+    if (!username) return false;
+    if (username === "20k") return true;
+    const user = await User.findOne({ username });
+    if (!user) return false;
+    const t = (user.title || "").toLowerCase();
+    return t === "owner" || t === "moderator" || t === "mod" || t === "janitor";
+}
+
+async function pingUser(username) {
+    if (!username) return;
     try {
-        const alert = await new Alert({
+        await User.collection.updateOne(
+            { username },
+            { $set: { lastSeen: new Date() } }
+        );
+    } catch (e) {}
+}
+
+async function createAlert({ to_user, from_user, type, message, link, threadTitle }) {
+    if (!to_user || !from_user) return;
+    if (to_user === from_user) return;
+    try {
+        await new Alert({
             id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
             to_user,
             from_user,
@@ -74,13 +96,11 @@ async function createAlert({ to_user, from_user, type, message, link, threadTitl
             read: false,
             created_at: new Date()
         }).save();
-        console.log("✅ Alert created:", alert.id, "→", to_user, "|", message, threadTitle || "");
     } catch (e) {
         console.error("createAlert error:", e);
     }
 }
 
-// HTML
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 app.get('/register', (req, res) => res.sendFile(path.join(__dirname, 'public', 'register.html')));
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
@@ -94,7 +114,6 @@ app.get('/banned.html', (req, res) => res.sendFile(path.join(__dirname, 'public'
 app.get('/search.html', (req, res) => res.sendFile(path.join(__dirname, 'public', 'search.html')));
 app.get('/alerts.html', (req, res) => res.sendFile(path.join(__dirname, 'public', 'alerts.html')));
 
-// AUTH
 app.post('/api/register', async (req, res) => {
     try {
         const { username, password } = req.body;
@@ -104,7 +123,6 @@ app.post('/api/register', async (req, res) => {
         await new User({ username, password, banned: false, tosAccepted: false, title: "Member" }).save();
         res.json({ success: true, message: "Account created" });
     } catch (err) {
-        console.error(err);
         res.json({ success: false, message: "Server error" });
     }
 });
@@ -115,10 +133,10 @@ app.post('/api/login', async (req, res) => {
         const user = await User.findOne({ username, password });
         if (!user) return res.json({ success: false, message: "Invalid credentials" });
         if (user.banned) return res.json({ success: false, message: "User is banned" });
+        pingUser(username);
         if (!user.tosAccepted) return res.json({ success: true, redirect: "/tos.html" });
         res.json({ success: true, message: "Login successful" });
     } catch (err) {
-        console.error(err);
         res.json({ success: false, message: "Server error" });
     }
 });
@@ -130,33 +148,24 @@ app.post('/api/accept-tos', async (req, res) => {
         await User.findOneAndUpdate({ username }, { tosAccepted: true });
         res.json({ success: true });
     } catch (err) {
-        console.error(err);
         res.json({ success: false });
     }
 });
 
-// UPLOAD
 app.post('/api/upload', (req, res) => {
     upload.single('file')(req, res, async function (err) {
         try {
-            if (err) {
-                console.error("Upload error:", err);
-                return res.json({ success: false, message: "Upload error: " + err.message });
-            }
+            if (err) return res.json({ success: false, message: "Upload error: " + err.message });
             if (!req.file) return res.json({ success: false, message: "No file received" });
             console.log("✅ File uploaded:", req.file.path);
             res.json({ success: true, url: req.file.path });
         } catch (e) {
-            console.error(e);
             res.json({ success: false, message: "Upload failed" });
         }
     });
 });
 
-// FORUMS
-app.get('/api/forums', async (req, res) => {
-    res.json(await Forum.find());
-});
+app.get('/api/forums', async (req, res) => res.json(await Forum.find()));
 
 app.post('/api/forums', async (req, res) => {
     const { name, description } = req.body;
@@ -166,7 +175,7 @@ app.post('/api/forums', async (req, res) => {
 
 app.get('/api/forum-stats', async (req, res) => {
     try {
-        const forums = ['pit', 'srs', 'br', 'crt', 'cnfs', 'ot'];
+        const forums = ['pit', 'srs', 'br', 'pol', 'crt', 'media', 'tech', 'cnfs', 'ot', 'qna', 'news'];
         const stats = {};
         for (const id of forums) {
             const threads = await Thread.find({ forum_id: id });
@@ -197,7 +206,6 @@ app.get('/api/forum-stats', async (req, res) => {
         }
         res.json(stats);
     } catch (err) {
-        console.error(err);
         res.json({});
     }
 });
@@ -212,17 +220,17 @@ app.get('/api/forums/:forumId/threads', async (req, res) => {
             result.push({
                 ...thread.toObject(),
                 postCount: posts.length,
-                views: thread.views || 0
+                views: thread.views || 0,
+                locked: !!thread.locked,
+                prefix: thread.prefix || ""
             });
         }
         res.json(result);
     } catch (err) {
-        console.error("ERROR loading threads:", err);
         res.status(500).json({ error: "Failed to load discussions" });
     }
 });
 
-// ANNOUNCEMENTS
 app.get('/api/announcements', async (req, res) => {
     try {
         res.json(await Announcement.find().sort({ pinned: -1, created_at: -1 }));
@@ -281,7 +289,6 @@ app.post('/api/announcements/:id/pin', async (req, res) => {
     }
 });
 
-// BANNER
 app.post('/api/admin/banner', async (req, res) => {
     try {
         const { username, text, imageUrl } = req.body;
@@ -302,7 +309,6 @@ app.get('/api/global-banner', async (req, res) => {
     res.json(banner || { active: false });
 });
 
-// THREADS / POSTS
 app.get('/api/threads/:threadId', async (req, res) => {
     try {
         const thread = await Thread.findOne({ id: String(req.params.threadId) });
@@ -315,7 +321,9 @@ app.get('/api/threads/:threadId', async (req, res) => {
             title: thread.title,
             creator: thread.user_id,
             created_at: thread.created_at,
-            views: thread.views
+            views: thread.views,
+            locked: !!thread.locked,
+            prefix: thread.prefix || ""
         });
     } catch (err) {
         res.json({ success: false, title: "Thread not found", creator: "Unknown" });
@@ -326,6 +334,12 @@ app.post('/api/posts', async (req, res) => {
     try {
         const { content, thread_id, username, fileUrl, fileUrls, parent_id } = req.body;
         if (!thread_id || !username) return res.json({ success: false, message: "Missing required fields" });
+
+        const threadCheck = await Thread.findOne({ id: String(thread_id) });
+        if (threadCheck && threadCheck.locked) {
+            const isMod = await canMod(username);
+            if (!isMod) return res.json({ success: false, message: "This thread is locked" });
+        }
 
         const allFiles = Array.isArray(fileUrls) ? fileUrls : (fileUrl ? [fileUrl] : []);
         const post = new Post({
@@ -339,13 +353,9 @@ app.post('/api/posts', async (req, res) => {
             created_at: new Date()
         });
         await post.save();
-        console.log("✅ Post saved:", post.id, "by", username, "thread", thread_id);
 
         try {
-            console.log("Creating alerts for post by", username, "thread", thread_id);
-            const thread = await Thread.findOne({ id: String(thread_id) });
-            console.log("Thread for alert:", thread ? { id: thread.id, user_id: thread.user_id, title: thread.title } : "NOT FOUND");
-
+            const thread = threadCheck || await Thread.findOne({ id: String(thread_id) });
             if (thread && thread.user_id) {
                 await createAlert({
                     to_user: thread.user_id,
@@ -356,10 +366,8 @@ app.post('/api/posts', async (req, res) => {
                     link: `/thread.html?id=${thread.id}&title=${encodeURIComponent(thread.title || "")}`
                 });
             }
-
             if (parent_id) {
                 const parent = await Post.findOne({ id: String(parent_id) });
-                console.log("Parent post for alert:", parent ? parent.user_id : "NOT FOUND");
                 if (parent && parent.user_id && parent.user_id !== (thread && thread.user_id)) {
                     await createAlert({
                         to_user: parent.user_id,
@@ -371,13 +379,10 @@ app.post('/api/posts', async (req, res) => {
                     });
                 }
             }
-        } catch (e) {
-            console.error("Alert error:", e);
-        }
+        } catch (e) {}
 
         res.json({ success: true, message: parent_id ? "Reply posted!" : "Post created!" });
     } catch (err) {
-        console.error("Post creation error:", err);
         res.json({ success: false, message: "Server error" });
     }
 });
@@ -410,22 +415,29 @@ app.get('/api/threads/:threadId/posts', async (req, res) => {
         });
         res.json(tree);
     } catch (err) {
-        console.error(err);
         res.json([]);
     }
 });
 
 app.post('/api/threads', async (req, res) => {
     try {
-        const { title, content, forum_id, username, fileUrl, fileUrls } = req.body;
+        const { title, content, forum_id, username, fileUrl, fileUrls, prefix } = req.body;
         if (!title || !forum_id || !username) return res.json({ success: false, message: "Missing fields" });
+
+        if (String(forum_id) === "news") {
+            if (!(await canStaff(username))) {
+                return res.json({ success: false, message: "Only Owner, Moderator, and Janitor can post in News & Announcements" });
+            }
+        }
 
         const thread = new Thread({
             id: Date.now().toString(36),
             title,
             forum_id: String(forum_id),
             user_id: username,
+            prefix: (prefix || "").trim().slice(0, 32),
             pinned: false,
+            locked: false,
             views: 0,
             created_at: new Date()
         });
@@ -450,7 +462,26 @@ app.post('/api/threads', async (req, res) => {
     }
 });
 
-// PROFILE
+app.post('/api/threads/:threadId/lock', async (req, res) => {
+    try {
+        const { username } = req.body;
+        if (!(await canMod(username))) {
+            return res.json({ success: false, message: "Only Owner/Moderator can lock threads" });
+        }
+        const thread = await Thread.findOne({ id: String(req.params.threadId) });
+        if (!thread) return res.json({ success: false, message: "Thread not found" });
+        thread.locked = !thread.locked;
+        await thread.save();
+        res.json({
+            success: true,
+            locked: thread.locked,
+            message: thread.locked ? "🔒 Thread locked" : "🔓 Thread unlocked"
+        });
+    } catch (err) {
+        res.json({ success: false, message: "Server error" });
+    }
+});
+
 app.post('/api/profile/update', async (req, res) => {
     try {
         const { username, bio, pfp, banner } = req.body;
@@ -471,7 +502,6 @@ app.post('/api/profile/update', async (req, res) => {
             bio: user.bio || ""
         });
     } catch (err) {
-        console.error(err);
         res.json({ success: false, message: "Server error" });
     }
 });
@@ -494,7 +524,6 @@ app.get('/api/profile/:username', async (req, res) => {
             created_at: user.created_at
         });
     } catch (err) {
-        console.error(err);
         res.json({ success: false, message: "Server error" });
     }
 });
@@ -527,7 +556,6 @@ app.post('/api/profile/:username/comments', async (req, res) => {
         }
         const target = await User.findOne({ username: req.params.username });
         if (!target) return res.json({ success: false, message: "User not found" });
-
         await new ProfileComment({
             id: Date.now().toString(36),
             profile_username: req.params.username,
@@ -535,7 +563,6 @@ app.post('/api/profile/:username/comments', async (req, res) => {
             content: content.trim(),
             created_at: new Date()
         }).save();
-
         await createAlert({
             to_user: req.params.username,
             from_user: username,
@@ -544,10 +571,8 @@ app.post('/api/profile/:username/comments', async (req, res) => {
             threadTitle: "",
             link: `/profile.html?user=${encodeURIComponent(req.params.username)}`
         });
-
         res.json({ success: true, message: "Comment posted" });
     } catch (err) {
-        console.error(err);
         res.json({ success: false, message: "Server error" });
     }
 });
@@ -603,14 +628,12 @@ app.get('/api/profile/:username/activity', async (req, res) => {
     }
 });
 
-// ALERTS
 app.get('/api/alerts/:username', async (req, res) => {
     try {
         const alerts = await Alert.find({ to_user: req.params.username }).sort({ created_at: -1 }).limit(50);
         const unread = await Alert.countDocuments({ to_user: req.params.username, read: false });
         res.json({ alerts, unread });
     } catch (err) {
-        console.error(err);
         res.json({ alerts: [], unread: 0 });
     }
 });
@@ -636,7 +659,6 @@ app.post('/api/alerts/:id/read', async (req, res) => {
     }
 });
 
-// ADMIN TITLE
 app.post('/api/admin/title', async (req, res) => {
     try {
         const { admin, targetUsername, title } = req.body;
@@ -650,12 +672,10 @@ app.post('/api/admin/title', async (req, res) => {
         if (result.matchedCount === 0) return res.json({ success: false, message: "User not found" });
         res.json({ success: true, message: `Title for ${targetUsername} set to "${cleanTitle}"` });
     } catch (err) {
-        console.error(err);
         res.json({ success: false, message: "Server error" });
     }
 });
 
-// SEARCH
 app.get('/api/search', async (req, res) => {
     try {
         const raw = (req.query.q || "").trim();
@@ -710,7 +730,8 @@ app.get('/api/search', async (req, res) => {
                     forum_id: t.forum_id,
                     user_id: t.user_id,
                     created_at: t.created_at,
-                    pinned: t.pinned || false
+                    pinned: t.pinned || false,
+                    prefix: t.prefix || ""
                 }));
             }
             return res.json({ users: [], threads });
@@ -736,16 +757,15 @@ app.get('/api/search', async (req, res) => {
             forum_id: t.forum_id,
             user_id: t.user_id,
             created_at: t.created_at,
-            pinned: t.pinned || false
+            pinned: t.pinned || false,
+            prefix: t.prefix || ""
         }));
         res.json({ users, threads });
     } catch (err) {
-        console.error("Search error:", err);
         res.json({ users: [], threads: [] });
     }
 });
 
-// OTHER
 app.put('/api/posts/:postId', async (req, res) => {
     const { username, content } = req.body;
     const post = await Post.findOne({ id: req.params.postId });
@@ -789,9 +809,7 @@ app.post('/api/report', async (req, res) => {
     res.json({ success: true, message: "Report submitted" });
 });
 
-app.get('/api/reports', async (req, res) => {
-    res.json(await Report.find().sort({ created_at: -1 }));
-});
+app.get('/api/reports', async (req, res) => res.json(await Report.find().sort({ created_at: -1 })));
 
 app.post('/api/reports/:id/review', async (req, res) => {
     const report = await Report.findOne({ id: req.params.id });
@@ -804,6 +822,7 @@ app.post('/api/reports/:id/review', async (req, res) => {
 app.get('/api/check-ban/:username', async (req, res) => {
     try {
         const user = await User.findOne({ username: req.params.username });
+        if (user) pingUser(user.username);
         if (user && user.banned) {
             return res.json({
                 banned: true,
@@ -814,6 +833,40 @@ app.get('/api/check-ban/:username', async (req, res) => {
         res.json({ banned: false });
     } catch (err) {
         res.status(500).json({ banned: false, error: true });
+    }
+});
+
+app.post('/api/heartbeat', async (req, res) => {
+    try {
+        const { username } = req.body;
+        if (username) await pingUser(username);
+        res.json({ success: true });
+    } catch (err) {
+        res.json({ success: false });
+    }
+});
+
+app.get('/api/online-stats', async (req, res) => {
+    try {
+        const cutoff = new Date(Date.now() - 5 * 60 * 1000);
+        const [members, threads, posts, onlineUsers] = await Promise.all([
+            User.countDocuments({}),
+            Thread.countDocuments({}),
+            Post.countDocuments({}),
+            User.find({ lastSeen: { $gte: cutoff } })
+                .select('username pfp title lastSeen')
+                .sort({ lastSeen: -1 })
+                .limit(80)
+                .lean()
+        ]);
+        const online = onlineUsers.map(u => ({
+            username: u.username,
+            pfp: u.pfp || "https://i.imgur.com/oJCfWc8.png",
+            title: u.title || (u.username === "20k" ? "Owner" : "Member")
+        }));
+        res.json({ members, threads, posts, onlineCount: online.length, online });
+    } catch (err) {
+        res.json({ members: 0, threads: 0, posts: 0, onlineCount: 0, online: [] });
     }
 });
 

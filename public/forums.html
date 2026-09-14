@@ -8,70 +8,58 @@
     <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="https://i.imgur.com/oJCfWc8.png">
     <style>
-        .category {
-            margin-bottom: 28px;
-        }
+        .category { margin-bottom: 28px; }
         .category-title {
-            color: #fffd01;
-            font-size: 1.25em;
-            margin-bottom: 10px;
-            padding-bottom: 4px;
-            border-bottom: 2px solid #0165fc;
+            color: #fffd01; font-size: 1.25em; margin-bottom: 10px;
+            padding-bottom: 4px; border-bottom: 2px solid #0165fc;
         }
         .board {
-            background: #1e2f4f;
-            border: 2px solid #0165fc;
-            border-radius: 8px;
-            padding: 14px 18px;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            cursor: pointer;
-            transition: all 0.2s;
+            background: #1e2f4f; border: 2px solid #0165fc; border-radius: 8px;
+            padding: 14px 18px; margin-bottom: 10px; display: flex;
+            align-items: center; cursor: pointer; transition: all 0.2s; gap: 12px;
         }
-        .board:hover {
-            background: #2a3f5f;
-            border-color: #fffd01;
+        .board:hover { background: #2a3f5f; border-color: #fffd01; }
+        .board-name { flex: 1; font-size: 1.15em; color: white; min-width: 140px; }
+        .board-desc { flex: 2; color: #aaa; }
+        .board-stats { text-align: right; color: #ccc; font-size: 0.95em; min-width: 100px; }
+        .board-last { flex: 1.4; text-align: right; color: #ccc; font-size: 0.85em; min-width: 160px; }
+        .board-last a { color: #fffd01; text-decoration: none; }
+        .board-last a:hover { text-decoration: underline; }
+        .staff-tag { color: #fffd01; font-size: 0.75em; }
+        .stats-box {
+            background: #1e2f4f; border: 2px solid #0165fc; border-radius: 8px;
+            padding: 16px 18px; margin: 28px 0 40px;
         }
-        .board-name {
-            flex: 1;
-            font-size: 1.2em;
-            color: white;
-            min-width: 140px;
+        .stats-box h3 { color: #fffd01; margin: 0 0 12px 0; font-size: 1.15em; }
+        .stats-row { display: flex; gap: 24px; flex-wrap: wrap; color: white; margin-bottom: 14px; }
+        .stat { background: #0f1b2e; border: 1px solid #0165fc; border-radius: 6px; padding: 8px 14px; }
+        .stat strong { color: #fffd01; }
+        .online-list { color: #ccc; line-height: 1.7; }
+        .online-list a { color: #0165fc; text-decoration: none; font-weight: bold; }
+        .online-list a:hover { color: #fffd01; text-decoration: underline; }
+        .online-empty { color: #888; }
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); display: none; align-items: center;
+            justify-content: center; z-index: 10000;
         }
-        .board-desc {
-            flex: 2;
-            color: #aaa;
+        .modal-content {
+            background: #1e2f4f; padding: 25px; border-radius: 12px;
+            border: 3px solid #0165fc; width: 90%; max-width: 400px; color: white; text-align: center;
         }
-        .board-stats {
-            text-align: right;
-            color: #ccc;
-            font-size: 0.95em;
-            min-width: 90px;
+        .button {
+            padding: 10px 20px; margin: 10px 5px; border: none; border-radius: 6px;
+            cursor: pointer; font-weight: bold; color: white; background: #0165fc;
         }
-        .board-latest {
-            text-align: right;
-            min-width: 170px;
-            color: #aaa;
-            font-size: 0.9em;
-            line-height: 1.35;
-        }
-        .board-latest a {
-            color: #fffd01;
-            text-decoration: none;
-        }
-        .board-latest a:hover {
-            text-decoration: underline;
-        }
-        .board-latest strong {
-            color: #e2e8f0;
+        @media (max-width: 700px) {
+            .board { flex-direction: column; align-items: flex-start; }
+            .board-stats, .board-last { text-align: left; }
         }
     </style>
 </head>
 <body>
     <header>
-        <img src="https://i.imgur.com/oJCfWc8.png" class="logo">
+        <img src="https://i.imgur.com/oJCfWc8.png" alt="Logo" class="logo">
         <h1>20Thousand Forums</h1>
     </header>
 
@@ -83,165 +71,201 @@
         <span id="user-nav"></span>
     </nav>
 
-    <form action="/search.html" method="get" style="display:inline;">
-  <input name="q" placeholder="user: / d1sc:" style="padding:4px 8px; border-radius:4px; border:1px solid #0165fc; background:#0f1b2e; color:white;">
-</form>
-
     <div id="global-banner" style="display:none; background:#fffd01; color:#162437; padding:12px; text-align:center; font-weight:bold;"></div>
 
     <div class="container">
         <h2>Boards (s1k/)</h2>
 
-        <!-- General -->
+        <div class="category">
+            <div class="category-title">Site Information</div>
+            <div class="board" onclick="goBoard('news','News & Announcements')">
+                <div class="board-name">s1k/news/</div>
+                <div class="board-desc">Official news & announcements<br><span class="staff-tag">Staff only (Owner / Moderator / Janitor)</span></div>
+                <div class="board-stats">d1scs: <span id="news-threads">--</span></div>
+                <div class="board-last" id="news-last">—</div>
+            </div>
+            <div class="board" onclick="window.location.href='/tos.html'">
+                <div class="board-name">s1k/laws/</div>
+                <div class="board-desc">The 20Thousand Commandments (rules)</div>
+                <div class="board-stats">Read</div>
+                <div class="board-last">→ TOS</div>
+            </div>
+        </div>
+
         <div class="category">
             <div class="category-title">General</div>
-
-            <div class="board" onclick="window.location.href='/thread-list.html?id=pit&name=The Pit'">
-                <div class="board-name">/pit/ — The Pit</div>
+            <div class="board" onclick="goBoard('pit','The Pit')">
+                <div class="board-name">s1k/pit/</div>
                 <div class="board-desc">Main board • Everything goes</div>
-                <div class="board-stats">Threads: <span id="pit-threads">—</span></div>
-                <div class="board-latest" id="pit-latest">—</div>
+                <div class="board-stats">d1scs: <span id="pit-threads">--</span></div>
+                <div class="board-last" id="pit-last">—</div>
             </div>
-
-            <div class="board" onclick="window.location.href='/thread-list.html?id=srs&name=Serious'">
-                <div class="board-name">/srs/ — Serious</div>
+            <div class="board" onclick="goBoard('srs','Serious')">
+                <div class="board-name">s1k/srs/</div>
                 <div class="board-desc">Real talk, debates & long posts</div>
-                <div class="board-stats">Threads: <span id="srs-threads">—</span></div>
-                <div class="board-latest" id="srs-latest">—</div>
+                <div class="board-stats">d1scs: <span id="srs-threads">--</span></div>
+                <div class="board-last" id="srs-last">—</div>
             </div>
-        </div>
-
-        <!-- Brainrot -->
-        <div class="category">
-            <div class="category-title">Brainrot</div>
-
-            <div class="board" onclick="window.location.href='/thread-list.html?id=br&name=Brainrot'">
-                <div class="board-name">/br/ — Brainrot</div>
+            <div class="board" onclick="goBoard('pol','Politics')">
+                <div class="board-name">s1k/pol/</div>
+                <div class="board-desc">Politics, news & current events</div>
+                <div class="board-stats">d1scs: <span id="pol-threads">--</span></div>
+                <div class="board-last" id="pol-last">—</div>
+            </div>
+            <div class="board" onclick="goBoard('br','Brainrot')">
+                <div class="board-name">s1k/br/</div>
                 <div class="board-desc">Memes, crapposting & degeneracy</div>
-                <div class="board-stats">Threads: <span id="br-threads">—</span></div>
-                <div class="board-latest" id="br-latest">—</div>
+                <div class="board-stats">d1scs: <span id="br-threads">--</span></div>
+                <div class="board-last" id="br-last">—</div>
             </div>
         </div>
 
-        <!-- Creativity -->
         <div class="category">
-            <div class="category-title">Creativity</div>
-
-            <div class="board" onclick="window.location.href='/thread-list.html?id=crt&name=Creativity'">
-                <div class="board-name">/crt/ — Creativity</div>
+            <div class="category-title">Creative</div>
+            <div class="board" onclick="goBoard('crt','Creativity')">
+                <div class="board-name">s1k/crt/</div>
                 <div class="board-desc">Art, edits, music & OC</div>
-                <div class="board-stats">Threads: <span id="crt-threads">—</span></div>
-                <div class="board-latest" id="crt-latest">—</div>
+                <div class="board-stats">d1scs: <span id="crt-threads">--</span></div>
+                <div class="board-last" id="crt-last">—</div>
+            </div>
+            <div class="board" onclick="goBoard('media','Media')">
+                <div class="board-name">s1k/media/</div>
+                <div class="board-desc">Movies, TV, games & streams</div>
+                <div class="board-stats">d1scs: <span id="media-threads">--</span></div>
+                <div class="board-last" id="media-last">—</div>
+            </div>
+            <div class="board" onclick="goBoard('tech','Tech')">
+                <div class="board-name">s1k/tech/</div>
+                <div class="board-desc">Computers, software & gadgets</div>
+                <div class="board-stats">d1scs: <span id="tech-threads">--</span></div>
+                <div class="board-last" id="tech-last">—</div>
             </div>
         </div>
 
-        <!-- Meta -->
         <div class="category">
             <div class="category-title">Meta</div>
-
-            <div class="board" onclick="window.location.href='/thread-list.html?id=cnfs&name=Confessions'">
-                <div class="board-name">/cnfs/ — Confessions</div>
-                <div class="board-desc">Anonymous vents, stories & thoughts</div>
-                <div class="board-stats">Threads: <span id="cnfs-threads">—</span></div>
-                <div class="board-latest" id="cnfs-latest">—</div>
+            <div class="board" onclick="goBoard('cnfs','Confessions')">
+                <div class="board-name">s1k/cnfs/</div>
+                <div class="board-desc">Vents, stories & thoughts</div>
+                <div class="board-stats">d1scs: <span id="cnfs-threads">--</span></div>
+                <div class="board-last" id="cnfs-last">—</div>
             </div>
-
-            <div class="board" onclick="window.location.href='/thread-list.html?id=ot&name=Off-Topic'">
-                <div class="board-name">/ot/ — Off-Topic</div>
+            <div class="board" onclick="goBoard('ot','Off-Topic')">
+                <div class="board-name">s1k/ot/</div>
                 <div class="board-desc">Random nonsense & tangents</div>
-                <div class="board-stats">Threads: <span id="ot-threads">—</span></div>
-                <div class="board-latest" id="ot-latest">—</div>
+                <div class="board-stats">d1scs: <span id="ot-threads">--</span></div>
+                <div class="board-last" id="ot-last">—</div>
+            </div>
+            <div class="board" onclick="goBoard('qna','Questions')">
+                <div class="board-name">s1k/qna/</div>
+                <div class="board-desc">Questions, help & site talk</div>
+                <div class="board-stats">d1scs: <span id="qna-threads">--</span></div>
+                <div class="board-last" id="qna-last">—</div>
             </div>
         </div>
 
+        <div class="stats-box">
+            <h3>Forum statistics</h3>
+            <div class="stats-row">
+                <div class="stat">Members: <strong id="stat-members">--</strong></div>
+                <div class="stat">d1scs: <strong id="stat-threads">--</strong></div>
+                <div class="stat">Posts: <strong id="stat-posts">--</strong></div>
+                <div class="stat">Online now: <strong id="stat-online">--</strong></div>
+            </div>
+            <div class="online-list" id="online-list">Loading...</div>
+        </div>
     </div>
 
     <script>
         const username = localStorage.getItem('username');
-        document.getElementById('user-nav').innerHTML = username
-            ? `Logged in as: <a href="/profile.html?user=${encodeURIComponent(username)}" style="color:inherit; text-decoration:none;"><strong>${username}</strong></a> | <a href="#" onclick="logout()">Logout</a>`
-            : '<a href="/login">Login</a> | <a href="/register">Register</a>';
+        const BOARD_IDS = ['news','pit','srs','pol','br','crt','media','tech','cnfs','ot','qna'];
 
-        function logout() {
-            localStorage.clear();
-            window.location.href = '/';
+        document.getElementById('user-nav').innerHTML = username
+            ? `Logged in as: <a href="/profile.html?user=${encodeURIComponent(username)}" style="color:inherit; text-decoration:none;"><strong>${username}</strong></a> | <a href="#" onclick="showLogoutModal(); return false;">Logout</a>`
+            : '<a href="/register">Register</a> | <a href="/login">Login</a>';
+
+        function goBoard(id, name) {
+            window.location.href = `/thread-list.html?id=${encodeURIComponent(id)}&name=${encodeURIComponent(name)}`;
         }
 
         function timeAgo(date) {
+            if (!date) return "";
             const s = Math.floor((Date.now() - new Date(date)) / 1000);
             if (s < 60) return "just now";
-            if (s < 3600) return Math.floor(s / 60) + "m ago";
-            if (s < 86400) return Math.floor(s / 3600) + "h ago";
-            if (s < 604800) return Math.floor(s / 86400) + "d ago";
-            return new Date(date).toLocaleDateString();
+            const m = Math.floor(s / 60);
+            if (m < 60) return m + "m ago";
+            const h = Math.floor(m / 60);
+            if (h < 24) return h + "h ago";
+            const d = Math.floor(h / 24);
+            return d + "d ago";
         }
 
         async function loadStats() {
             try {
                 const res = await fetch('/api/forum-stats');
-                if (!res.ok) return;
                 const stats = await res.json();
-
-                ['pit', 'srs', 'br', 'crt', 'cnfs', 'ot'].forEach(id => {
-                    const data = stats[id];
-
-                    // support both old format (number) and new format ({ threads, last })
-                    const threads = typeof data === 'number' ? data : (data && data.threads) || 0;
-                    const last = typeof data === 'object' && data ? data.last : null;
-
-                    const countEl = document.getElementById(`${id}-threads`);
-                    const lastEl = document.getElementById(`${id}-latest`);
-
-                    if (countEl) countEl.textContent = threads;
-
-                    if (lastEl) {
-                        if (last) {
-                            const title = last.title.length > 32 ? last.title.slice(0, 32) + "…" : last.title;
-                            lastEl.innerHTML = `
-                                <a href="/thread.html?id=${last.threadId}&title=${encodeURIComponent(last.title)}"
-                                   onclick="event.stopPropagation()">
-                                    ${title}
-                                </a><br>
-                                <strong>${last.user}</strong> · ${timeAgo(last.at)}
-                            `;
-                        } else {
-                            lastEl.textContent = "No posts yet";
-                        }
+                BOARD_IDS.forEach(id => {
+                    const data = stats[id] || {};
+                    const el = document.getElementById(id + '-threads');
+                    if (el) el.textContent = data.threads || 0;
+                    const lastEl = document.getElementById(id + '-last');
+                    if (lastEl && data.last) {
+                        lastEl.innerHTML = `<a href="/thread.html?id=${data.last.threadId}&title=${encodeURIComponent(data.last.title || '')}">${data.last.title || 'd1sc'}</a><br>by ${data.last.user || ''} • ${timeAgo(data.last.at)}`;
                     }
                 });
-            } catch (err) {
-                console.error("Failed to load forum stats:", err);
-            }
+            } catch (err) {}
+        }
+
+        async function loadOnlineStats() {
+            try {
+                const res = await fetch('/api/online-stats');
+                const data = await res.json();
+                document.getElementById('stat-members').textContent = data.members || 0;
+                document.getElementById('stat-threads').textContent = data.threads || 0;
+                document.getElementById('stat-posts').textContent = data.posts || 0;
+                document.getElementById('stat-online').textContent = data.onlineCount || 0;
+                const list = document.getElementById('online-list');
+                if (!data.online || !data.online.length) {
+                    list.innerHTML = '<span class="online-empty">Nobody online right now.</span>';
+                    return;
+                }
+                list.innerHTML = 'Online now: ' + data.online.map(u =>
+                    `<a href="/profile.html?user=${encodeURIComponent(u.username)}">${u.username}</a>`
+                ).join(', ');
+            } catch (e) {}
+        }
+
+        async function heartbeat() {
+            if (!username) return;
+            try {
+                await fetch('/api/heartbeat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username })
+                });
+            } catch (e) {}
         }
 
         async function loadGlobalBanner() {
             try {
                 const res = await fetch('/api/global-banner');
-                if (!res.ok) return;
                 const data = await res.json();
                 const el = document.getElementById('global-banner');
                 if (!el) return;
-
                 if (data && data.active && (data.text || data.imageUrl)) {
                     let content = data.text || "";
-                    if (data.imageUrl) {
-                        content += `<br><img src="${data.imageUrl}" style="max-width:100%; margin-top:8px;">`;
-                    }
+                    if (data.imageUrl) content += `<br><img src="${data.imageUrl}" style="max-width:100%; margin-top:8px;">`;
                     el.innerHTML = content;
                     el.style.display = 'block';
-                } else {
-                    el.style.display = 'none';
-                }
+                } else el.style.display = 'none';
             } catch (e) {}
         }
 
         async function checkBan() {
             const currentUser = localStorage.getItem('username');
             if (!currentUser) return;
-
             try {
                 const res = await fetch(`/api/check-ban/${encodeURIComponent(currentUser)}`);
-                if (!res.ok) return;
                 const data = await res.json();
                 if (data.banned) {
                     localStorage.clear();
@@ -249,31 +273,52 @@
                 }
             } catch (e) {}
         }
-    
+
         async function loadAlertBadge() {
-    const u = localStorage.getItem('username');
-    if (!u) return;
-    try {
-        const res = await fetch(`/api/alerts/${encodeURIComponent(u)}`);
-        if (!res.ok) return;
-        const data = await res.json();
-        const badge = document.getElementById('alert-badge');
-        if (!badge) return;
-        if (data.unread > 0) {
-            badge.style.display = 'inline';
-            badge.textContent = data.unread > 99 ? '99+' : data.unread;
-        } else {
-            badge.style.display = 'none';
+            const u = localStorage.getItem('username');
+            if (!u) return;
+            try {
+                const res = await fetch(`/api/alerts/${encodeURIComponent(u)}`);
+                if (!res.ok) return;
+                const data = await res.json();
+                const badge = document.getElementById('alert-badge');
+                if (!badge) return;
+                if (data.unread > 0) {
+                    badge.style.display = 'inline';
+                    badge.textContent = data.unread > 99 ? '99+' : data.unread;
+                } else badge.style.display = 'none';
+            } catch (e) {}
         }
-    } catch (e) {}
-}
-loadAlertBadge();
-setInterval(loadAlertBadge, 15000);
+
+        function showLogoutModal() {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.display = 'flex';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <h3>Logout?</h3>
+                    <p>Are you sure you want to logout?</p>
+                    <button class="button" onclick="doLogout()" style="background:#ff4444;">Yes, Logout</button>
+                    <button class="button" onclick="this.parentElement.parentElement.remove()">Cancel</button>
+                </div>`;
+            document.body.appendChild(modal);
+        }
+
+        function doLogout() {
+            localStorage.removeItem('username');
+            window.location.href = '/';
+        }
 
         loadStats();
+        loadOnlineStats();
         loadGlobalBanner();
         checkBan();
+        heartbeat();
+        loadAlertBadge();
         setInterval(checkBan, 8000);
+        setInterval(heartbeat, 30000);
+        setInterval(loadOnlineStats, 20000);
+        setInterval(loadAlertBadge, 15000);
     </script>
 </body>
 </html>

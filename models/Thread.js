@@ -5,8 +5,10 @@ const threadSchema = new mongoose.Schema({
     title: String,
     forum_id: String,
     user_id: String,
+    prefix: { type: String, default: "" },
     pinned: { type: Boolean, default: false },
-    views: { type: Number, default: 0 },   // ← add this
+    views: { type: Number, default: 0 },
+    locked: { type: Boolean, default: false },
     created_at: { type: Date, default: Date.now }
 });
 

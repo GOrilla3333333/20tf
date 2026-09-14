@@ -8,90 +8,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="https://i.imgur.com/oJCfWc8.png">
     <style>
-        .section-title {
-            color: #fffd01;
-            font-size: 1.1em;
-            margin: 18px 0 8px 0;
-            padding-bottom: 4px;
-            border-bottom: 2px solid #0165fc;
-        }
-        .thread {
-            background: #1e2f4f;
-            border: 2px solid #0165fc;
-            border-radius: 8px;
-            padding: 14px 18px;
-            margin: 10px 0;
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-            transition: all 0.2s;
-            position: relative;
-        }
-        .thread:hover {
-            background: #2a3f5f;
-            border-color: #fffd01;
-        }
-        .thread.pinned {
-            border-left: 5px solid #fffd01;
-            background: #2a3f5f;
-        }
-        .thread-main { flex: 1; padding-right: 40px; }
-        .thread-title {
-            font-size: 1.2em;
-            color: white;
-            margin-bottom: 4px;
-        }
-        .thread-meta { color: #aaa; font-size: 0.9em; }
-        .thread-right {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 8px;
-    min-width: 90px;
-}
-.thread-actions {
-    display: flex;
-    align-items: center;
-    gap: 2px;
-}
-.menu-btn, .pin-btn {
-    position: static;
-    background: none;
-    border: none;
-    font-size: 20px;
-    cursor: pointer;
-    color: #aaa;
-    padding: 0 2px;
-}
-.thread-stats {
-    text-align: right;
-    color: #ccc;
-    font-size: 0.9em;
-    line-height: 1.35;
-}
-.dropdown-menu {
-    display: none;
-    position: absolute;
-    top: 36px;
-    right: 8px;
-    background: #0f1b2e;
-    border: 2px solid #0165fc;
-    border-radius: 8px;
-    min-width: 140px;
-    z-index: 50;
-}
-        .dropdown-menu button {
-            display: block;
-            width: 100%;
-            background: none;
-            border: none;
-            color: white;
-            text-align: left;
-            padding: 10px 14px;
-            cursor: pointer;
-            font-family: inherit;
-        }
-        .dropdown-menu button:hover { background: #1e2f4f; }
         .modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); display: none; align-items: center;
@@ -100,229 +16,177 @@
         .modal-content {
             background: #1e2f4f; padding: 25px; border-radius: 12px;
             border: 3px solid #0165fc; width: 90%; max-width: 450px; color: white;
+            max-height: 90vh; overflow-y: auto;
         }
         .notification {
             position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
             padding: 15px 25px; border-radius: 6px; z-index: 20000;
             color: white; font-weight: bold;
         }
+        .thread {
+            background: #1e2f4f;
+            padding: 15px;
+            margin: 12px 0;
+            border-radius: 8px;
+            border-left: 5px solid #0165fc;
+            position: relative;
+            cursor: pointer;
+        }
+        .thread:hover { background: #2a3f5f; }
+        .pinned {
+            border-left: 5px solid #fffd01;
+            background: #2a3f5f;
+        }
+        .menu-btn {
+            position: absolute; top: 10px; right: 10px; background: none; border: none;
+            font-size: 22px; cursor: pointer; color: #aaa;
+        }
+        .dropdown-menu {
+            display: none; position: absolute; top: 36px; right: 10px;
+            background: #0f1b2e; border: 2px solid #0165fc; border-radius: 8px;
+            z-index: 50; min-width: 140px;
+        }
+        .dropdown-menu button {
+            display: block; width: 100%; text-align: left; background: none; border: none;
+            color: white; padding: 10px 14px; cursor: pointer;
+        }
+        .dropdown-menu button:hover { background: #1e2f4f; }
+        .prefix-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75em;
+            font-weight: bold;
+            margin-right: 6px;
+            color: #fff;
+            vertical-align: middle;
+        }
+        .prefix-select, .modal-content input, .modal-content textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 12px;
+            border-radius: 6px;
+            border: 2px solid #0165fc;
+            background: #0f1b2e;
+            color: white;
+            font-size: 15px;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+        .modal-content textarea { min-height: 100px; resize: vertical; }
+        .upload-status { font-size: 13px; color: #aaa; margin-bottom: 10px; min-height: 18px; }
+        .button {
+            padding: 10px 18px; border: none; border-radius: 6px;
+            cursor: pointer; font-weight: bold; color: white; background: #0165fc;
+        }
+        .thread-title-line { color: white; font-size: 1.1em; font-weight: bold; word-break: break-word; }
+        .thread-meta { color: #aaa; font-size: 0.9em; margin-top: 6px; }
     </style>
 </head>
 <body>
     <header>
-        <img src="https://i.imgur.com/oJCfWc8.png" class="logo">
-        <h1 id="board-title">Loading...</h1>
+        <img src="https://i.imgur.com/oJCfWc8.png" alt="Logo" class="logo">
+        <h1>20Thousand Forums</h1>
     </header>
 
     <nav>
-        <a href="/forums">← Back to Boards</a> |
+        <a href="/">Home</a> |
+        <a href="/forums">Boards</a> |
+        <a href="/search.html">Search</a> |
+        <a href="/alerts.html">Alerts <span id="alert-badge" style="display:none; background:#ff4444; color:white; border-radius:10px; padding:1px 7px; font-size:12px; margin-left:4px;">0</span></a> |
         <span id="user-nav"></span>
     </nav>
 
     <div id="global-banner" style="display:none; background:#fffd01; color:#162437; padding:12px; text-align:center; font-weight:bold;"></div>
 
     <div class="container">
-        <div style="margin: 15px 0;">
-            <button onclick="showCreateModal()" class="button" style="background:#fffd01; color:#162437;">+ New d1sc</button>
-        </div>
+        <p><a href="/forums">← Back to Boards</a></p>
+        <h2 id="boardTitle">Loading...</h2>
+        <div id="createArea"></div>
         <div id="threadsList">Loading discussions...</div>
     </div>
 
-    <!-- Create Modal -->
     <div id="createModal" class="modal">
         <div class="modal-content">
-            <h3>Create New d1sc</h3>
-            <input id="modal-title" placeholder="Title" style="width:100%; padding:10px; margin:8px 0;"><br>
-            <textarea id="modal-content" placeholder="Content" rows="5" style="width:100%; padding:10px;"></textarea><br>
-            <input type="file" id="modal-file" accept="image/*,video/*" multiple><br><br>
-            <button onclick="createD1sc()" style="background:#fffd01; color:#162437; padding:10px 20px;">Create</button>
-            <button onclick="closeCreateModal()" style="margin-left:10px;">Cancel</button>
+            <h3>Create d1sc</h3>
+            <select id="threadPrefix" class="prefix-select">
+                <option value="">(No prefix)</option>
+                <option value="News">News</option>
+                <option value="Serious">Serious</option>
+                <option value="Discussion">Discussion</option>
+                <option value="Question">Question</option>
+                <option value="Vent">Vent</option>
+                <option value="Media">Media</option>
+                <option value="Art">Art</option>
+                <option value="Tech">Tech</option>
+                <option value="Brainrot">Brainrot</option>
+                <option value="NSFW">NSFW</option>
+                <option value="Story">Story</option>
+                <option value="Help">Help</option>
+                <option value="Announcement">Announcement</option>
+            </select>
+            <input type="text" id="threadTitle" placeholder="Title" maxlength="120">
+            <textarea id="threadContent" placeholder="Description (optional) — paste image/video links to embed"></textarea>
+            <input type="file" id="threadFiles" multiple accept="image/*,video/*">
+            <div class="upload-status" id="uploadStatus"></div>
+            <button class="button" onclick="createThread()">Create d1sc</button>
+            <button class="button" style="background:#555;" onclick="closeCreateModal()">Cancel</button>
         </div>
     </div>
 
-    <!-- Report Modal -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-content" style="text-align:center;">
+            <h3>Delete d1sc?</h3>
+            <p>This cannot be undone.</p>
+            <button class="button" style="background:#ff4444;" onclick="confirmDelete()">Yes, Delete</button>
+            <button class="button" style="background:#555;" onclick="closeDeleteModal()">Cancel</button>
+        </div>
+    </div>
+
     <div id="reportModal" class="modal">
         <div class="modal-content">
             <h3>Report d1sc</h3>
-            <textarea id="reportReason" rows="4" style="width:100%;" placeholder="Why are you reporting this?"></textarea><br><br>
-            <button onclick="submitReport()">Submit Report</button>
-            <button onclick="closeReportModal()">Cancel</button>
-        </div>
-    </div>
-
-    <!-- Delete Modal -->
-    <div id="deleteModal" class="modal">
-        <div class="modal-content">
-            <h3>Delete this d1sc?</h3>
-            <p>This cannot be undone.</p>
-            <button onclick="confirmDelete()" style="background:#ff4444; color:white;">Delete</button>
-            <button onclick="closeDeleteModal()">Cancel</button>
+            <textarea id="reportReason" placeholder="Reason"></textarea>
+            <button class="button" onclick="submitReport()">Submit Report</button>
+            <button class="button" style="background:#555;" onclick="closeReportModal()">Cancel</button>
         </div>
     </div>
 
     <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        const forumId = urlParams.get('id');
-        const forumName = urlParams.get('name') || forumId;
+        const params = new URLSearchParams(window.location.search);
+        const forumId = params.get('id') || '';
+        const forumName = params.get('name') || forumId;
         const username = localStorage.getItem('username');
-        let currentThreadId = null;
+        let pendingDeleteId = null;
+        let pendingReportId = null;
+        let uploadedUrls = [];
 
-        document.getElementById('board-title').textContent = `/${forumId}/ — ${forumName}`;
+        const PREFIX_COLORS = {
+            "News": "#2ecc71",
+            "Serious": "#3498db",
+            "Discussion": "#9b59b6",
+            "Question": "#1abc9c",
+            "Vent": "#8e44ad",
+            "Media": "#e67e22",
+            "Art": "#e91e63",
+            "Tech": "#00bcd4",
+            "Brainrot": "#ff5722",
+            "NSFW": "#e74c3c",
+            "Story": "#16a085",
+            "Help": "#f39c12",
+            "Announcement": "#fffd01"
+        };
+
+        document.getElementById('boardTitle').textContent = forumName ? 's1k/' + forumId + '/ — ' + forumName : 'Board';
         document.getElementById('user-nav').innerHTML = username
-            ? `Logged in as: <a href="/profile.html?user=${encodeURIComponent(username)}" style="color:inherit; text-decoration:none;"><strong>${username}</strong></a>`
-            : '<a href="/login">Login</a>';
+            ? 'Logged in as: <a href="/profile.html?user=' + encodeURIComponent(username) + '" style="color:inherit;text-decoration:none;"><strong>' + username + '</strong></a> | <a href="#" onclick="showLogoutModal();return false;">Logout</a>'
+            : '<a href="/register">Register</a> | <a href="/login">Login</a>';
 
-        function threadRow(t) {
-            const date = t.created_at ? new Date(t.created_at).toLocaleDateString() : '';
-            const canDelete = username === "20k" || username === t.user_id;
-            return `
-                <div class="thread ${t.pinned ? 'pinned' : ''}">
-                    <div class="thread-main" onclick="window.location.href='/thread.html?id=${t.id}&title=${encodeURIComponent(t.title)}'">
-                        <div class="thread-title">${t.pinned ? '📌 ' : ''}${t.title}</div>
-                        <div class="thread-meta">${t.user_id || 'Unknown'} • ${date}</div>
-                    </div>
-                    <div class="thread-stats">
-                        Replies: ${Math.max(0, (t.postCount || 1) - 1)}<br>
-                        Views: ${t.views || 0}
-                    </div>
-                    ${username === "20k" ? `<button class="pin-btn" onclick="event.stopPropagation(); togglePin('${t.id}')">📌</button>` : ''}
-                    <button class="menu-btn" onclick="showDropdown('${t.id}', event)">⋮</button>
-                    <div id="dropdown-${t.id}" class="dropdown-menu">
-                        <button onclick="openReport('${t.id}')">Report</button>
-                        ${canDelete ? `<button onclick="openDelete('${t.id}')" style="color:#ff6666;">Delete</button>` : ''}
-                    </div>
-                </div>`;
-        }
-
-        async function loadThreads() {
-            try {
-                const res = await fetch(`/api/forums/${forumId}/threads`);
-                const threads = await res.json();
-
-                if (!Array.isArray(threads) || threads.length === 0) {
-                    document.getElementById('threadsList').innerHTML = "<p>No discussions yet.</p>";
-                    return;
-                }
-
-                const sticky = threads.filter(t => t.pinned);
-                const normal = threads.filter(t => !t.pinned);
-
-                let html = '';
-                if (sticky.length) {
-                    html += `<div class="section-title">Sticky Threads</div>`;
-                    html += sticky.map(threadRow).join('');
-                }
-                html += `<div class="section-title">Normal Threads</div>`;
-                html += normal.map(threadRow).join('') || "<p>No discussions yet.</p>";
-
-                document.getElementById('threadsList').innerHTML = html;
-            } catch (err) {
-                console.error(err);
-                document.getElementById('threadsList').innerHTML = "<p>Error loading discussions.</p>";
-            }
-        }
-
-        function hideAllDropdowns() {
-            document.querySelectorAll('.dropdown-menu').forEach(m => m.style.display = 'none');
-        }
-
-        function showDropdown(threadId, e) {
-            e.stopPropagation();
-            hideAllDropdowns();
-            document.getElementById(`dropdown-${threadId}`).style.display = 'block';
-        }
-
-        document.addEventListener('click', hideAllDropdowns);
-
-        function showCreateModal() {
-            if (!username) return alert("Login first");
-            document.getElementById('createModal').style.display = 'flex';
-        }
-        function closeCreateModal() {
-            document.getElementById('createModal').style.display = 'none';
-        }
-
-        async function createD1sc() {
-            const title = document.getElementById('modal-title').value.trim();
-            const content = document.getElementById('modal-content').value.trim();
-            const files = document.getElementById('modal-file').files;
-
-            if (!title) return alert("Title required");
-
-            let fileUrls = [];
-            for (let file of files) {
-                const fd = new FormData();
-                fd.append('file', file);
-                const r = await fetch('/api/upload', { method: 'POST', body: fd });
-                const d = await r.json();
-                if (d.success) fileUrls.push(d.url);
-            }
-
-            await fetch('/api/threads', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    title, content, forum_id: forumId, username, fileUrls
-                })
-            });
-
-            closeCreateModal();
-            loadThreads();
-        }
-
-        function openReport(id) {
-            hideAllDropdowns();
-            currentThreadId = id;
-            document.getElementById('reportModal').style.display = 'flex';
-        }
-        function closeReportModal() {
-            document.getElementById('reportModal').style.display = 'none';
-        }
-        async function submitReport() {
-            const reason = document.getElementById('reportReason').value.trim();
-            if (!reason) return;
-            await fetch('/api/report', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ post_id: currentThreadId, reported_by: username, reason })
-            });
-            closeReportModal();
-            showNotification("Report submitted", "#00cc66");
-        }
-
-        function openDelete(id) {
-            hideAllDropdowns();
-            currentThreadId = id;
-            document.getElementById('deleteModal').style.display = 'flex';
-        }
-        function closeDeleteModal() {
-            document.getElementById('deleteModal').style.display = 'none';
-        }
-        async function confirmDelete() {
-            const res = await fetch(`/api/threads/${currentThreadId}`, {
-                method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username })
-            });
-            const data = await res.json();
-            showNotification(data.message, data.success ? "#00cc66" : "#ff4444");
-            closeDeleteModal();
-            if (data.success) loadThreads();
-        }
-
-        async function togglePin(threadId) {
-            try {
-                const res = await fetch(`/api/threads/${threadId}/pin`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username })
-                });
-                const data = await res.json();
-                showNotification(data.message, data.success ? "#00cc66" : "#ff4444");
-                if (data.success) loadThreads();
-            } catch (err) {
-                showNotification("Pin request failed", "#ff4444");
-            }
+        function prefixBadge(prefix) {
+            if (!prefix) return "";
+            const color = PREFIX_COLORS[prefix] || "#0165fc";
+            const textColor = prefix === "Announcement" ? "#162437" : "#fff";
+            return '<span class="prefix-badge" style="background:' + color + ';color:' + textColor + '">' + prefix + '</span>';
         }
 
         function showNotification(text, color) {
@@ -331,25 +195,294 @@
             notif.style.background = color;
             notif.textContent = text;
             document.body.appendChild(notif);
-            setTimeout(() => notif.remove(), 2500);
+            setTimeout(function() { notif.remove(); }, 2500);
+        }
+
+        function showLogoutModal() {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.display = 'flex';
+            modal.innerHTML = '<div class="modal-content" style="text-align:center;"><h3>Logout?</h3><p>Are you sure you want to logout?</p><button class="button" style="background:#ff4444;" onclick="localStorage.removeItem(\'username\');location.href=\'/\'">Yes, Logout</button><button class="button" style="background:#555;" onclick="this.parentElement.parentElement.remove()">Cancel</button></div>';
+            document.body.appendChild(modal);
+        }
+
+        async function canPostHere() {
+            if (forumId !== 'news') return true;
+            if (!username) return false;
+            if (username === '20k') return true;
+            try {
+                const r = await fetch('/api/profile/' + encodeURIComponent(username));
+                const d = await r.json();
+                const t = (d.title || '').toLowerCase();
+                return t === 'owner' || t === 'moderator' || t === 'mod' || t === 'janitor';
+            } catch (e) {
+                return false;
+            }
+        }
+
+        async function setupCreateArea() {
+            const area = document.getElementById('createArea');
+            if (!username) {
+                area.innerHTML = '<p><a href="/login">Login</a> to create a d1sc.</p>';
+                return;
+            }
+            const allowed = await canPostHere();
+            if (!allowed) {
+                area.innerHTML = '<p style="color:#ffaa00;">Only staff (Owner / Moderator / Janitor) can post in News & Announcements.</p>';
+                return;
+            }
+            area.innerHTML = '<button class="button" onclick="openCreateModal()">+ Create d1sc</button>';
+        }
+
+        function openCreateModal() {
+            uploadedUrls = [];
+            document.getElementById('threadPrefix').value = '';
+            document.getElementById('threadTitle').value = '';
+            document.getElementById('threadContent').value = '';
+            document.getElementById('threadFiles').value = '';
+            document.getElementById('uploadStatus').textContent = '';
+            document.getElementById('createModal').style.display = 'flex';
+        }
+
+        function closeCreateModal() {
+            document.getElementById('createModal').style.display = 'none';
+        }
+
+        document.getElementById('threadFiles').addEventListener('change', async function () {
+            const files = this.files;
+            if (!files.length) return;
+
+            const status = document.getElementById('uploadStatus');
+            const contentBox = document.getElementById('threadContent');
+            status.textContent = 'Uploading file(s)...';
+            uploadedUrls = [];
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const fd = new FormData();
+                fd.append('file', file);
+                try {
+                    const r = await fetch('/api/upload', { method: 'POST', body: fd });
+                    const d = await r.json();
+                    if (d.success && d.url) {
+                        uploadedUrls.push(d.url);
+                        contentBox.value = (contentBox.value ? contentBox.value + '\n\n' : '') + d.url;
+                    } else {
+                        console.error('Upload failed:', d);
+                    }
+                } catch (e) {
+                    console.error('Upload error:', e);
+                }
+            }
+
+            status.textContent = uploadedUrls.length
+                ? 'Uploaded ' + uploadedUrls.length + ' file(s) — links added below'
+                : 'Upload failed (check Cloudinary keys / terminal)';
+        });
+
+        async function createThread() {
+            const title = document.getElementById('threadTitle').value.trim();
+            const content = document.getElementById('threadContent').value.trim();
+            const prefix = document.getElementById('threadPrefix').value;
+            if (!title) return showNotification('Enter a title', '#ff4444');
+            if (!username) return showNotification('Login required', '#ff4444');
+
+            try {
+                const res = await fetch('/api/threads', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title: title,
+                        content: content,
+                        forum_id: forumId,
+                        username: username,
+                        fileUrls: uploadedUrls,
+                        prefix: prefix
+                    })
+                });
+                const data = await res.json();
+                showNotification(data.message || (data.success ? 'Created!' : 'Failed'), data.success ? '#00cc66' : '#ff4444');
+                if (data.success) {
+                    closeCreateModal();
+                    loadThreads();
+                }
+            } catch (e) {
+                showNotification('Server error', '#ff4444');
+            }
+        }
+
+        async function loadThreads() {
+            try {
+                const res = await fetch('/api/forums/' + encodeURIComponent(forumId) + '/threads');
+                const threads = await res.json();
+                if (!Array.isArray(threads)) {
+                    document.getElementById('threadsList').innerHTML = '<p>Failed to load discussions.</p>';
+                    return;
+                }
+                if (!threads.length) {
+                    document.getElementById('threadsList').innerHTML = '<p>No discussions yet.</p>';
+                    return;
+                }
+
+                let html = '';
+                threads.forEach(function(t) {
+                    const canManage = username === '20k' || username === t.user_id;
+                    const safeTitle = String(t.title || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                    html += '<div class="thread ' + (t.pinned ? 'pinned' : '') + '" onclick="goThread(\'' + t.id + '\', \'' + safeTitle + '\')">';
+                    html += '<div class="thread-title-line">';
+                    html += prefixBadge(t.prefix);
+                    html += escapeHtml(t.title || 'Untitled');
+                    if (t.locked) html += ' 🔒';
+                    if (t.pinned) html += ' 📌';
+                    html += '</div>';
+                    html += '<div class="thread-meta">by ' + escapeHtml(t.user_id || 'Unknown') + ' • replies: ' + ((t.postCount || 1) - 1) + ' • views: ' + (t.views || 0) + '</div>';
+                    html += '<button class="menu-btn" onclick="event.stopPropagation();showDropdown(\'' + t.id + '\', event)">⋮</button>';
+                    html += '<div class="dropdown-menu" id="dropdown-' + t.id + '">';
+                    if (username === '20k') {
+                        html += '<button onclick="event.stopPropagation();togglePin(\'' + t.id + '\')">' + (t.pinned ? 'Unpin' : 'Pin') + '</button>';
+                    }
+                    if (canManage) {
+                        html += '<button onclick="event.stopPropagation();openDeleteModal(\'' + t.id + '\')">Delete</button>';
+                    }
+                    html += '<button onclick="event.stopPropagation();openReportModal(\'' + t.id + '\')">Report</button>';
+                    html += '</div></div>';
+                });
+                document.getElementById('threadsList').innerHTML = html;
+            } catch (err) {
+                document.getElementById('threadsList').innerHTML = '<p>Failed to load discussions.</p>';
+            }
+        }
+
+        function escapeHtml(s) {
+            return String(s)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function goThread(id, title) {
+            window.location.href = '/thread.html?id=' + encodeURIComponent(id) + '&title=' + encodeURIComponent(title || '');
+        }
+
+        function showDropdown(threadId, e) {
+            e.stopPropagation();
+            document.querySelectorAll('.dropdown-menu').forEach(function(m) { m.style.display = 'none'; });
+            const el = document.getElementById('dropdown-' + threadId);
+            if (el) el.style.display = 'block';
+        }
+
+        document.addEventListener('click', function() {
+            document.querySelectorAll('.dropdown-menu').forEach(function(m) { m.style.display = 'none'; });
+        });
+
+        async function togglePin(threadId) {
+            try {
+                const res = await fetch('/api/threads/' + threadId + '/pin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: username })
+                });
+                const data = await res.json();
+                showNotification(data.message, data.success ? '#00cc66' : '#ff4444');
+                if (data.success) loadThreads();
+            } catch (err) {
+                showNotification('Pin failed', '#ff4444');
+            }
+        }
+
+        function openDeleteModal(id) {
+            pendingDeleteId = id;
+            document.getElementById('deleteModal').style.display = 'flex';
+        }
+        function closeDeleteModal() {
+            pendingDeleteId = null;
+            document.getElementById('deleteModal').style.display = 'none';
+        }
+        async function confirmDelete() {
+            if (!pendingDeleteId) return;
+            const res = await fetch('/api/threads/' + pendingDeleteId, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: username })
+            });
+            const data = await res.json();
+            showNotification(data.message, data.success ? '#00cc66' : '#ff4444');
+            closeDeleteModal();
+            if (data.success) loadThreads();
+        }
+
+        function openReportModal(id) {
+            pendingReportId = id;
+            document.getElementById('reportReason').value = '';
+            document.getElementById('reportModal').style.display = 'flex';
+        }
+        function closeReportModal() {
+            pendingReportId = null;
+            document.getElementById('reportModal').style.display = 'none';
+        }
+        async function submitReport() {
+            const reason = document.getElementById('reportReason').value.trim();
+            if (!reason) return showNotification('Enter a reason', '#ff4444');
+            await fetch('/api/report', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ post_id: pendingReportId, reported_by: username, reason: reason })
+            });
+            closeReportModal();
+            showNotification('Report submitted', '#00cc66');
         }
 
         async function checkBan() {
             const currentUser = localStorage.getItem('username');
             if (!currentUser) return;
             try {
-                const res = await fetch(`/api/check-ban/${currentUser}`);
+                const res = await fetch('/api/check-ban/' + encodeURIComponent(currentUser));
                 const data = await res.json();
                 if (data.banned) {
                     localStorage.clear();
-                    window.location.href = `/banned.html?reason=${encodeURIComponent(data.reason || 'No reason')}&type=${data.type || 'permanent'}`;
+                    window.location.href = '/banned.html?reason=' + encodeURIComponent(data.reason || 'No reason') + '&type=' + (data.type || 'permanent');
                 }
             } catch (e) {}
         }
 
+        async function loadGlobalBanner() {
+            try {
+                const res = await fetch('/api/global-banner');
+                const data = await res.json();
+                const el = document.getElementById('global-banner');
+                if (!el) return;
+                if (data && data.active && (data.text || data.imageUrl)) {
+                    let content = data.text || '';
+                    if (data.imageUrl) content += '<br><img src="' + data.imageUrl + '" style="max-width:100%;margin-top:8px;">';
+                    el.innerHTML = content;
+                    el.style.display = 'block';
+                } else el.style.display = 'none';
+            } catch (e) {}
+        }
+
+        async function loadAlertBadge() {
+            if (!username) return;
+            try {
+                const res = await fetch('/api/alerts/' + encodeURIComponent(username));
+                if (!res.ok) return;
+                const data = await res.json();
+                const badge = document.getElementById('alert-badge');
+                if (!badge) return;
+                if (data.unread > 0) {
+                    badge.style.display = 'inline';
+                    badge.textContent = data.unread > 99 ? '99+' : data.unread;
+                } else badge.style.display = 'none';
+            } catch (e) {}
+        }
+
+        setupCreateArea();
         loadThreads();
+        loadGlobalBanner();
         checkBan();
+        loadAlertBadge();
         setInterval(checkBan, 8000);
+        setInterval(loadAlertBadge, 15000);
     </script>
 </body>
 </html>

@@ -1,16 +1,17 @@
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
-    username: String,
-    password: String,
+    username: { type: String, unique: true, required: true },
+    password: { type: String, required: true },
+    pfp: String,
+    banner: String,
+    bio: String,
+    title: { type: String, default: "Member" },
     banned: { type: Boolean, default: false },
     banReason: String,
     banType: String,
     tosAccepted: { type: Boolean, default: false },
-    pfp: { type: String, default: "https://i.imgur.com/oJCfWc8.png" },
-    banner: { type: String, default: "" },
-    bio: { type: String, default: "No bio yet." },
-    title: { type: String, default: "Member" },
+    lastSeen: { type: Date, default: Date.now },
     created_at: { type: Date, default: Date.now }
 }, { strict: false });
 
