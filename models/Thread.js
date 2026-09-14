@@ -9,6 +9,7 @@ const threadSchema = new mongoose.Schema({
     pinned: { type: Boolean, default: false },
     views: { type: Number, default: 0 },
     locked: { type: Boolean, default: false },
+    viewedBy: { type: [String], default: [] },
     created_at: { type: Date, default: Date.now }
 });
 

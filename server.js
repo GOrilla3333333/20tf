@@ -83,7 +83,7 @@ async function pingUser(username) {
 
 async function createAlert({ to_user, from_user, type, message, link, threadTitle }) {
     if (!to_user || !from_user) return;
-    if (to_user === from_user) return;
+    if (String(to_user).toLowerCase() === String(from_user).toLowerCase()) return;
     try {
         await new Alert({
             id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
@@ -101,24 +101,46 @@ async function createAlert({ to_user, from_user, type, message, link, threadTitl
     }
 }
 
-async function notifyMentions(text, fromUser, link, threadTitle) {
+// context: 'post' | 'd1sc' | 'announcement' | 'banner'
+async function notifyMentions(text, fromUser, options = {}) {
     if (!text || !fromUser) return;
+
+    const context = options.context || 'post';
+    const link = options.link || '/';
+    const threadTitle = options.threadTitle || '';
+
     const mentionRegex = /@([a-zA-Z0-9_]{1,32})/g;
     const mentioned = new Set();
     let m;
-    while ((m = mentionRegex.exec(text)) !== null) mentioned.add(m[1]);
+    while ((m = mentionRegex.exec(String(text))) !== null) {
+        mentioned.add(m[1]);
+    }
+
     for (const name of mentioned) {
-        if (name === fromUser) continue;
+        if (name.toLowerCase() === String(fromUser).toLowerCase()) continue;
+
         const exists = await User.findOne({ username: name });
         if (!exists) continue;
-        await createAlert({
-            to_user: name,
-            from_user: fromUser,
-            type: 'mention',
-            message: fromUser + ' tagged you',
-            threadTitle: threadTitle || '',
-            link: link || '/'
-        });
+
+        let message = fromUser + ' tagged you';
+        if (context === 'post') message = fromUser + ' tagged you in this post';
+        else if (context === 'd1sc') message = fromUser + ' tagged you in a d1sc';
+        else if (context === 'announcement') message = fromUser + ' tagged you in an announcement';
+        else if (context === 'banner') message = 'You are featured in the banner!';
+
+        try {
+            await createAlert({
+                to_user: name,
+                from_user: fromUser,
+                type: 'mention',
+                message,
+                threadTitle,
+                link
+            });
+            console.log('Mention alert →', name, '|', message);
+        } catch (e) {
+            console.error('Mention alert failed for', name, e);
+        }
     }
 }
 
@@ -264,7 +286,10 @@ app.post('/api/announcements', async (req, res) => {
     try {
         const { content, author } = req.body;
         if (author !== "20k") return res.json({ success: false, message: "Only 20k can post announcements" });
-        await notifyMentions(content, '20k', '/', 'Announcement');
+        if (!content || !String(content).trim()) {
+            return res.json({ success: false, message: "Empty announcement" });
+        }
+
         await new Announcement({
             id: Date.now().toString(36),
             content: content.trim(),
@@ -272,6 +297,13 @@ app.post('/api/announcements', async (req, res) => {
             pinned: false,
             created_at: new Date()
         }).save();
+
+        await notifyMentions(content, '20k', {
+            context: 'announcement',
+            link: '/',
+            threadTitle: 'Announcement'
+        });
+
         res.json({ success: true, message: "Announcement posted!" });
     } catch (err) {
         res.json({ success: false, message: "Server error" });
@@ -314,13 +346,22 @@ app.post('/api/announcements/:id/pin', async (req, res) => {
 app.post('/api/admin/banner', async (req, res) => {
     try {
         const { username, text, imageUrl } = req.body;
-        if (text) await notifyMentions(text, '20k', '/', 'Global banner');
         if (username !== "20k") return res.json({ success: false, message: "No permission" });
+
         await GlobalBanner.findOneAndUpdate(
             { active: true },
             { active: !!(text || imageUrl), text: text || "", imageUrl: imageUrl || "" },
             { upsert: true }
         );
+
+        if (text && String(text).trim()) {
+            await notifyMentions(text, '20k', {
+                context: 'banner',
+                link: '/',
+                threadTitle: 'Global banner'
+            });
+        }
+
         res.json({ success: true, message: text ? "Banner updated successfully!" : "Banner cleared!" });
     } catch (err) {
         res.json({ success: false, message: "Server error" });
@@ -335,16 +376,35 @@ app.get('/api/global-banner', async (req, res) => {
 app.get('/api/threads/:threadId', async (req, res) => {
     try {
         const thread = await Thread.findOne({ id: String(req.params.threadId) });
-        if (!thread) return res.json({ success: false, title: "Thread not found", creator: "Unknown" });
-        thread.views = (thread.views || 0) + 1;
-        await thread.save();
+        if (!thread) {
+            return res.json({ success: false, title: "Thread not found", creator: "Unknown" });
+        }
+
+        const viewer = String(req.query.username || '').trim();
+
+        // Only count once per logged-in account
+        if (viewer) {
+            const already = Array.isArray(thread.viewedBy) && thread.viewedBy.includes(viewer);
+            if (!already) {
+                await Thread.updateOne(
+                    { id: thread.id, viewedBy: { $ne: viewer } },
+                    {
+                        $inc: { views: 1 },
+                        $addToSet: { viewedBy: viewer }
+                    }
+                );
+                thread.views = (thread.views || 0) + 1;
+            }
+        }
+        // Guests: do not inflate the counter by refreshing
+
         res.json({
             success: true,
             id: thread.id,
             title: thread.title,
             creator: thread.user_id,
             created_at: thread.created_at,
-            views: thread.views,
+            views: thread.views || 0,
             locked: !!thread.locked,
             prefix: thread.prefix || ""
         });
@@ -356,7 +416,9 @@ app.get('/api/threads/:threadId', async (req, res) => {
 app.post('/api/posts', async (req, res) => {
     try {
         const { content, thread_id, username, fileUrl, fileUrls, parent_id } = req.body;
-        if (!thread_id || !username) return res.json({ success: false, message: "Missing required fields" });
+        if (!thread_id || !username) {
+            return res.json({ success: false, message: "Missing required fields" });
+        }
 
         const threadCheck = await Thread.findOne({ id: String(thread_id) });
         if (threadCheck && threadCheck.locked) {
@@ -377,18 +439,27 @@ app.post('/api/posts', async (req, res) => {
         });
         await post.save();
 
+        const thread = threadCheck || await Thread.findOne({ id: String(thread_id) });
+        const tTitle = (thread && thread.title) || '';
+        const tLink = '/thread.html?id=' + encodeURIComponent(thread_id) +
+            '&title=' + encodeURIComponent(tTitle);
+
+        // Thread owner alert
         try {
-            const thread = threadCheck || await Thread.findOne({ id: String(thread_id) });
             if (thread && thread.user_id) {
                 await createAlert({
                     to_user: thread.user_id,
                     from_user: username,
                     type: "thread_reply",
-                    message: `${username} replied in your d1sc`,
-                    threadTitle: thread.title || "Untitled",
-                    link: `/thread.html?id=${thread.id}&title=${encodeURIComponent(thread.title || "")}`
+                    message: username + ' replied in your d1sc',
+                    threadTitle: tTitle || 'Untitled',
+                    link: tLink
                 });
             }
+        } catch (e) {}
+
+        // Nested reply alert
+        try {
             if (parent_id) {
                 const parent = await Post.findOne({ id: String(parent_id) });
                 if (parent && parent.user_id && parent.user_id !== (thread && thread.user_id)) {
@@ -396,50 +467,24 @@ app.post('/api/posts', async (req, res) => {
                         to_user: parent.user_id,
                         from_user: username,
                         type: "reply",
-                        message: `${username} replied to your post`,
-                        threadTitle: (thread && thread.title) || "",
-                        link: `/thread.html?id=${thread_id}#post-${parent_id}`
+                        message: username + ' replied to your post',
+                        threadTitle: tTitle,
+                        link: tLink + '#post-' + parent_id
                     });
-
-                            // @mentions → alerts
-
-    await notifyMentions(
-    content,
-    username,
-    '/thread.html?id=' + thread_id + '&title=' + encodeURIComponent((threadCheck && threadCheck.title) || ''),
-    (threadCheck && threadCheck.title) || ''
-);
-        try {
-            const mentionRegex = /@([a-zA-Z0-9_]{1,32})/g;
-            const mentioned = new Set();
-            let m;
-            const text = content || '';
-            while ((m = mentionRegex.exec(text)) !== null) {
-                mentioned.add(m[1]);
-            }
-            for (const name of mentioned) {
-                if (name === username) continue;
-                const exists = await User.findOne({ username: name });
-                if (!exists) continue;
-                await createAlert({
-                    to_user: name,
-                    from_user: username,
-                    type: 'mention',
-                    message: `${username} tagged you`,
-                    threadTitle: (threadCheck && threadCheck.title) || '',
-                    link: `/thread.html?id=${thread_id}&title=${encodeURIComponent((threadCheck && threadCheck.title) || '')}`
-                });
-            }
-        } catch (e) {
-            console.error('Mention alert error:', e);
-        }
-
                 }
             }
         } catch (e) {}
 
+        // @mentions — ALWAYS (not only inside parent_id)
+        await notifyMentions(content || '', username, {
+            context: 'post',
+            link: tLink,
+            threadTitle: tTitle
+        });
+
         res.json({ success: true, message: parent_id ? "Reply posted!" : "Post created!" });
     } catch (err) {
+        console.error('POST /api/posts error:', err);
         res.json({ success: false, message: "Server error" });
     }
 });
@@ -481,10 +526,7 @@ app.post('/api/threads', async (req, res) => {
         const { title, content, forum_id, username, fileUrl, fileUrls, prefix } = req.body;
 
         if (!title || !forum_id || !username) {
-            return res.json({
-                success: false,
-                message: "Missing fields"
-            });
+            return res.json({ success: false, message: "Missing fields" });
         }
 
         if (String(forum_id) === "news") {
@@ -496,7 +538,6 @@ app.post('/api/threads', async (req, res) => {
             }
         }
 
-        // Create the thread first
         const thread = new Thread({
             id: Date.now().toString(36),
             title,
@@ -508,14 +549,9 @@ app.post('/api/threads', async (req, res) => {
             views: 0,
             created_at: new Date()
         });
-
         await thread.save();
 
-        // Create the first post
-        const allFiles = Array.isArray(fileUrls)
-            ? fileUrls
-            : (fileUrl ? [fileUrl] : []);
-
+        const allFiles = Array.isArray(fileUrls) ? fileUrls : (fileUrl ? [fileUrl] : []);
         await new Post({
             id: Date.now().toString(36) + "p",
             thread_id: thread.id,
@@ -527,25 +563,17 @@ app.post('/api/threads', async (req, res) => {
             created_at: new Date()
         }).save();
 
-        // @mentions → alerts
-        await notifyMentions(
-            content || '',
-            username,
-            '/thread.html?id=' + thread.id + '&title=' + encodeURIComponent(title || ''),
-            title || ''
-        );
-
-        res.json({
-            success: true,
-            message: "d1sc created successfully!"
+        await notifyMentions(content || '', username, {
+            context: 'd1sc',
+            link: '/thread.html?id=' + encodeURIComponent(thread.id) +
+                '&title=' + encodeURIComponent(title || ''),
+            threadTitle: title || ''
         });
 
+        res.json({ success: true, message: "d1sc created successfully!" });
     } catch (err) {
         console.error("Error creating thread:", err);
-        res.json({
-            success: false,
-            message: "Server error creating thread"
-        });
+        res.json({ success: false, message: "Server error creating thread" });
     }
 });
 
@@ -596,20 +624,11 @@ app.post('/api/profile/update', async (req, res) => {
 app.get('/api/profile/:username', async (req, res) => {
     try {
         const user = await User.collection.findOne({ username: req.params.username });
-
-        if (!user) {
-            return res.json({
-                success: false,
-                message: "User not found"
-            });
-        }
+        if (!user) return res.json({ success: false, message: "User not found" });
 
         const postCount = await Post.countDocuments({ user_id: user.username });
-
         let title = user.title || "Member";
-        if (user.username === "20k" && !user.title) {
-            title = "Owner";
-        }
+        if (user.username === "20k" && !user.title) title = "Owner";
 
         res.json({
             success: true,
@@ -624,12 +643,8 @@ app.get('/api/profile/:username', async (req, res) => {
             banReason: user.banReason || '',
             banType: user.banType || 'permanent'
         });
-
     } catch (err) {
-        res.json({
-            success: false,
-            message: "Server error"
-        });
+        res.json({ success: false, message: "Server error" });
     }
 });
 
@@ -672,9 +687,9 @@ app.post('/api/profile/:username/comments', async (req, res) => {
             to_user: req.params.username,
             from_user: username,
             type: "profile_comment",
-            message: `${username} commented on your profile`,
+            message: username + ' commented on your profile',
             threadTitle: "",
-            link: `/profile.html?user=${encodeURIComponent(req.params.username)}`
+            link: '/profile.html?user=' + encodeURIComponent(req.params.username)
         });
         res.json({ success: true, message: "Comment posted" });
     } catch (err) {
@@ -709,7 +724,7 @@ app.get('/api/profile/:username/activity', async (req, res) => {
                 id: t.id,
                 title: t.title,
                 created_at: t.created_at,
-                url: `/thread.html?id=${t.id}&title=${encodeURIComponent(t.title || "")}`
+                url: '/thread.html?id=' + t.id + '&title=' + encodeURIComponent(t.title || "")
             });
         }
         for (const p of posts) {
@@ -723,7 +738,7 @@ app.get('/api/profile/:username/activity', async (req, res) => {
                 title,
                 preview: (p.content || "").slice(0, 140),
                 created_at: p.created_at,
-                url: `/thread.html?id=${p.thread_id}&title=${encodeURIComponent(title)}#post-${p.id}`
+                url: '/thread.html?id=' + p.thread_id + '&title=' + encodeURIComponent(title) + '#post-' + p.id
             });
         }
         activity.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
@@ -775,7 +790,7 @@ app.post('/api/admin/title', async (req, res) => {
             { $set: { title: cleanTitle } }
         );
         if (result.matchedCount === 0) return res.json({ success: false, message: "User not found" });
-        res.json({ success: true, message: `Title for ${targetUsername} set to "${cleanTitle}"` });
+        res.json({ success: true, message: 'Title for ' + targetUsername + ' set to "' + cleanTitle + '"' });
     } catch (err) {
         res.json({ success: false, message: "Server error" });
     }
@@ -985,7 +1000,7 @@ app.post('/api/admin/ban', async (req, res) => {
         user.banReason = reason || "No reason given";
         user.banType = type || "permanent";
         await user.save();
-        res.json({ success: true, message: `User ${targetUsername} has been banned.` });
+        res.json({ success: true, message: 'User ' + targetUsername + ' has been banned.' });
     } catch (err) {
         res.json({ success: false, message: "Server error" });
     }
@@ -1047,24 +1062,6 @@ app.post('/api/threads/:threadId/pin', async (req, res) => {
 app.get('/api/users/suggest', async (req, res) => {
     try {
         const q = (req.query.q || '').trim();
-        if (!q || q.length < 1) return res.json([]);
-        const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const users = await User.find({
-            username: { $regex: '^' + escaped, $options: 'i' }
-        }).limit(8).select('username pfp title');
-        res.json(users.map(u => ({
-            username: u.username,
-            pfp: u.pfp || 'https://i.imgur.com/oJCfWc8.png',
-            title: u.title || (u.username === '20k' ? 'Owner' : 'Member')
-        })));
-    } catch (err) {
-        res.json([]);
-    }
-});
-
-app.get('/api/users/suggest', async (req, res) => {
-    try {
-        const q = (req.query.q || '').trim();
         if (!q) return res.json([]);
         const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const users = await User.find({
@@ -1075,7 +1072,7 @@ app.get('/api/users/suggest', async (req, res) => {
             pfp: u.pfp || 'https://i.imgur.com/oJCfWc8.png',
             title: u.title || (u.username === '20k' ? 'Owner' : 'Member')
         })));
-    } catch (e) {
+    } catch (err) {
         res.json([]);
     }
 });

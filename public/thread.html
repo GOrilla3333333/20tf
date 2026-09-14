@@ -444,7 +444,10 @@
 
         async function loadThreadInfo() {
             try {
-                const res = await fetch('/api/threads/' + encodeURIComponent(threadId));
+                const res = await fetch(
+    '/api/threads/' + encodeURIComponent(threadId) +
+    (username ? ('?username=' + encodeURIComponent(username)) : '')
+);
                 const data = await res.json();
                 document.getElementById('thread-title').innerHTML = prefixBadge(data.prefix) + escapeHtml(data.title || 'Untitled');
                 document.getElementById('thread-creator').textContent = data.creator || 'Unknown';
