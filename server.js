@@ -479,21 +479,24 @@ app.get('/api/threads/:threadId/posts', async (req, res) => {
 app.post('/api/threads', async (req, res) => {
     try {
         const { title, content, forum_id, username, fileUrl, fileUrls, prefix } = req.body;
-        if (!title || !forum_id || !username) return res.json({ success: false, message: "Missing fields" });
+
+        if (!title || !forum_id || !username) {
+            return res.json({
+                success: false,
+                message: "Missing fields"
+            });
+        }
 
         if (String(forum_id) === "news") {
             if (!(await canStaff(username))) {
-                return res.json({ success: false, message: "Only Owner, Moderator, and Janitor can post in News & Announcements" });
+                return res.json({
+                    success: false,
+                    message: "Only Owner, Moderator, and Janitor can post in News & Announcements"
+                });
             }
         }
 
-        await notifyMentions(
-    content || '',
-    username,
-    '/thread.html?id=' + thread.id + '&title=' + encodeURIComponent(title || ''),
-    title || ''
-);
-
+        // Create the thread first
         const thread = new Thread({
             id: Date.now().toString(36),
             title,
@@ -505,9 +508,14 @@ app.post('/api/threads', async (req, res) => {
             views: 0,
             created_at: new Date()
         });
+
         await thread.save();
 
-        const allFiles = fileUrls || (fileUrl ? [fileUrl] : []);
+        // Create the first post
+        const allFiles = Array.isArray(fileUrls)
+            ? fileUrls
+            : (fileUrl ? [fileUrl] : []);
+
         await new Post({
             id: Date.now().toString(36) + "p",
             thread_id: thread.id,
@@ -519,10 +527,25 @@ app.post('/api/threads', async (req, res) => {
             created_at: new Date()
         }).save();
 
-        res.json({ success: true, message: "d1sc created successfully!" });
+        // @mentions → alerts
+        await notifyMentions(
+            content || '',
+            username,
+            '/thread.html?id=' + thread.id + '&title=' + encodeURIComponent(title || ''),
+            title || ''
+        );
+
+        res.json({
+            success: true,
+            message: "d1sc created successfully!"
+        });
+
     } catch (err) {
-        console.error(err);
-        res.json({ success: false, message: "Server error creating thread" });
+        console.error("Error creating thread:", err);
+        res.json({
+            success: false,
+            message: "Server error creating thread"
+        });
     }
 });
 
@@ -573,10 +596,21 @@ app.post('/api/profile/update', async (req, res) => {
 app.get('/api/profile/:username', async (req, res) => {
     try {
         const user = await User.collection.findOne({ username: req.params.username });
-        if (!user) return res.json({ success: false, message: "User not found" });
+
+        if (!user) {
+            return res.json({
+                success: false,
+                message: "User not found"
+            });
+        }
+
         const postCount = await Post.countDocuments({ user_id: user.username });
+
         let title = user.title || "Member";
-        if (user.username === "20k" && !user.title) title = "Owner";
+        if (user.username === "20k" && !user.title) {
+            title = "Owner";
+        }
+
         res.json({
             success: true,
             username: user.username,
@@ -585,10 +619,17 @@ app.get('/api/profile/:username', async (req, res) => {
             bio: user.bio || "No bio yet.",
             title,
             postCount,
-            created_at: user.created_at
+            created_at: user.created_at,
+            banned: !!user.banned,
+            banReason: user.banReason || '',
+            banType: user.banType || 'permanent'
         });
+
     } catch (err) {
-        res.json({ success: false, message: "Server error" });
+        res.json({
+            success: false,
+            message: "Server error"
+        });
     }
 });
 
