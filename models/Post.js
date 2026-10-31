@@ -8,7 +8,8 @@ const postSchema = new mongoose.Schema({
     fileUrl: String,           // Keep for backward compatibility
     fileUrls: [String],        // New: Support multiple files
     parent_id: { type: String, default: null },
+    edited_at: { type: Date, default: null },
     created_at: { type: Date, default: Date.now }
-});
+}, { strict: false });
 
 module.exports = mongoose.model('Post', postSchema);

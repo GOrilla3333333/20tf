@@ -3,176 +3,380 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>20Thousand Forums</title>
+    <title>Boards - 20Thousand Forums</title>
     <link rel="stylesheet" href="/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="https://i.imgur.com/oJCfWc8.png">
     <style>
-        .category { margin-bottom: 28px; }
+        .category {
+            margin-bottom: 20px;
+            border: 1px solid #2b4570;
+            border-radius: 4px;
+            overflow: hidden;
+            background: #1e2f4f;
+        }
         .category-title {
-            color: #fffd01; font-size: 1.25em; margin-bottom: 10px;
-            padding-bottom: 4px; border-bottom: 2px solid #0165fc;
+            background: #0f1c2e;
+            color: #fffd01;
+            font-size: 1.05em;
+            font-weight: bold;
+            padding: 10px 16px;
+            border-bottom: 2px solid #0165fc;
+            margin: 0;
         }
         .board {
-            background: #1e2f4f; border: 2px solid #0165fc; border-radius: 8px;
-            padding: 14px 18px; margin-bottom: 10px; display: flex;
-            align-items: center; cursor: pointer; transition: all 0.2s; gap: 12px;
+            background: #1e2f4f;
+            border: none;
+            border-bottom: 1px solid #283e64;
+            border-radius: 0;
+            padding: 12px 16px;
+            margin-bottom: 0;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            gap: 14px;
         }
-        .board:hover { background: #2a3f5f; border-color: #fffd01; }
-        .board-name { flex: 1; font-size: 1.15em; color: white; min-width: 140px; }
-        .board-desc { flex: 2; color: #aaa; }
-        .board-stats { text-align: right; color: #ccc; font-size: 0.95em; min-width: 100px; }
-        .board-last { flex: 1.4; text-align: right; color: #ccc; font-size: 0.85em; min-width: 160px; }
-        .board-last a { color: #fffd01; text-decoration: none; }
-        .board-last a:hover { text-decoration: underline; }
-        .staff-tag { color: #fffd01; font-size: 0.75em; }
-        .stats-box {
-            background: #1e2f4f; border: 2px solid #0165fc; border-radius: 8px;
-            padding: 16px 18px; margin: 28px 0 40px;
+        .board:last-child { border-bottom: none; }
+        .board:hover { background: #24385c; }
+        .node-icon {
+            width: 36px; height: 36px; border-radius: 4px;
+            background: #132238; border: 1px solid #2b4570;
+            display: flex; align-items: center; justify-content: center;
+            color: #6b84a6; flex-shrink: 0;
         }
-        .stats-box h3 { color: #fffd01; margin: 0 0 12px 0; font-size: 1.15em; }
-        .stats-row { display: flex; gap: 24px; flex-wrap: wrap; color: white; margin-bottom: 14px; }
-        .stat { background: #0f1b2e; border: 1px solid #0165fc; border-radius: 6px; padding: 8px 14px; }
-        .stat strong { color: #fffd01; }
-        .online-list { color: #ccc; line-height: 1.7; }
-        .online-list a { color: #0165fc; text-decoration: none; font-weight: bold; }
-        .online-list a:hover { color: #fffd01; text-decoration: underline; }
-        .online-empty { color: #888; }
+        .node-icon.has-posts {
+            color: #0165fc;
+            border-color: #0165fc;
+        }
+        .node-main { flex: 1.6; min-width: 160px; }
+        .board-name { font-size: 1.08em; font-weight: bold; color: #ffffff; }
+        .board-subname { color: #7eb3ff; font-weight: normal; font-size: 0.92em; margin-left: 6px; }
+        .board:hover .board-name { color: #fffd01; }
+        .board-desc { color: #c5d4eb; font-size: 0.86em; margin-top: 2px; }
+        .board-stats {
+            display: flex; gap: 18px; text-align: center;
+            color: #c5d4eb; font-size: 0.82em; min-width: 115px; justify-content: center;
+        }
+        .board-stats .stat-col strong {
+            display: block; color: #ffffff; font-size: 1.12em;
+        }
+        .board-last {
+            flex: 1.3; display: flex; align-items: center; gap: 10px;
+            color: #c5d4eb; font-size: 0.84em; min-width: 195px; max-width: 260px;
+        }
+        .board-last-avatar {
+            width: 30px; height: 30px; border-radius: 50%; object-fit: cover;
+            border: 1px solid #2b4570; flex-shrink: 0; background: #0f1c2e;
+        }
+        .board-last-info {
+            min-width: 0; flex: 1; overflow: hidden;
+        }
+        .board-last-title {
+            display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            color: #7eb3ff; text-decoration: none; font-weight: bold;
+        }
+        .board-last-title:hover { color: #fffd01; text-decoration: underline; }
+        .staff-tag { color: #fffd01; font-size: 0.82em; font-weight: bold; }
+
+        /* Sidebar widgets */
+        .recent-item {
+            display: flex; align-items: flex-start; gap: 10px;
+            padding: 8px 0; border-bottom: 1px solid #283e64;
+        }
+        .recent-item:last-child { border-bottom: none; padding-bottom: 0; }
+        .recent-item:first-child { padding-top: 0; }
+        .recent-pfp {
+            width: 30px; height: 30px; border-radius: 50%; object-fit: cover;
+            border: 1px solid #2b4570; background: #0f1c2e;
+        }
+        .recent-info { flex: 1; min-width: 0; }
+        .recent-title {
+            display: block; color: #7eb3ff; font-weight: bold; text-decoration: none;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .recent-title:hover { color: #fffd01; text-decoration: underline; }
+        .recent-meta { font-size: 0.82em; color: #c5d4eb; }
+        .recent-meta a { color: #c5d4eb; text-decoration: none; font-weight: bold; }
+        .recent-meta a:hover { color: #fffd01; text-decoration: underline; }
+
+        .online-user-link {
+            display: inline-block;
+            color: #7eb3ff;
+            text-decoration: none;
+            font-weight: bold;
+            margin-right: 6px;
+        }
+        .online-user-link:hover { color: #fffd01; text-decoration: underline; }
+        .stat-kv {
+            display: flex; justify-content: space-between; padding: 5px 0;
+            border-bottom: 1px solid #283e64; color: #c5d4eb;
+        }
+        .stat-kv:last-child { border-bottom: none; }
+        .stat-kv strong { color: #ffffff; }
+
         .modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); display: none; align-items: center;
             justify-content: center; z-index: 10000;
         }
         .modal-content {
-            background: #1e2f4f; padding: 25px; border-radius: 12px;
-            border: 3px solid #0165fc; width: 90%; max-width: 400px; color: white; text-align: center;
-        }
-        .button {
-            padding: 10px 20px; margin: 10px 5px; border: none; border-radius: 6px;
-            cursor: pointer; font-weight: bold; color: white; background: #0165fc;
+            background: #1e2f4f; padding: 22px; border-radius: 4px;
+            border: 1px solid #2b4570; width: 90%; max-width: 380px; color: white; text-align: center;
         }
         @media (max-width: 700px) {
-            .board { flex-direction: column; align-items: flex-start; }
-            .board-stats, .board-last { text-align: left; }
+            .board { flex-wrap: wrap; }
+            .board-stats { justify-content: flex-start; }
+            .board-last { max-width: 100%; width: 100%; padding-top: 6px; border-top: 1px solid #283e64; }
         }
     </style>
 </head>
 <body>
     <header>
-        <img src="https://i.imgur.com/oJCfWc8.png" alt="Logo" class="logo">
+        <img src="https://i.imgur.com/oJCfWc8.png" alt="Logo" class="logo" onclick="window.location.href='/'">
         <h1>20Thousand Forums</h1>
     </header>
 
     <nav>
-        <a href="/">Home</a> |
-        <a href="/forums">Boards</a> |
-        <a href="/search.html">Search</a> |
-        <a href="/alerts.html">Alerts <span id="alert-badge" style="display:none; background:#ff4444; color:white; border-radius:10px; padding:1px 7px; font-size:12px; margin-left:4px;">0</span></a> |
+        <a href="/">Home</a>
+        <a href="/forums" class="active">Boards</a>
+        <a href="/search.html">Search</a>
+        <a href="/alerts.html">Alerts <span id="alert-badge" style="display:none; background:#d93838; color:white; border-radius:3px; padding:1px 6px; font-size:11px; margin-left:4px;">0</span></a>
         <span id="user-nav"></span>
+        <form action="/search.html" method="get" class="nav-search">
+            <input name="q" placeholder="Search users or d1scs...">
+            <button type="submit">Search</button>
+        </form>
     </nav>
 
-    <div id="global-banner" style="display:none; background:#fffd01; color:#162437; padding:12px; text-align:center; font-weight:bold;"></div>
+    <div id="global-banner" style="display:none; background:#fffd01; color:#162437; padding:10px 16px; text-align:center; font-weight:bold;"></div>
 
     <div class="container">
-        <h2>Boards (s1k/)</h2>
-
-        <div class="category">
-            <div class="category-title">Site Information</div>
-            <div class="board" onclick="goBoard('news','News & Announcements')">
-                <div class="board-name">s1k/news/</div>
-                <div class="board-desc">Official news & announcements<br><span class="staff-tag">Staff only (Owner / Moderator / Janitor)</span></div>
-                <div class="board-stats">d1scs: <span id="news-threads">--</span></div>
-                <div class="board-last" id="news-last">—</div>
-            </div>
-            <div class="board" onclick="window.location.href='/tos.html'">
-                <div class="board-name">s1k/laws/</div>
-                <div class="board-desc">The 20Thousand Commandments (rules)</div>
-                <div class="board-stats">Read</div>
-                <div class="board-last">→ TOS</div>
-            </div>
+        <div class="breadcrumbs">
+            <a href="/">Home</a>
+            <span class="bc-sep">›</span>
+            <span class="bc-current">Boards (s1k/)</span>
         </div>
 
-        <div class="category">
-            <div class="category-title">General</div>
-            <div class="board" onclick="goBoard('pit','The Pit')">
-                <div class="board-name">s1k/pit/</div>
-                <div class="board-desc">Main board • Everything goes</div>
-                <div class="board-stats">d1scs: <span id="pit-threads">--</span></div>
-                <div class="board-last" id="pit-last">—</div>
-            </div>
-            <div class="board" onclick="goBoard('srs','Serious')">
-                <div class="board-name">s1k/srs/</div>
-                <div class="board-desc">Real talk, debates & long posts</div>
-                <div class="board-stats">d1scs: <span id="srs-threads">--</span></div>
-                <div class="board-last" id="srs-last">—</div>
-            </div>
-            <div class="board" onclick="goBoard('pol','Politics')">
-                <div class="board-name">s1k/pol/</div>
-                <div class="board-desc">Politics, news & current events</div>
-                <div class="board-stats">d1scs: <span id="pol-threads">--</span></div>
-                <div class="board-last" id="pol-last">—</div>
-            </div>
-            <div class="board" onclick="goBoard('br','Brainrot')">
-                <div class="board-name">s1k/br/</div>
-                <div class="board-desc">Memes, crapposting & degeneracy</div>
-                <div class="board-stats">d1scs: <span id="br-threads">--</span></div>
-                <div class="board-last" id="br-last">—</div>
-            </div>
-        </div>
+        <div class="xf-layout">
+            <div class="xf-main">
+                <div class="category">
+                    <div class="category-title">Site Information</div>
+                    <div class="board" onclick="goBoard('news','News & Announcements')">
+                        <div class="node-icon" id="news-icon">
+                            <svg class="svg-icon-lg" viewBox="0 0 24 24"><path d="M18 11v2h4v-2h-4zm-2 6.61c.96.71 2.21 1.65 3.2 2.39.4-.53.8-1.07 1.2-1.6-.99-.74-2.24-1.68-3.2-2.4-.4.54-.8 1.08-1.2 1.61zM20.4 5.6c-.4-.53-.8-1.07-1.2-1.6-.99.74-2.24 1.68-3.2 2.4.4.53.8 1.07 1.2 1.6.96-.72 2.21-1.65 3.2-2.4zM4 9c-1.1 0-2 .9-2 2v2c0 1.1.9 2 2 2h1v4h2v-4h1l5 3V6L8 9H4zm11.5 3c0-1.33-.58-2.53-1.5-3.35v6.69c.92-.81 1.5-2.01 1.5-3.34z"/></svg>
+                        </div>
+                        <div class="node-main">
+                            <div class="board-name">s1k/news/ <span class="board-subname">News &amp; Announcements</span></div>
+                            <div class="board-desc">Official news &amp; announcements · <span class="staff-tag">Staff only</span></div>
+                        </div>
+                        <div class="board-stats">
+                            <div class="stat-col"><strong id="news-threads">0</strong>d1scs</div>
+                            <div class="stat-col"><strong id="news-posts">0</strong>Posts</div>
+                        </div>
+                        <div class="board-last" id="news-last"><span>No posts yet</span></div>
+                    </div>
+                    <div class="board" onclick="window.location.href='/commandments.html'">
+                        <div class="node-icon has-posts">
+                            <svg class="svg-icon-lg" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+                        </div>
+                        <div class="node-main">
+                            <div class="board-name">s1k/laws/ <span class="board-subname">The 20Thousand Commandments</span></div>
+                            <div class="board-desc">Official site rules and conduct guidelines</div>
+                        </div>
+                        <div class="board-stats">
+                            <div class="stat-col"><strong>20</strong>Laws</div>
+                        </div>
+                        <div class="board-last"><span style="color:#7eb3ff;font-weight:bold;">Read Rules</span></div>
+                    </div>
+                </div>
 
-        <div class="category">
-            <div class="category-title">Creative</div>
-            <div class="board" onclick="goBoard('crt','Creativity')">
-                <div class="board-name">s1k/crt/</div>
-                <div class="board-desc">Art, edits, music & OC</div>
-                <div class="board-stats">d1scs: <span id="crt-threads">--</span></div>
-                <div class="board-last" id="crt-last">—</div>
-            </div>
-            <div class="board" onclick="goBoard('media','Media')">
-                <div class="board-name">s1k/media/</div>
-                <div class="board-desc">Movies, TV, games & streams</div>
-                <div class="board-stats">d1scs: <span id="media-threads">--</span></div>
-                <div class="board-last" id="media-last">—</div>
-            </div>
-            <div class="board" onclick="goBoard('tech','Tech')">
-                <div class="board-name">s1k/tech/</div>
-                <div class="board-desc">Computers, software & gadgets</div>
-                <div class="board-stats">d1scs: <span id="tech-threads">--</span></div>
-                <div class="board-last" id="tech-last">—</div>
-            </div>
-        </div>
+                <div class="category">
+                    <div class="category-title">General</div>
+                    <div class="board" onclick="goBoard('pit','The Pit')">
+                        <div class="node-icon" id="pit-icon">
+                            <svg class="svg-icon-lg" viewBox="0 0 24 24"><path d="M21 6h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zm-4 6V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z"/></svg>
+                        </div>
+                        <div class="node-main">
+                            <div class="board-name">s1k/pit/ <span class="board-subname">The Pit</span></div>
+                            <div class="board-desc">Main board · Everything goes</div>
+                        </div>
+                        <div class="board-stats">
+                            <div class="stat-col"><strong id="pit-threads">0</strong>d1scs</div>
+                            <div class="stat-col"><strong id="pit-posts">0</strong>Posts</div>
+                        </div>
+                        <div class="board-last" id="pit-last"><span>No posts yet</span></div>
+                    </div>
+                    <div class="board" onclick="goBoard('srs','Serious')">
+                        <div class="node-icon" id="srs-icon">
+                            <svg class="svg-icon-lg" viewBox="0 0 24 24"><path d="M21 6h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zm-4 6V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z"/></svg>
+                        </div>
+                        <div class="node-main">
+                            <div class="board-name">s1k/srs/ <span class="board-subname">Serious</span></div>
+                            <div class="board-desc">Real talk, debates &amp; long posts</div>
+                        </div>
+                        <div class="board-stats">
+                            <div class="stat-col"><strong id="srs-threads">0</strong>d1scs</div>
+                            <div class="stat-col"><strong id="srs-posts">0</strong>Posts</div>
+                        </div>
+                        <div class="board-last" id="srs-last"><span>No posts yet</span></div>
+                    </div>
+                    <div class="board" onclick="goBoard('pol','Politics')">
+                        <div class="node-icon" id="pol-icon">
+                            <svg class="svg-icon-lg" viewBox="0 0 24 24"><path d="M21 6h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zm-4 6V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z"/></svg>
+                        </div>
+                        <div class="node-main">
+                            <div class="board-name">s1k/pol/ <span class="board-subname">Politics</span></div>
+                            <div class="board-desc">Politics, news &amp; current events</div>
+                        </div>
+                        <div class="board-stats">
+                            <div class="stat-col"><strong id="pol-threads">0</strong>d1scs</div>
+                            <div class="stat-col"><strong id="pol-posts">0</strong>Posts</div>
+                        </div>
+                        <div class="board-last" id="pol-last"><span>No posts yet</span></div>
+                    </div>
+                    <div class="board" onclick="goBoard('br','Brainrot')">
+                        <div class="node-icon" id="br-icon">
+                            <svg class="svg-icon-lg" viewBox="0 0 24 24"><path d="M21 6h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zm-4 6V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z"/></svg>
+                        </div>
+                        <div class="node-main">
+                            <div class="board-name">s1k/br/ <span class="board-subname">Brainrot</span></div>
+                            <div class="board-desc">Memes, crapposting &amp; degeneracy</div>
+                        </div>
+                        <div class="board-stats">
+                            <div class="stat-col"><strong id="br-threads">0</strong>d1scs</div>
+                            <div class="stat-col"><strong id="br-posts">0</strong>Posts</div>
+                        </div>
+                        <div class="board-last" id="br-last"><span>No posts yet</span></div>
+                    </div>
+                </div>
 
-        <div class="category">
-            <div class="category-title">Meta</div>
-            <div class="board" onclick="goBoard('cnfs','Confessions')">
-                <div class="board-name">s1k/cnfs/</div>
-                <div class="board-desc">Vents, stories & thoughts</div>
-                <div class="board-stats">d1scs: <span id="cnfs-threads">--</span></div>
-                <div class="board-last" id="cnfs-last">—</div>
-            </div>
-            <div class="board" onclick="goBoard('ot','Off-Topic')">
-                <div class="board-name">s1k/ot/</div>
-                <div class="board-desc">Random nonsense & tangents</div>
-                <div class="board-stats">d1scs: <span id="ot-threads">--</span></div>
-                <div class="board-last" id="ot-last">—</div>
-            </div>
-            <div class="board" onclick="goBoard('qna','Questions')">
-                <div class="board-name">s1k/qna/</div>
-                <div class="board-desc">Questions, help & site talk</div>
-                <div class="board-stats">d1scs: <span id="qna-threads">--</span></div>
-                <div class="board-last" id="qna-last">—</div>
-            </div>
-        </div>
+                <div class="category">
+                    <div class="category-title">Creative</div>
+                    <div class="board" onclick="goBoard('crt','Creativity')">
+                        <div class="node-icon" id="crt-icon">
+                            <svg class="svg-icon-lg" viewBox="0 0 24 24"><path d="M21 6h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zm-4 6V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z"/></svg>
+                        </div>
+                        <div class="node-main">
+                            <div class="board-name">s1k/crt/ <span class="board-subname">Creativity</span></div>
+                            <div class="board-desc">Art, edits, music &amp; OC</div>
+                        </div>
+                        <div class="board-stats">
+                            <div class="stat-col"><strong id="crt-threads">0</strong>d1scs</div>
+                            <div class="stat-col"><strong id="crt-posts">0</strong>Posts</div>
+                        </div>
+                        <div class="board-last" id="crt-last"><span>No posts yet</span></div>
+                    </div>
+                    <div class="board" onclick="goBoard('media','Media')">
+                        <div class="node-icon" id="media-icon">
+                            <svg class="svg-icon-lg" viewBox="0 0 24 24"><path d="M21 6h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zm-4 6V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z"/></svg>
+                        </div>
+                        <div class="node-main">
+                            <div class="board-name">s1k/media/ <span class="board-subname">Media</span></div>
+                            <div class="board-desc">Movies, TV, games &amp; streams</div>
+                        </div>
+                        <div class="board-stats">
+                            <div class="stat-col"><strong id="media-threads">0</strong>d1scs</div>
+                            <div class="stat-col"><strong id="media-posts">0</strong>Posts</div>
+                        </div>
+                        <div class="board-last" id="media-last"><span>No posts yet</span></div>
+                    </div>
+                    <div class="board" onclick="goBoard('tech','Tech')">
+                        <div class="node-icon" id="tech-icon">
+                            <svg class="svg-icon-lg" viewBox="0 0 24 24"><path d="M21 6h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zm-4 6V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z"/></svg>
+                        </div>
+                        <div class="node-main">
+                            <div class="board-name">s1k/tech/ <span class="board-subname">Tech</span></div>
+                            <div class="board-desc">Computers, software &amp; gadgets</div>
+                        </div>
+                        <div class="board-stats">
+                            <div class="stat-col"><strong id="tech-threads">0</strong>d1scs</div>
+                            <div class="stat-col"><strong id="tech-posts">0</strong>Posts</div>
+                        </div>
+                        <div class="board-last" id="tech-last"><span>No posts yet</span></div>
+                    </div>
+                </div>
 
-        <div class="stats-box">
-            <h3>Forum statistics</h3>
-            <div class="stats-row">
-                <div class="stat">Members: <strong id="stat-members">--</strong></div>
-                <div class="stat">d1scs: <strong id="stat-threads">--</strong></div>
-                <div class="stat">Posts: <strong id="stat-posts">--</strong></div>
-                <div class="stat">Online now: <strong id="stat-online">--</strong></div>
+                <div class="category">
+                    <div class="category-title">Meta</div>
+                    <div class="board" onclick="goBoard('cnfs','Confessions')">
+                        <div class="node-icon" id="cnfs-icon">
+                            <svg class="svg-icon-lg" viewBox="0 0 24 24"><path d="M21 6h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zm-4 6V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z"/></svg>
+                        </div>
+                        <div class="node-main">
+                            <div class="board-name">s1k/cnfs/ <span class="board-subname">Confessions</span></div>
+                            <div class="board-desc">Vents, stories &amp; thoughts</div>
+                        </div>
+                        <div class="board-stats">
+                            <div class="stat-col"><strong id="cnfs-threads">0</strong>d1scs</div>
+                            <div class="stat-col"><strong id="cnfs-posts">0</strong>Posts</div>
+                        </div>
+                        <div class="board-last" id="cnfs-last"><span>No posts yet</span></div>
+                    </div>
+                    <div class="board" onclick="goBoard('ot','Off-Topic')">
+                        <div class="node-icon" id="ot-icon">
+                            <svg class="svg-icon-lg" viewBox="0 0 24 24"><path d="M21 6h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zm-4 6V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z"/></svg>
+                        </div>
+                        <div class="node-main">
+                            <div class="board-name">s1k/ot/ <span class="board-subname">Off-Topic</span></div>
+                            <div class="board-desc">Random nonsense &amp; tangents</div>
+                        </div>
+                        <div class="board-stats">
+                            <div class="stat-col"><strong id="ot-threads">0</strong>d1scs</div>
+                            <div class="stat-col"><strong id="ot-posts">0</strong>Posts</div>
+                        </div>
+                        <div class="board-last" id="ot-last"><span>No posts yet</span></div>
+                    </div>
+                    <div class="board" onclick="goBoard('qna','Questions')">
+                        <div class="node-icon" id="qna-icon">
+                            <svg class="svg-icon-lg" viewBox="0 0 24 24"><path d="M21 6h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zm-4 6V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z"/></svg>
+                        </div>
+                        <div class="node-main">
+                            <div class="board-name">s1k/qna/ <span class="board-subname">Questions</span></div>
+                            <div class="board-desc">Questions, help &amp; site talk</div>
+                        </div>
+                        <div class="board-stats">
+                            <div class="stat-col"><strong id="qna-threads">0</strong>d1scs</div>
+                            <div class="stat-col"><strong id="qna-posts">0</strong>Posts</div>
+                        </div>
+                        <div class="board-last" id="qna-last"><span>No posts yet</span></div>
+                    </div>
+                </div>
             </div>
-            <div class="online-list" id="online-list">Loading...</div>
+
+            <!-- Right-Hand XenForo Sidebar -->
+            <aside class="xf-sidebar">
+                <div class="xf-widget">
+                    <div class="xf-widget-header">
+                        <span>Latest Posts</span>
+                    </div>
+                    <div class="xf-widget-body" id="recent-posts-list">
+                        Loading recent activity...
+                    </div>
+                </div>
+
+                <div class="xf-widget">
+                    <div class="xf-widget-header">
+                        <span>Members Online</span>
+                        <span id="stat-online-badge" style="background:#162437;border:1px solid #2b4570;color:#ffffff;padding:1px 7px;border-radius:3px;font-size:0.8em;">0</span>
+                    </div>
+                    <div class="xf-widget-body" id="online-list">
+                        Loading...
+                    </div>
+                </div>
+
+                <div class="xf-widget">
+                    <div class="xf-widget-header">
+                        <span>Forum Statistics</span>
+                    </div>
+                    <div class="xf-widget-body">
+                        <div class="stat-kv"><span>d1scs:</span><strong id="stat-threads">0</strong></div>
+                        <div class="stat-kv"><span>Posts:</span><strong id="stat-posts">0</strong></div>
+                        <div class="stat-kv"><span>Members:</span><strong id="stat-members">0</strong></div>
+                        <div class="stat-kv"><span>Online now:</span><strong id="stat-online">0</strong></div>
+                        <div class="stat-kv"><span>Latest member:</span><strong id="stat-newest">None</strong></div>
+                    </div>
+                </div>
+            </aside>
         </div>
     </div>
 
@@ -180,9 +384,17 @@
         const username = localStorage.getItem('username');
         const BOARD_IDS = ['news','pit','srs','pol','br','crt','media','tech','cnfs','ot','qna'];
 
+        function escapeHtml(s) {
+            return String(s || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
         document.getElementById('user-nav').innerHTML = username
-            ? `Logged in as: <a href="/profile.html?user=${encodeURIComponent(username)}" style="color:inherit; text-decoration:none;"><strong>${username}</strong></a> | <a href="#" onclick="showLogoutModal(); return false;">Logout</a>`
-            : '<a href="/register">Register</a> | <a href="/login">Login</a>';
+            ? `<span class="nav-user-bar"><a href="/profile.html?user=${encodeURIComponent(username)}"><strong>${escapeHtml(username)}</strong></a>${username === '20k' ? ' · <a href="/admin.html">Admin</a>' : ''} · <a href="#" onclick="showLogoutModal(); return false;">Logout</a></span>`
+            : '<a href="/register">Register</a> <a href="/login">Login</a>';
 
         function goBoard(id, name) {
             window.location.href = `/thread-list.html?id=${encodeURIComponent(id)}&name=${encodeURIComponent(name)}`;
@@ -208,12 +420,51 @@
                     const data = stats[id] || {};
                     const el = document.getElementById(id + '-threads');
                     if (el) el.textContent = data.threads || 0;
+                    const pEl = document.getElementById(id + '-posts');
+                    if (pEl) pEl.textContent = data.posts || 0;
+                    const iconEl = document.getElementById(id + '-icon');
+                    if (iconEl && (data.threads || 0) > 0) iconEl.classList.add('has-posts');
+
                     const lastEl = document.getElementById(id + '-last');
                     if (lastEl && data.last) {
-                        lastEl.innerHTML = `<a href="/thread.html?id=${data.last.threadId}&title=${encodeURIComponent(data.last.title || '')}">${data.last.title || 'd1sc'}</a><br>by ${data.last.user || ''} • ${timeAgo(data.last.at)}`;
+                        const threadUrl = `/thread.html?id=${encodeURIComponent(data.last.threadId)}&title=${encodeURIComponent(data.last.title || '')}${data.last.postId ? '#post-' + encodeURIComponent(data.last.postId) : ''}`;
+                        lastEl.innerHTML =
+                            `<img class="board-last-avatar" src="${escapeHtml(data.last.pfp || 'https://i.imgur.com/oJCfWc8.png')}" alt="" onclick="event.stopPropagation();window.location.href='/profile.html?user=${encodeURIComponent(data.last.user || '')}'">` +
+                            `<div class="board-last-info" onclick="event.stopPropagation();">` +
+                                `<a class="board-last-title" href="${threadUrl}">${escapeHtml(data.last.title || 'd1sc')}</a>` +
+                                `<div>by <a href="/profile.html?user=${encodeURIComponent(data.last.user || '')}" style="color:#c5d4eb;text-decoration:none;font-weight:bold;">${escapeHtml(data.last.user || 'Unknown')}</a> · ${escapeHtml(timeAgo(data.last.at))}</div>` +
+                            `</div>`;
                     }
                 });
             } catch (err) {}
+        }
+
+        async function loadRecentPosts() {
+            const box = document.getElementById('recent-posts-list');
+            if (!box) return;
+            try {
+                const res = await fetch('/api/recent-posts');
+                const items = await res.json();
+                if (!Array.isArray(items) || !items.length) {
+                    box.innerHTML = '<span style="color:#c5d4eb;">No recent posts yet.</span>';
+                    return;
+                }
+                box.innerHTML = items.map(item => {
+                    const url = `/thread.html?id=${encodeURIComponent(item.threadId)}&title=${encodeURIComponent(item.title || '')}#post-${encodeURIComponent(item.postId)}`;
+                    return `<div class="recent-item">` +
+                        `<div class="avatar-wrap">` +
+                            `<img class="recent-pfp" src="${escapeHtml(item.pfp)}" alt="">` +
+                            (item.online ? '<span class="online-dot" style="width:9px;height:9px;"></span>' : '') +
+                        `</div>` +
+                        `<div class="recent-info">` +
+                            `<a class="recent-title" href="${url}">${escapeHtml(item.title)}</a>` +
+                            `<div class="recent-meta"><a href="/profile.html?user=${encodeURIComponent(item.user)}">${escapeHtml(item.user)}</a> · ${escapeHtml(timeAgo(item.at))} · <a href="/thread-list.html?id=${encodeURIComponent(item.forum_id)}">s1k/${escapeHtml(item.forum_id)}/</a></div>` +
+                        `</div>` +
+                    `</div>`;
+                }).join('');
+            } catch (e) {
+                box.innerHTML = '<span style="color:#c5d4eb;">Failed to load recent posts.</span>';
+            }
         }
 
         async function loadOnlineStats() {
@@ -224,13 +475,21 @@
                 document.getElementById('stat-threads').textContent = data.threads || 0;
                 document.getElementById('stat-posts').textContent = data.posts || 0;
                 document.getElementById('stat-online').textContent = data.onlineCount || 0;
+                const badgeEl = document.getElementById('stat-online-badge');
+                if (badgeEl) badgeEl.textContent = data.onlineCount || 0;
+                const newestEl = document.getElementById('stat-newest');
+                if (newestEl) {
+                    newestEl.innerHTML = data.newestMember
+                        ? `<a href="/profile.html?user=${encodeURIComponent(data.newestMember)}" style="color:#7eb3ff;text-decoration:none;">${escapeHtml(data.newestMember)}</a>`
+                        : 'None';
+                }
                 const list = document.getElementById('online-list');
                 if (!data.online || !data.online.length) {
-                    list.innerHTML = '<span class="online-empty">Nobody online right now.</span>';
+                    list.innerHTML = '<span style="color:#c5d4eb;">Nobody online right now.</span>';
                     return;
                 }
-                list.innerHTML = 'Online now: ' + data.online.map(u =>
-                    `<a href="/profile.html?user=${encodeURIComponent(u.username)}">${u.username}</a>`
+                list.innerHTML = data.online.map(u =>
+                    `<a class="online-user-link" href="/profile.html?user=${encodeURIComponent(u.username)}">${escapeHtml(u.username)}</a>`
                 ).join(', ');
             } catch (e) {}
         }
@@ -253,8 +512,8 @@
                 const el = document.getElementById('global-banner');
                 if (!el) return;
                 if (data && data.active && (data.text || data.imageUrl)) {
-                    let content = data.text || "";
-                    if (data.imageUrl) content += `<br><img src="${data.imageUrl}" style="max-width:100%; margin-top:8px;">`;
+                    let content = escapeHtml(data.text || "");
+                    if (data.imageUrl) content += `<br><img src="${escapeHtml(data.imageUrl)}" style="max-width:100%; margin-top:8px;">`;
                     el.innerHTML = content;
                     el.style.display = 'block';
                 } else el.style.display = 'none';
@@ -298,8 +557,8 @@
                 <div class="modal-content">
                     <h3>Logout?</h3>
                     <p>Are you sure you want to logout?</p>
-                    <button class="button" onclick="doLogout()" style="background:#ff4444;">Yes, Logout</button>
-                    <button class="button" onclick="this.parentElement.parentElement.remove()">Cancel</button>
+                    <button class="button" onclick="doLogout()" style="background:#d93838;border-color:#d93838;">Yes, Logout</button>
+                    <button class="button" onclick="this.parentElement.parentElement.remove()" style="background:#2b4570;border-color:#2b4570;">Cancel</button>
                 </div>`;
             document.body.appendChild(modal);
         }
@@ -310,6 +569,7 @@
         }
 
         loadStats();
+        loadRecentPosts();
         loadOnlineStats();
         loadGlobalBanner();
         checkBan();
@@ -318,6 +578,7 @@
         setInterval(checkBan, 8000);
         setInterval(heartbeat, 30000);
         setInterval(loadOnlineStats, 20000);
+        setInterval(loadRecentPosts, 20000);
         setInterval(loadAlertBadge, 15000);
     </script>
 </body>

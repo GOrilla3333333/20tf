@@ -106,14 +106,19 @@
 </head>
 <body>
     <header>
-        <img src="https://i.imgur.com/oJCfWc8.png" alt="Logo" class="logo">
+        <img src="https://i.imgur.com/oJCfWc8.png" alt="Logo" class="logo" onclick="window.location.href='/'">
         <h1>Admin Panel</h1>
     </header>
 
-    <nav><a href="/forums">← Back to Forums</a></nav>
-    <hr>
+    <nav>
+        <a href="/">Home</a>
+        <a href="/forums">Boards</a>
+        <a href="/admin.html" class="active">Admin Panel</a>
+    </nav>
 
-    <div id="content"></div>
+    <div class="container">
+        <div id="content"></div>
+    </div>
     <div id="mentionDropdown" class="mention-dropdown"></div>
 
     <script>
@@ -215,8 +220,7 @@
             document.getElementById('content').innerHTML =
                 '<div class="admin-section">' +
                     '<h2>Global Banner</h2>' +
-                    '<p class="hint">Type @ to tag a user — they get an alert.</p>' +
-                    '<input id="bannerText" placeholder="Banner text — @ to tag someone">' +
+                    '<input id="bannerText" placeholder="Banner text">' +
                     '<input id="bannerImage" placeholder="Image URL (optional)">' +
                     '<button onclick="updateBanner()">Update Banner</button>' +
                     '<button class="danger" onclick="clearBanner()">Clear Banner</button>' +
@@ -315,6 +319,9 @@
                     html += '<input class="reason" id="reason-' + safe + '" placeholder="Ban reason">';
                     html += '<select id="type-' + safe + '"><option value="permanent">Permanent</option><option value="temporary">Temporary</option></select>';
                     html += '<button class="danger" onclick="banFromList(\'' + jsName + '\')">Ban</button>';
+                    if (u.banned) {
+                        html += '<button style="background:#00cc66;" onclick="unbanFromList(\'' + jsName + '\')">Unban</button>';
+                    }
                     html += '</div>';
                 } else {
                     html += '<div style="color:#aaa;font-size:0.85em;">(owner)</div>';
@@ -342,6 +349,18 @@
                     reason: reason,
                     type: type
                 })
+            });
+            const data = await res.json();
+            alert(data.message);
+            if (data.success) loadMembers();
+        }
+
+        async function unbanFromList(target) {
+            if (!confirm('Unban ' + target + '?')) return;
+            const res = await fetch('/api/admin/unban', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ admin: '20k', targetUsername: target })
             });
             const data = await res.json();
             alert(data.message);

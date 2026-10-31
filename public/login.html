@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - 20Thousand Forums</title>
     <link rel="stylesheet" href="/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
@@ -9,29 +10,67 @@
     <style>
         .form-container {
             max-width: 400px;
-            margin: 80px auto;
+            margin: 60px auto;
             background: #1e2f4f;
-            padding: 40px;
+            padding: 36px 32px;
             border-radius: 12px;
             border: 2px solid #0165fc;
+            box-shadow: 0 8px 26px rgba(0, 0, 0, 0.35);
             text-align: center;
+        }
+        .form-container input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 12px 14px;
+            margin-bottom: 14px;
+            border-radius: 8px;
+            border: 2px solid #0165fc;
+            background: #0f1b2e;
+            color: #ffffff;
+            font-family: inherit;
+            font-size: 1em;
+            outline: none;
+        }
+        .form-container input:focus {
+            border-color: #fffd01;
+        }
+        .form-container a {
+            color: #fffd01;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .form-container a:hover {
+            text-decoration: underline;
         }
         .notification {
             position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
             padding: 15px 25px; border-radius: 6px; z-index: 20000;
             color: white; font-weight: bold;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
         }
     </style>
 </head>
 <body>
+    <header>
+        <img src="https://i.imgur.com/oJCfWc8.png" class="logo" alt="Logo" onclick="window.location.href='/'">
+        <h1>20Thousand Forums</h1>
+    </header>
+
+    <nav>
+        <a href="/">Home</a>
+        <a href="/forums">Boards</a>
+        <a href="/login" class="active">Login</a>
+        <a href="/register">Register</a>
+    </nav>
+
     <div class="form-container">
-        <h1>Login</h1>
+        <h1 style="margin-bottom:20px;">Login</h1>
         <form id="loginForm">
-            <input type="text" id="username" placeholder="Username" required><br><br>
-            <input type="password" id="password" placeholder="Password" required><br><br>
-            <button type="submit" class="button">Login</button>
+            <input type="text" id="username" placeholder="Username" required>
+            <input type="password" id="password" placeholder="Password" required>
+            <button type="submit" class="button" style="width:100%;padding:12px;">Login</button>
         </form>
-        <p><a href="/register">Don't have an account? Register</a></p>
+        <p style="margin-top:18px;color:#9fb3c8;">Don't have an account? <a href="/register">Register</a></p>
     </div>
 
     <script>
@@ -68,7 +107,6 @@
                     localStorage.setItem('username', username);
 
                     if (data.redirect) {
-                        // Redirect to TOS for new accounts
                         showNotification("Please accept the Terms of Service", "#ffaa00");
                         setTimeout(() => {
                             window.location.href = data.redirect;

@@ -52,6 +52,7 @@ const Report = require('./models/Report');
 const Announcement = require('./models/Announcement');
 const ProfileComment = require('./models/ProfileComment');
 const Alert = require('./models/Alert');
+const Vote = require('./models/Vote');
 
 async function canMod(username) {
     if (!username) return false;
@@ -220,36 +221,88 @@ app.get('/api/forum-stats', async (req, res) => {
     try {
         const forums = ['pit', 'srs', 'br', 'pol', 'crt', 'media', 'tech', 'cnfs', 'ot', 'qna', 'news'];
         const stats = {};
+        const pfpCache = new Map();
+        async function getPfp(uname) {
+            if (!uname) return "https://i.imgur.com/oJCfWc8.png";
+            if (pfpCache.has(uname)) return pfpCache.get(uname);
+            const u = await User.collection.findOne({ username: uname });
+            const url = (u && u.pfp) || "https://i.imgur.com/oJCfWc8.png";
+            pfpCache.set(uname, url);
+            return url;
+        }
         for (const id of forums) {
             const threads = await Thread.find({ forum_id: id });
             const threadCount = threads.length;
+            let postCount = 0;
             let last = null;
             if (threadCount > 0) {
                 const threadIds = threads.map(t => t.id);
+                postCount = await Post.countDocuments({ thread_id: { $in: threadIds } });
                 const lastPost = await Post.findOne({ thread_id: { $in: threadIds } }).sort({ created_at: -1 });
                 if (lastPost) {
                     const thread = threads.find(t => t.id === lastPost.thread_id);
                     last = {
                         title: thread ? thread.title : "Unknown",
+                        prefix: thread ? (thread.prefix || "") : "",
                         user: lastPost.user_id,
+                        pfp: await getPfp(lastPost.user_id),
                         at: lastPost.created_at,
-                        threadId: lastPost.thread_id
+                        threadId: lastPost.thread_id,
+                        postId: lastPost.id
                     };
                 } else {
                     const newest = [...threads].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
                     last = {
                         title: newest.title,
+                        prefix: newest.prefix || "",
                         user: newest.user_id,
+                        pfp: await getPfp(newest.user_id),
                         at: newest.created_at,
-                        threadId: newest.id
+                        threadId: newest.id,
+                        postId: ""
                     };
                 }
             }
-            stats[id] = { threads: threadCount, last };
+            stats[id] = { threads: threadCount, posts: postCount, last };
         }
         res.json(stats);
     } catch (err) {
         res.json({});
+    }
+});
+
+app.get('/api/recent-posts', async (req, res) => {
+    try {
+        const recentPosts = await Post.find({}).sort({ created_at: -1 }).limit(10).lean();
+        const threadIds = [...new Set(recentPosts.map(p => String(p.thread_id)))];
+        const threads = threadIds.length ? await Thread.find({ id: { $in: threadIds } }).lean() : [];
+        const threadMap = new Map(threads.map(t => [String(t.id), t]));
+        const usernames = [...new Set(recentPosts.map(p => p.user_id).filter(Boolean))];
+        const users = usernames.length ? await User.find({ username: { $in: usernames } }).lean() : [];
+        const userMap = new Map(users.map(u => [u.username, u]));
+        const cutoff = Date.now() - 5 * 60 * 1000;
+
+        const items = [];
+        for (const p of recentPosts) {
+            const t = threadMap.get(String(p.thread_id));
+            if (!t) continue;
+            const u = userMap.get(p.user_id);
+            items.push({
+                postId: p.id,
+                threadId: t.id,
+                title: t.title || "Untitled",
+                prefix: t.prefix || "",
+                forum_id: t.forum_id || "",
+                user: p.user_id || "Unknown",
+                pfp: (u && u.pfp) || "https://i.imgur.com/oJCfWc8.png",
+                online: !!(u && u.lastSeen && new Date(u.lastSeen).getTime() >= cutoff),
+                at: p.created_at
+            });
+            if (items.length >= 8) break;
+        }
+        res.json(items);
+    } catch (err) {
+        res.json([]);
     }
 });
 
@@ -260,12 +313,23 @@ app.get('/api/forums/:forumId/threads', async (req, res) => {
         const result = [];
         for (const thread of threads) {
             const posts = await Post.find({ thread_id: thread.id });
+            let lastPost = null;
+            if (posts.length > 0) {
+                const latest = posts.reduce((a, b) => new Date(b.created_at) > new Date(a.created_at) ? b : a, posts[0]);
+                lastPost = {
+                    id: latest.id,
+                    user: latest.user_id,
+                    at: latest.created_at
+                };
+            }
             result.push({
                 ...thread.toObject(),
                 postCount: posts.length,
                 views: thread.views || 0,
                 locked: !!thread.locked,
-                prefix: thread.prefix || ""
+                pinned: !!thread.pinned,
+                prefix: thread.prefix || "",
+                lastPost
             });
         }
         res.json(result);
@@ -402,10 +466,12 @@ app.get('/api/threads/:threadId', async (req, res) => {
             success: true,
             id: thread.id,
             title: thread.title,
+            forum_id: thread.forum_id || "",
             creator: thread.user_id,
             created_at: thread.created_at,
             views: thread.views || 0,
             locked: !!thread.locked,
+            pinned: !!thread.pinned,
             prefix: thread.prefix || ""
         });
     } catch (err) {
@@ -438,6 +504,7 @@ app.post('/api/posts', async (req, res) => {
             created_at: new Date()
         });
         await post.save();
+        pingUser(username);
 
         const thread = threadCheck || await Thread.findOne({ id: String(thread_id) });
         const tTitle = (thread && thread.title) || '';
@@ -469,7 +536,7 @@ app.post('/api/posts', async (req, res) => {
                         type: "reply",
                         message: username + ' replied to your post',
                         threadTitle: tTitle,
-                        link: tLink + '#post-' + parent_id
+                        link: tLink + '#post-' + post.id
                     });
                 }
             }
@@ -492,30 +559,85 @@ app.post('/api/posts', async (req, res) => {
 app.get('/api/threads/:threadId/posts', async (req, res) => {
     try {
         const posts = await Post.find({ thread_id: String(req.params.threadId) }).sort({ created_at: 1 });
+        const postIds = posts.map(p => String(p.id));
+        const allVotes = postIds.length
+            ? await Vote.find({ target_type: 'post', target_id: { $in: postIds } }).lean()
+            : [];
+        const votesByPost = new Map();
+        for (const v of allVotes) {
+            const key = String(v.target_id);
+            if (!votesByPost.has(key)) votesByPost.set(key, []);
+            votesByPost.get(key).push({
+                user_id: v.user_id,
+                reaction: v.reaction || 'like'
+            });
+        }
+
+        const userCache = new Map();
+        const onlineCutoff = Date.now() - 5 * 60 * 1000;
+        async function getAuthorMeta(uname) {
+            if (userCache.has(uname)) return userCache.get(uname);
+            const user = await User.collection.findOne({ username: uname });
+            const postCount = await Post.countDocuments({ user_id: uname });
+            const userPosts = await Post.find({ user_id: uname }).select('id').lean();
+            const uPostIds = userPosts.map(up => String(up.id));
+            const reactionScore = uPostIds.length
+                ? await Vote.countDocuments({ target_type: 'post', target_id: { $in: uPostIds } })
+                : 0;
+            let title = (user && user.title) || "Member";
+            if (uname === "20k" && (!user || !user.title)) title = "Owner";
+            const online = !!(user && user.lastSeen && new Date(user.lastSeen).getTime() >= onlineCutoff);
+            const meta = {
+                pfp: (user && user.pfp) || "https://i.imgur.com/oJCfWc8.png",
+                title,
+                joined: user ? user.created_at : null,
+                postCount,
+                reactionScore,
+                signature: (user && user.signature) || "",
+                online
+            };
+            userCache.set(uname, meta);
+            return meta;
+        }
+
         const cleaned = [];
         for (const p of posts) {
-            const user = await User.findOne({ username: p.user_id });
+            const meta = await getAuthorMeta(p.user_id);
             cleaned.push({
                 id: String(p.id),
                 content: p.content || "",
                 thread_id: String(p.thread_id),
                 user_id: p.user_id,
-                pfp: user?.pfp || "https://i.imgur.com/oJCfWc8.png",
+                pfp: meta.pfp,
+                userTitle: meta.title,
+                userJoined: meta.joined,
+                userPostCount: meta.postCount,
+                userReactions: meta.reactionScore,
+                userSignature: meta.signature,
+                userOnline: meta.online,
                 fileUrl: p.fileUrl,
                 fileUrls: p.fileUrls || (p.fileUrl ? [p.fileUrl] : []),
                 parent_id: p.parent_id ? String(p.parent_id) : null,
                 created_at: p.created_at,
+                edited_at: p.edited_at || null,
+                reactions: votesByPost.get(String(p.id)) || [],
                 replies: []
             });
         }
         const map = new Map();
         cleaned.forEach(p => map.set(p.id, p));
-        const tree = [];
         cleaned.forEach(p => {
-            if (p.parent_id && map.has(p.parent_id)) map.get(p.parent_id).replies.push(p);
-            else tree.push(p);
+            if (p.parent_id && map.has(p.parent_id)) {
+                const parent = map.get(p.parent_id);
+                p.replyTo = {
+                    id: parent.id,
+                    user_id: parent.user_id,
+                    content: parent.content,
+                    fileUrls: parent.fileUrls
+                };
+            }
         });
-        res.json(tree);
+        res.json(cleaned);
     } catch (err) {
         res.json([]);
     }
@@ -599,10 +721,11 @@ app.post('/api/threads/:threadId/lock', async (req, res) => {
 
 app.post('/api/profile/update', async (req, res) => {
     try {
-        const { username, bio, pfp, banner } = req.body;
+        const { username, bio, signature, pfp, banner } = req.body;
         if (!username) return res.json({ success: false, message: "Missing username" });
         const $set = {};
         if (typeof bio === "string") $set.bio = bio;
+        if (typeof signature === "string") $set.signature = signature.slice(0, 600);
         if (typeof pfp === "string" && pfp) $set.pfp = pfp;
         if (typeof banner === "string" && banner) $set.banner = banner;
         if (!Object.keys($set).length) return res.json({ success: false, message: "Nothing to update" });
@@ -614,7 +737,8 @@ app.post('/api/profile/update', async (req, res) => {
             message: "Profile updated!",
             pfp: user.pfp || "",
             banner: user.banner || "",
-            bio: user.bio || ""
+            bio: user.bio || "",
+            signature: user.signature || ""
         });
     } catch (err) {
         res.json({ success: false, message: "Server error" });
@@ -627,8 +751,14 @@ app.get('/api/profile/:username', async (req, res) => {
         if (!user) return res.json({ success: false, message: "User not found" });
 
         const postCount = await Post.countDocuments({ user_id: user.username });
+        const userPosts = await Post.find({ user_id: user.username }).select('id').lean();
+        const uPostIds = userPosts.map(up => String(up.id));
+        const reactionScore = uPostIds.length
+            ? await Vote.countDocuments({ target_type: 'post', target_id: { $in: uPostIds } })
+            : 0;
         let title = user.title || "Member";
         if (user.username === "20k" && !user.title) title = "Owner";
+        const online = !!(user.lastSeen && (Date.now() - new Date(user.lastSeen).getTime() < 5 * 60 * 1000));
 
         res.json({
             success: true,
@@ -636,8 +766,12 @@ app.get('/api/profile/:username', async (req, res) => {
             pfp: user.pfp || "https://i.imgur.com/oJCfWc8.png",
             banner: user.banner || "",
             bio: user.bio || "No bio yet.",
+            signature: user.signature || "",
             title,
             postCount,
+            reactionScore,
+            online,
+            lastSeen: user.lastSeen || null,
             created_at: user.created_at,
             banned: !!user.banned,
             banReason: user.banReason || '',
@@ -729,7 +863,7 @@ app.get('/api/profile/:username/activity', async (req, res) => {
         }
         for (const p of posts) {
             const thread = await Thread.findOne({ id: p.thread_id });
-            if (!p.parent_id && thread && thread.user_id === name && thread.id === p.thread_id) continue;
+            if (!p.parent_id && String(p.id).endsWith("p") && thread && thread.user_id === name) continue;
             const title = thread ? thread.title : "Unknown thread";
             activity.push({
                 type: "comment",
@@ -892,8 +1026,65 @@ app.put('/api/posts/:postId', async (req, res) => {
     if (!post) return res.json({ success: false, message: "Post not found" });
     if (post.user_id !== username && username !== "20k") return res.json({ success: false, message: "No permission" });
     post.content = content;
+    post.edited_at = new Date();
     await post.save();
-    res.json({ success: true, message: "Updated" });
+    res.json({ success: true, message: "Updated", edited_at: post.edited_at });
+});
+
+app.post('/api/posts/:postId/react', async (req, res) => {
+    try {
+        const { username, reaction } = req.body;
+        const postId = String(req.params.postId);
+        if (!username) return res.json({ success: false, message: "Login required" });
+        const post = await Post.findOne({ id: postId });
+        if (!post) return res.json({ success: false, message: "Post not found" });
+
+        const allowed = ['like', 'love', 'haha', 'fire', 'skull'];
+        const rx = allowed.includes(reaction) ? reaction : 'like';
+
+        const existing = await Vote.findOne({ target_type: 'post', target_id: postId, user_id: username });
+        if (existing) {
+            if ((existing.reaction || 'like') === rx) {
+                await Vote.deleteOne({ _id: existing._id });
+            } else {
+                existing.reaction = rx;
+                await existing.save();
+            }
+        } else {
+            await new Vote({
+                id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
+                user_id: username,
+                target_type: 'post',
+                target_id: postId,
+                vote_type: 1,
+                reaction: rx,
+                created_at: new Date()
+            }).save();
+
+            if (post.user_id && post.user_id !== username) {
+                const thread = await Thread.findOne({ id: post.thread_id });
+                const tTitle = (thread && thread.title) || 'd1sc';
+                const tLink = '/thread.html?id=' + encodeURIComponent(post.thread_id) +
+                    '&title=' + encodeURIComponent(tTitle) + '#post-' + postId;
+                await createAlert({
+                    to_user: post.user_id,
+                    from_user: username,
+                    type: 'reaction',
+                    message: 'reacted to your post in "' + tTitle + '"',
+                    threadTitle: tTitle,
+                    link: tLink
+                });
+            }
+        }
+
+        const updated = await Vote.find({ target_type: 'post', target_id: postId }).lean();
+        res.json({
+            success: true,
+            reactions: updated.map(v => ({ user_id: v.user_id, reaction: v.reaction || 'like' }))
+        });
+    } catch (err) {
+        res.json({ success: false, message: "Server error" });
+    }
 });
 
 app.delete('/api/posts/:postId', async (req, res) => {
@@ -969,7 +1160,7 @@ app.post('/api/heartbeat', async (req, res) => {
 app.get('/api/online-stats', async (req, res) => {
     try {
         const cutoff = new Date(Date.now() - 5 * 60 * 1000);
-        const [members, threads, posts, onlineUsers] = await Promise.all([
+        const [members, threads, posts, onlineUsers, newest] = await Promise.all([
             User.countDocuments({}),
             Thread.countDocuments({}),
             Post.countDocuments({}),
@@ -977,16 +1168,39 @@ app.get('/api/online-stats', async (req, res) => {
                 .select('username pfp title lastSeen')
                 .sort({ lastSeen: -1 })
                 .limit(80)
-                .lean()
+                .lean(),
+            User.findOne({}).sort({ created_at: -1 }).select('username').lean()
         ]);
         const online = onlineUsers.map(u => ({
             username: u.username,
             pfp: u.pfp || "https://i.imgur.com/oJCfWc8.png",
             title: u.title || (u.username === "20k" ? "Owner" : "Member")
         }));
-        res.json({ members, threads, posts, onlineCount: online.length, online });
+        res.json({
+            members,
+            threads,
+            posts,
+            onlineCount: online.length,
+            online,
+            newestMember: newest ? newest.username : ""
+        });
     } catch (err) {
-        res.json({ members: 0, threads: 0, posts: 0, onlineCount: 0, online: [] });
+        res.json({ members: 0, threads: 0, posts: 0, onlineCount: 0, online: [], newestMember: "" });
+    }
+});
+
+app.post('/api/admin/unban', async (req, res) => {
+    try {
+        const { admin, targetUsername } = req.body;
+        if (admin !== "20k") return res.json({ success: false, message: "No permission" });
+        const user = await User.findOne({ username: targetUsername });
+        if (!user) return res.json({ success: false, message: "User not found" });
+        user.banned = false;
+        user.banReason = "";
+        await user.save();
+        res.json({ success: true, message: 'User ' + targetUsername + ' has been unbanned.' });
+    } catch (err) {
+        res.json({ success: false, message: "Server error" });
     }
 });
 
@@ -1048,12 +1262,12 @@ app.get('/api/admin/users', async (req, res) => {
 app.post('/api/threads/:threadId/pin', async (req, res) => {
     try {
         const { username } = req.body;
-        if (username !== "20k") return res.json({ success: false, message: "Only admin can pin" });
+        if (!(await canMod(username))) return res.json({ success: false, message: "Only Owner/Moderator can pin" });
         const thread = await Thread.findOne({ id: req.params.threadId });
         if (!thread) return res.json({ success: false, message: "Thread not found" });
         thread.pinned = !thread.pinned;
         await thread.save();
-        res.json({ success: true, message: thread.pinned ? "📌 Pinned" : "📌 Unpinned" });
+        res.json({ success: true, pinned: thread.pinned, message: thread.pinned ? "📌 Pinned" : "📌 Unpinned" });
     } catch (err) {
         res.json({ success: false, message: "Server error" });
     }

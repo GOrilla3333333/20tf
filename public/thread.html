@@ -9,153 +9,727 @@
     <link rel="icon" type="image/png" href="https://i.imgur.com/oJCfWc8.png">
     <style>
         .notification {
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-            padding: 15px 25px; border-radius: 6px; z-index: 20000;
-            color: white; font-weight: bold;
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 22px;
+            border-radius: 4px;
+            z-index: 20000;
+            color: #ffffff;
+            font-weight: bold;
+            border: 1px solid #2b4570;
         }
-        .original-post {
-            background: #fff3d9; color: #000; border-left: 5px solid #fffd01;
-        }
-        .reply-post {
-            background: #1e2f4f; color: #fff; border-left: 5px solid #0165fc;
+        .thread-top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 8px;
+            background: #0f1c2e;
+            border: 1px solid #2b4570;
+            border-radius: 4px;
+            padding: 14px 18px;
         }
         .post {
-            padding: 15px; margin: 12px 0; border-radius: 8px; position: relative;
+            padding: 0;
+            margin: 12px 0;
+            border-radius: 4px;
+            position: relative;
+            display: flex;
+            align-items: stretch;
+            overflow: visible;
+            background: #1e2f4f;
+            color: #ffffff;
+            border: 1px solid #2b4570;
         }
-        .user-row {
-            display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+        .original-post {
+            background: #223556;
+            border-color: #3a5a8f;
+        }
+        .post-sidebar {
+            width: 172px;
+            flex-shrink: 0;
+            padding: 16px 12px;
+            background: #15233b;
+            border-right: 1px solid #2b4570;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        .original-post .post-sidebar {
+            background: #172742;
+            border-right-color: #3a5a8f;
+        }
+        .post-main {
+            flex: 1;
+            min-width: 0;
+            padding: 12px 18px 14px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
         }
         .user-pfp {
-            width: 36px; height: 36px; border-radius: 50%; object-fit: cover;
-            border: 2px solid #0165fc;
+            width: 68px;
+            height: 68px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1px solid #3a5a8f;
+            background: #0f1b2e;
+        }
+        .original-post .user-pfp {
+            border-color: #fffd01;
+        }
+        .postbit-badges {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            margin-top: 6px;
+        }
+        .postbit-role {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 0.74em;
+            font-weight: bold;
+            color: #ffffff;
+            background: #0165fc;
+        }
+        .op-badge {
+            display: inline-block;
+            padding: 2px 7px;
+            border-radius: 3px;
+            font-size: 0.72em;
+            font-weight: bold;
+            background: #fffd01;
+            color: #162437;
+        }
+        .postbit-stats {
+            margin-top: 10px;
+            font-size: 0.8em;
+            color: #c5d4eb;
+            line-height: 1.55;
+            width: 100%;
+        }
+        @media (max-width: 680px) {
+            .post { flex-direction: column; }
+            .post-sidebar {
+                width: auto;
+                flex-direction: row;
+                text-align: left;
+                gap: 12px;
+                padding: 10px 14px;
+                border-right: none;
+                border-bottom: 1px solid #2b4570;
+            }
+            .user-pfp { width: 42px; height: 42px; }
+            .postbit-badges { justify-content: flex-start; }
+            .postbit-stats { display: none; }
         }
         .post img.embed-media, .post video.embed-media {
-            max-width: min(100%, 420px);
+            max-width: min(100%, 440px);
             max-height: 360px;
-            border-radius: 8px;
+            border-radius: 4px;
+            border: 1px solid #2b4570;
             margin: 10px 0;
             display: block;
             object-fit: contain;
         }
-        .post a { color: #0165fc; word-break: break-all; }
-        .original-post a { color: #0b57d0; }
+        .post iframe.embed-iframe {
+            width: 100%;
+            max-width: 560px;
+            aspect-ratio: 16 / 9;
+            border: 1px solid #2b4570;
+            border-radius: 4px;
+            margin: 10px 0;
+            display: block;
+        }
+        .post a { color: #7cb8ff; word-break: break-all; }
         .username-link {
-            color: inherit; font-weight: bold; text-decoration: none; cursor: pointer;
+            color: #ffffff !important;
+            font-weight: bold;
+            text-decoration: none;
+            cursor: pointer;
         }
-        .username-link:hover { text-decoration: underline; color: #fffd01; }
+        .username-link:hover { text-decoration: underline; color: #fffd01 !important; }
+        .post-body {
+            color: #ffffff;
+            line-height: 1.55;
+        }
         .post-body .mention {
-            color: #fffd01; font-weight: bold; text-decoration: none;
+            color: #fffd01;
+            font-weight: bold;
+            text-decoration: none;
         }
-        .original-post .post-body .mention { color: #b8860b; }
+        .post-meta-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.82em;
+            color: #c5d4eb;
+            border-bottom: 1px solid #2b4570;
+            padding-bottom: 6px;
+            margin-bottom: 10px;
+            padding-right: 28px;
+        }
+        .original-post .post-meta-bar {
+            border-bottom-color: #3a5a8f;
+        }
+        .post-meta-bar a.post-num {
+            color: #c5d4eb;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .post-meta-bar a.post-num:hover {
+            color: #fffd01;
+            text-decoration: underline;
+        }
+        .xf-quote {
+            background: #142236;
+            border: 1px solid #2b4570;
+            border-left: 2px solid #0165fc;
+            border-radius: 4px;
+            margin: 8px 0 12px 0;
+            overflow: hidden;
+            color: #ffffff;
+        }
+        .xf-quote-header {
+            background: #1b2d47;
+            border-bottom: 1px solid #2b4570;
+            padding: 6px 12px;
+            font-size: 0.88em;
+            color: #c5d4eb;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .xf-quote-link {
+            color: #7cb8ff !important;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .xf-quote-link:hover {
+            color: #fffd01 !important;
+            text-decoration: underline;
+        }
+        .xf-quote-arrow {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 15px;
+            height: 15px;
+            border-radius: 3px;
+            background: #2b4570;
+            color: #ffffff;
+            font-size: 10px;
+            font-weight: bold;
+            line-height: 1;
+            text-decoration: none;
+        }
+        .xf-quote-link:hover .xf-quote-arrow {
+            background: #fffd01;
+            color: #162437;
+        }
+        .xf-quote-content {
+            padding: 10px 12px;
+            font-size: 0.95em;
+            color: #e8eef7;
+            line-height: 1.5;
+            position: relative;
+        }
+        .xf-quote-content.collapsed {
+            max-height: 150px;
+            overflow: hidden;
+            padding-bottom: 32px;
+        }
+        .xf-quote-expand {
+            display: none;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 6px 0;
+            text-align: center;
+            background: #1b2d47;
+            border-top: 1px solid #2b4570;
+            color: #fffd01;
+            font-size: 0.82em;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .xf-quote-content.collapsed .xf-quote-expand {
+            display: block;
+        }
+        .xf-spoiler {
+            margin: 8px 0;
+        }
+        .xf-spoiler-btn {
+            background: #142238;
+            color: #fffd01;
+            border: 1px solid #2b4570;
+            border-radius: 4px;
+            padding: 5px 12px;
+            cursor: pointer;
+            font-weight: bold;
+            font-family: inherit;
+            font-size: 0.88em;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .xf-spoiler-btn:hover { background: #263c63; }
+        .xf-spoiler-body {
+            display: none;
+            margin-top: 6px;
+            padding: 10px 12px;
+            background: #142236;
+            border: 1px solid #2b4570;
+            border-radius: 4px;
+            color: #ffffff;
+        }
+        .xf-code {
+            background: #0d1726;
+            color: #d6e4f7;
+            padding: 10px 12px;
+            border-radius: 4px;
+            border: 1px solid #2b4570;
+            font-family: monospace;
+            white-space: pre-wrap;
+            margin: 8px 0;
+            display: block;
+            font-size: 0.9em;
+        }
+        .post-edited {
+            margin-top: 8px;
+            text-align: right;
+            font-size: 0.78em;
+            color: #c5d4eb;
+        }
+        .post-signature {
+            margin-top: 12px;
+            padding-top: 8px;
+            border-top: 1px solid #2b4570;
+            font-size: 0.84em;
+            color: #c5d4eb;
+        }
+        .post-footer {
+            margin-top: auto;
+            padding-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .reaction-summary {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #142238;
+            border: 1px solid #2b4570;
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 0.82em;
+            color: #d6e4f7;
+        }
+        .rx-icon-group {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            color: #fffd01;
+        }
+        .post-actions {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-left: auto;
+            position: relative;
+        }
+        .action-btn {
+            padding: 4px 10px;
+            font-size: 12px;
+            background: #142238;
+            border: 1px solid #2b4570;
+            color: #ffffff;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .action-btn:hover, .action-btn.active {
+            background: #0165fc;
+            border-color: #0165fc;
+            color: #ffffff;
+        }
+        .reaction-picker {
+            display: none;
+            position: absolute;
+            bottom: 100%;
+            right: 56px;
+            margin-bottom: 5px;
+            background: #0f1b2e;
+            border: 1px solid #2b4570;
+            border-radius: 4px;
+            padding: 4px;
+            gap: 4px;
+            z-index: 80;
+        }
+        .reaction-picker.open { display: inline-flex; }
+        .reaction-picker button {
+            background: #15233b;
+            border: 1px solid #2b4570;
+            color: #ffffff;
+            font-size: 12px;
+            font-family: inherit;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 3px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .reaction-picker button:hover {
+            background: #0165fc;
+            border-color: #0165fc;
+        }
+        .bb-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-bottom: 8px;
+        }
+        .bb-btn {
+            background: #162437;
+            color: #d6e4f7;
+            border: 1px solid #2b4570;
+            border-radius: 4px;
+            padding: 4px 10px;
+            font-size: 12px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: bold;
+        }
+        .bb-btn:hover { background: #263c63; color: #ffffff; }
+        .pagination-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 10px 0;
+        }
+        .page-buttons { display: flex; gap: 4px; flex-wrap: wrap; }
+        .page-btn {
+            background: #1e2f4f;
+            color: #ffffff;
+            border: 1px solid #2b4570;
+            border-radius: 4px;
+            padding: 5px 11px;
+            cursor: pointer;
+            font-weight: bold;
+            font-family: inherit;
+        }
+        .page-btn.active { background: #0165fc; border-color: #fffd01; color: #fffd01; }
+        .page-btn:hover:not(:disabled) { background: #263c63; }
+        .page-btn:disabled { opacity: 0.45; cursor: default; }
+        .xf-quote-content img.embed-media,
+        .xf-quote-content video.embed-media {
+            max-width: 200px;
+            max-height: 140px;
+        }
+        .xf-quote-content iframe.embed-iframe {
+            max-width: 320px;
+        }
+        @keyframes xfHighlight {
+            0% { outline: 2px solid #fffd01; }
+            100% { outline: 2px solid transparent; }
+        }
+        .post-highlight {
+            animation: xfHighlight 1.6s ease-out;
+        }
         .menu-btn {
-            position: absolute; top: 10px; right: 10px; background: none; border: none;
-            font-size: 18px; cursor: pointer; color: #aaa;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: #c5d4eb;
         }
         .dropdown-menu {
-            display: none; position: absolute; top: 36px; right: 10px;
-            background: #0f1b2e; border: 2px solid #0165fc; border-radius: 8px;
-            z-index: 50; min-width: 130px;
+            display: none;
+            position: absolute;
+            top: 34px;
+            right: 10px;
+            background: #0f1b2e;
+            border: 1px solid #2b4570;
+            border-radius: 4px;
+            z-index: 50;
+            min-width: 130px;
         }
         .dropdown-menu button {
-            display: block; width: 100%; text-align: left; background: none;
-            border: none; color: white; padding: 10px 12px; cursor: pointer;
+            display: block;
+            width: 100%;
+            text-align: left;
+            background: none;
+            border: none;
+            color: #ffffff;
+            padding: 9px 12px;
+            cursor: pointer;
+            font-family: inherit;
         }
         .dropdown-menu button:hover { background: #1e2f4f; }
         .reply-box {
-            position: sticky; bottom: 0; background: #0f1b2e;
-            padding: 12px; border-top: 2px solid #0165fc;
+            background: #1e2f4f;
+            border: 1px solid #2b4570;
+            border-radius: 4px;
+            margin-top: 18px;
+            overflow: hidden;
+        }
+        .reply-box-title {
+            background: #0f1c2e;
+            border-bottom: 1px solid #2b4570;
+            color: #ffffff;
+            font-weight: bold;
+            font-size: 0.95em;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .reply-box-body {
+            padding: 14px 16px;
         }
         .reply-box textarea {
-            width: 100%; min-height: 70px; box-sizing: border-box;
-            background: #1e2f4f; color: #f8f8f8; border: 2px solid #0165fc;
-            border-radius: 6px; padding: 10px; font-family: inherit;
+            width: 100%;
+            min-height: 100px;
+            box-sizing: border-box;
+            background: #0f1b2e;
+            color: #ffffff;
+            border: 1px solid #355387;
+            border-radius: 4px;
+            padding: 10px 12px;
+            font-family: inherit;
+            font-size: 1em;
+            resize: vertical;
+            outline: none;
+        }
+        .reply-box textarea:focus {
+            border-color: #fffd01;
+        }
+        .reply-actions-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
         }
         .modal {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); display: none; align-items: center;
-            justify-content: center; z-index: 10000;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
         }
         .modal-content {
-            background: #1e2f4f; padding: 25px; border-radius: 12px;
-            border: 3px solid #0165fc; width: 90%; max-width: 450px; color: white;
+            background: #1e2f4f;
+            padding: 22px;
+            border-radius: 4px;
+            border: 1px solid #2b4570;
+            width: 90%;
+            max-width: 450px;
+            color: #ffffff;
         }
         .button {
-            padding: 10px 16px; border: none; border-radius: 6px;
-            cursor: pointer; font-weight: bold; color: white; background: #0165fc;
+            padding: 9px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            color: #ffffff;
+            background: #0165fc;
             margin: 4px;
         }
         .prefix-badge {
-            display: inline-block; padding: 2px 8px; border-radius: 4px;
-            font-size: 0.75em; font-weight: bold; margin-right: 6px; color: #fff;
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 0.75em;
+            font-weight: bold;
+            margin-right: 6px;
+            color: #ffffff;
         }
-        .upload-status { font-size: 12px; color: #aaa; margin: 4px 0; }
+        .upload-status { font-size: 12px; color: #c5d4eb; margin: 4px 0; }
 
         #profile-hover {
-            display: none; position: fixed; z-index: 30000; width: 260px;
-            background: #0f1b2e; border: 2px solid #0165fc; border-radius: 10px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.5); color: white; overflow: hidden;
+            display: none;
+            position: fixed;
+            z-index: 30000;
+            width: 260px;
+            background: #0f1b2e;
+            border: 1px solid #2b4570;
+            border-radius: 4px;
+            color: #ffffff;
+            overflow: hidden;
             pointer-events: none;
         }
         #profile-hover .ph-banner {
-            height: 54px; background: #1e2f4f; background-size: cover; background-position: center;
+            height: 54px;
+            background: #1e2f4f;
+            background-size: cover;
+            background-position: center;
+            border-bottom: 1px solid #2b4570;
         }
         #profile-hover .ph-body { padding: 10px 12px 14px; }
+        #profile-hover .ph-pfp-wrap {
+            position: relative;
+            display: inline-flex;
+            margin-top: -28px;
+        }
         #profile-hover .ph-pfp {
-            width: 52px; height: 52px; border-radius: 50%; object-fit: cover;
-            border: 3px solid #0165fc; margin-top: -28px; background: #1e2f4f;
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #0165fc;
+            background: #1e2f4f;
         }
         #profile-hover .ph-name { font-weight: bold; font-size: 1.05em; margin-top: 6px; color: #fffd01; }
         #profile-hover .ph-title {
-            display: inline-block; margin-top: 4px; padding: 2px 8px; border-radius: 4px;
-            background: #0165fc; font-size: 0.75em; font-weight: bold;
+            display: inline-block;
+            margin-top: 4px;
+            padding: 2px 8px;
+            border-radius: 3px;
+            background: #0165fc;
+            font-size: 0.75em;
+            font-weight: bold;
         }
-        #profile-hover .ph-stats { margin-top: 10px; font-size: 0.85em; color: #ccc; line-height: 1.5; }
-        #profile-hover .ph-bio { margin-top: 8px; font-size: 0.8em; color: #aaa; max-height: 48px; overflow: hidden; }
+        #profile-hover .ph-stats { margin-top: 10px; font-size: 0.85em; color: #c5d4eb; line-height: 1.5; }
+        #profile-hover .ph-bio { margin-top: 8px; font-size: 0.8em; color: #c5d4eb; max-height: 48px; overflow: hidden; }
 
         .mention-dropdown {
-            position: absolute; z-index: 15000; background: #0f1b2e;
-            border: 2px solid #0165fc; border-radius: 8px; max-height: 220px;
-            overflow-y: auto; min-width: 200px; box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+            position: absolute;
+            z-index: 15000;
+            background: #0f1b2e;
+            border: 1px solid #2b4570;
+            border-radius: 4px;
+            max-height: 220px;
+            overflow-y: auto;
+            min-width: 200px;
             display: none;
         }
         .mention-item {
-            display: flex; align-items: center; gap: 10px; padding: 8px 12px;
-            cursor: pointer; color: white;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            cursor: pointer;
+            color: #ffffff;
         }
         .mention-item:hover, .mention-item.active { background: #1e2f4f; }
         .mention-item img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; }
         .mention-item .mi-name { font-weight: bold; }
-        .mention-item .mi-title { font-size: 0.75em; color: #aaa; }
+        .mention-item .mi-title { font-size: 0.75em; color: #c5d4eb; }
     </style>
 </head>
 <body>
     <header>
-        <img src="https://i.imgur.com/oJCfWc8.png" class="logo" alt="Logo">
+        <img src="https://i.imgur.com/oJCfWc8.png" class="logo" alt="Logo" onclick="window.location.href='/'">
         <h1>20Thousand Forums</h1>
     </header>
 
     <nav>
-        <a href="/forums">← Back to Boards</a> |
-        <a href="/">Home</a> |
+        <a href="/">Home</a>
+        <a href="/forums" class="active">Boards</a>
+        <a href="/search.html">Search</a>
+        <a href="/alerts.html">Alerts <span id="alert-badge" style="display:none; background:#ff4444; color:white; border-radius:4px; padding:1px 6px; font-size:12px; margin-left:4px;">0</span></a>
         <span id="user-nav"></span>
-    </nav>
-    <hr>
-
-    <h2 id="thread-title">Loading...</h2>
-    <p><small>Created by <strong id="thread-creator">...</strong> · <span id="thread-views"></span></small></p>
-    <div id="lockBanner" style="display:none;background:#ff4444;color:white;padding:8px 12px;border-radius:6px;margin:10px 0;font-weight:bold;">🔒 This thread is locked</div>
-
-    <div id="postsList">Loading posts...</div>
-
-    <div class="reply-box" id="replyBox">
-        <div id="replyTarget" style="display:none;font-size:12px;color:#f8f8f8;margin-bottom:5px;"></div>
-        <form id="replyForm">
-            <textarea id="postContent" placeholder="Write a reply... @ to tag someone"></textarea>
-            <input type="file" id="mediaFile" multiple accept="image/*,video/*">
-            <div class="upload-status" id="uploadStatus"></div>
-            <button type="submit" class="button">Post reply</button>
-            <button type="button" class="button" style="background:#555;display:none;" id="cancelReplyBtn" onclick="cancelReply()">Cancel reply</button>
+        <form action="/search.html" method="get" class="nav-search">
+            <input name="q" placeholder="Search users or d1scs...">
+            <button type="submit">Search</button>
         </form>
+    </nav>
+
+    <div class="container">
+        <div class="breadcrumbs">
+            <a href="/">Home</a>
+            <span class="bc-sep">›</span>
+            <a href="/forums">Boards</a>
+            <span class="bc-sep">›</span>
+            <a href="/forums" id="backToBoardLink">Board</a>
+            <span class="bc-sep">›</span>
+            <span class="bc-current" id="bcThreadTitle">d1sc</span>
+        </div>
+
+        <div class="thread-top-bar">
+            <div>
+                <h2 id="thread-title" style="margin:0;">Loading...</h2>
+                <p style="margin:4px 0 0 0;color:#c5d4eb;"><small>Created by <strong id="thread-creator" style="color:#fffd01;">...</strong> · <span id="thread-views"></span></small></p>
+            </div>
+            <div id="staffControls" style="display:none;"></div>
+        </div>
+
+        <div id="lockBanner" style="display:none;background:#471818;border:1px solid #8c2d2d;color:#ffffff;padding:8px 12px;border-radius:4px;margin:10px 0;font-weight:bold;">
+            <svg class="svg-icon" viewBox="0 0 16 16"><path d="M8 1a4 4 0 0 0-4 4v2H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-1V5a4 4 0 0 0-4-4zm-2 4a2 2 0 1 1 4 0v2H6V5z"/></svg>
+            This thread is locked.
+        </div>
+
+        <div id="paginationTop" class="pagination-bar" style="display:none;"></div>
+        <div id="postsList">Loading posts...</div>
+        <div id="paginationBottom" class="pagination-bar" style="display:none;"></div>
+
+        <div class="reply-box" id="replyBox">
+            <div class="reply-box-title">
+                <span>Post a Reply</span>
+                <button type="button" class="action-btn" style="background:#3a4b66;display:none;" id="cancelReplyBtn" onclick="cancelReply()">Cancel quote</button>
+            </div>
+            <div class="reply-box-body">
+                <div id="replyTarget" style="display:none;font-size:12px;color:#ffffff;margin-bottom:8px;"></div>
+                <form id="replyForm">
+                    <div class="bb-toolbar">
+                        <button type="button" class="bb-btn" onclick="insertTag('postContent','[b]','[/b]')" title="Bold"><b>B</b></button>
+                        <button type="button" class="bb-btn" onclick="insertTag('postContent','[i]','[/i]')" title="Italic"><i>I</i></button>
+                        <button type="button" class="bb-btn" onclick="insertTag('postContent','[u]','[/u]')" title="Underline"><u>U</u></button>
+                        <button type="button" class="bb-btn" onclick="insertTag('postContent','[s]','[/s]')" title="Strikethrough"><s>S</s></button>
+                        <button type="button" class="bb-btn" onclick="insertTag('postContent','[code]','[/code]')" title="Code block">Code</button>
+                        <button type="button" class="bb-btn" onclick="insertTag('postContent','[quote]','[/quote]')" title="Quote">Quote</button>
+                        <button type="button" class="bb-btn" onclick="insertTag('postContent','[spoiler=Spoiler]','[/spoiler]')" title="Spoiler">Spoiler</button>
+                    </div>
+                    <textarea id="postContent" placeholder="Write your reply..."></textarea>
+                    <div class="media-preview-list" id="mediaPreviewList"></div>
+                    <div class="upload-status" id="uploadStatus"></div>
+                    <div class="reply-actions-row">
+                        <div>
+                            <label for="mediaFile" class="attach-btn">
+                                <svg class="svg-icon" viewBox="0 0 16 16"><path d="M4.5 3a2.5 2.5 0 0 1 5 0v9a1.5 1.5 0 0 1-3 0V5a.5.5 0 0 1 1 0v7a.5.5 0 0 0 1 0V3a1.5 1.5 0 1 0-3 0v9a2.5 2.5 0 0 0 5 0V5a.5.5 0 0 1 1 0v7a3.5 3.5 0 1 1-7 0V3z"/></svg>
+                                Attach image / video
+                            </label>
+                            <input type="file" id="mediaFile" multiple accept="image/*,video/*" style="display:none;">
+                        </div>
+                        <button type="submit" class="button" style="margin:0;">Post reply</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 
     <div id="mentionDropdown" class="mention-dropdown"></div>
@@ -163,18 +737,22 @@
     <div id="editModal" class="modal">
         <div class="modal-content">
             <h3>Edit post</h3>
-            <textarea id="editContent" style="width:100%;min-height:100px;background:#0f1b2e;color:white;border:2px solid #0165fc;border-radius:6px;padding:10px;"></textarea>
-            <button class="button" onclick="saveEdit()">Save</button>
-            <button class="button" style="background:#555;" onclick="closeEditModal()">Cancel</button>
+            <textarea id="editContent" style="width:100%;min-height:110px;background:#0f1b2e;color:#ffffff;border:1px solid #355387;border-radius:4px;padding:10px;box-sizing:border-box;font-family:inherit;"></textarea>
+            <div style="margin-top:10px;">
+                <button class="button" onclick="saveEdit()">Save</button>
+                <button class="button" style="background:#3a4b66;" onclick="closeEditModal()">Cancel</button>
+            </div>
         </div>
     </div>
 
     <div id="reportModal" class="modal">
         <div class="modal-content">
             <h3>Report</h3>
-            <textarea id="reportReason" style="width:100%;min-height:80px;background:#0f1b2e;color:white;border:2px solid #0165fc;border-radius:6px;padding:10px;"></textarea>
-            <button class="button" onclick="submitReport()">Submit</button>
-            <button class="button" style="background:#555;" onclick="closeReportModal()">Cancel</button>
+            <textarea id="reportReason" style="width:100%;min-height:80px;background:#0f1b2e;color:#ffffff;border:1px solid #355387;border-radius:4px;padding:10px;box-sizing:border-box;font-family:inherit;" placeholder="Reason for report..."></textarea>
+            <div style="margin-top:10px;">
+                <button class="button" onclick="submitReport()">Submit</button>
+                <button class="button" style="background:#3a4b66;" onclick="closeReportModal()">Cancel</button>
+            </div>
         </div>
     </div>
 
@@ -182,14 +760,17 @@
         <div class="modal-content" style="text-align:center;">
             <h3>Delete this reply?</h3>
             <button class="button" style="background:#ff4444;" onclick="confirmDeletePost()">Yes, Delete</button>
-            <button class="button" style="background:#555;" onclick="closeDeleteModal()">Cancel</button>
+            <button class="button" style="background:#3a4b66;" onclick="closeDeleteModal()">Cancel</button>
         </div>
     </div>
 
     <div id="profile-hover">
         <div class="ph-banner" id="ph-banner"></div>
         <div class="ph-body">
-            <img class="ph-pfp" id="ph-pfp" src="https://i.imgur.com/oJCfWc8.png" alt="">
+            <div class="ph-pfp-wrap">
+                <img class="ph-pfp" id="ph-pfp" src="https://i.imgur.com/oJCfWc8.png" alt="">
+                <span class="online-dot" id="ph-online" style="display:none;"></span>
+            </div>
             <div class="ph-name" id="ph-name">...</div>
             <div class="ph-title" id="ph-title">Member</div>
             <div class="ph-stats" id="ph-stats"></div>
@@ -207,6 +788,7 @@
         let currentDeleteId = null;
         let uploadedUrls = [];
         let threadLocked = false;
+        let threadCreator = '';
         const profileCache = {};
         let hoverTimer = null;
         let hideTimer = null;
@@ -220,9 +802,26 @@
             "Announcement": "#fffd01"
         };
 
+        const REACTION_SVGS = {
+            like: '<svg class="svg-icon" viewBox="0 0 16 16"><path d="M8.864.046C7.908-.193 7.02.53 6.956 1.466c-.072 1.051-.23 2.016-.428 2.59-.125.36-.479 1.013-1.04 1.639-.557.623-1.282 1.178-2.131 1.41C2.685 7.288 2 7.87 2 8.72v4.001c0 .845.682 1.464 1.448 1.545 1.07.114 1.564.415 2.068.723l.048.03c.272.165.578.348.97.484.397.136.861.217 1.466.217h3.5c.937 0 1.599-.477 1.934-1.064a1.86 1.86 0 0 0 .254-.912c0-.152-.023-.312-.077-.464.201-.263.38-.578.488-.901.11-.33.172-.762.004-1.149.069-.13.12-.269.159-.403.077-.27.113-.568.113-.857 0-.288-.036-.585-.113-.856a2 2 0 0 0-.138-.362 1.9 1.9 0 0 0 .234-1.734c-.206-.592-.682-1.1-1.2-1.272-.847-.282-1.803-.276-2.516-.211a10 10 0 0 0-.443.05 9.4 9.4 0 0 0 .062-4.509A1.38 1.38 0 0 0 9.125.111z"/></svg>',
+            love: '<svg class="svg-icon" viewBox="0 0 16 16"><path d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314z"/></svg>',
+            haha: '<svg class="svg-icon" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16zM4.285 9.567a.5.5 0 0 1 .683.183A3.5 3.5 0 0 0 8 11.5a3.5 3.5 0 0 0 3.032-1.75.5.5 0 1 1 .866.5A4.5 4.5 0 0 1 8 12.5a4.5 4.5 0 0 1-3.898-2.25.5.5 0 0 1 .183-.683zM7 6.5C7 7.328 6.552 8 6 8s-1-.672-1-1.5S5.448 5 6 5s1 .672 1 1.5zm4 0c0 .828-.448 1.5-1 1.5s-1-.672-1-1.5S9.448 5 10 5s1 .672 1 1.5z"/></svg>',
+            fire: '<svg class="svg-icon" viewBox="0 0 16 16"><path d="M8 16c3.314 0 6-2 6-5.5 0-1.5-.5-4-2.5-6 .25 1.5-1.25 2-1.25 2C11 4 9 .5 6 0c.357 2 .5 4-2 6-1.25 1-2 2.729-2 4.5C2 14 4.686 16 8 16zm0-1c-1.657 0-3-1-3-2.75 0-.75.25-2 1.25-3C6.125 10 7 10.5 7 10.5c-.375-1.25.5-3.25 2-3.5-.179 1-.25 2 1 3 .625.5 1 1.364 1 2.25C11 14 9.657 15 8 15z"/></svg>',
+            skull: '<svg class="svg-icon" viewBox="0 0 16 16"><path d="M8 1a6 6 0 0 0-6 6c0 2.09 1.07 3.93 2.69 5l.31 2h6l.31-2A5.99 5.99 0 0 0 14 7a6 6 0 0 0-6-6zm-2.5 7a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/></svg>'
+        };
+        const REACTION_NAMES = { like: 'Like', love: 'Love', haha: 'Haha', fire: 'Fire', skull: 'Skull' };
+
         document.getElementById('user-nav').innerHTML = username
-            ? 'Logged in as: <a href="/profile.html?user=' + encodeURIComponent(username) + '" style="color:inherit;text-decoration:none;"><strong>' + username + '</strong></a>'
-            : '<a href="/login">Login</a>';
+            ? '<span class="nav-user-bar">Signed in as <a href="/profile.html?user=' + encodeURIComponent(username) + '"><strong>' + escapeHtml(username) + '</strong></a> · <a href="#" onclick="showLogoutModal();return false;">Logout</a></span>'
+            : '<a href="/login">Login</a> <a href="/register">Register</a>';
+
+        function showLogoutModal() {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.display = 'flex';
+            modal.innerHTML = '<div class="modal-content" style="text-align:center;"><h3>Logout?</h3><p>Are you sure you want to logout?</p><button class="button" style="background:#ff4444;" onclick="localStorage.removeItem(\'username\');location.href=\'/\'">Yes, Logout</button><button class="button" style="background:#3a4b66;" onclick="this.parentElement.parentElement.remove()">Cancel</button></div>';
+            document.body.appendChild(modal);
+        }
 
         function showNotification(text, color) {
             const n = document.createElement('div');
@@ -242,8 +841,8 @@
         }
 
         function formatDate(d) {
-            if (!d) return '—';
-            try { return new Date(d).toLocaleDateString(); } catch (e) { return '—'; }
+            if (!d) return 'N/A';
+            try { return new Date(d).toLocaleDateString(); } catch (e) { return 'N/A'; }
         }
 
         async function fetchProfile(user) {
@@ -269,6 +868,7 @@
                 document.getElementById('ph-name').textContent = data.username || user;
                 document.getElementById('ph-title').textContent = data.title || 'Member';
                 document.getElementById('ph-pfp').src = data.pfp || 'https://i.imgur.com/oJCfWc8.png';
+                document.getElementById('ph-online').style.display = data.online ? 'block' : 'none';
                 const banner = document.getElementById('ph-banner');
                 if (data.banner) {
                     banner.style.backgroundImage = 'url(' + data.banner + ')';
@@ -277,7 +877,7 @@
                     banner.style.background = '#1e2f4f';
                 }
                 document.getElementById('ph-stats').innerHTML =
-                    'Posts: <strong>' + (data.postCount || 0) + '</strong><br>Joined: <strong>' + formatDate(data.created_at) + '</strong>';
+                    'Posts: <strong>' + (data.postCount || 0) + '</strong> · Reactions: <strong>' + (data.reactionScore || 0) + '</strong><br>Joined: <strong>' + formatDate(data.created_at) + '</strong>';
                 document.getElementById('ph-bio').textContent = (data.bio || '').slice(0, 120);
                 const pad = 12;
                 let x = event.clientX + 14;
@@ -300,34 +900,173 @@
             }, 150);
         }
 
+        function getYouTubeEmbedUrl(rawUrl) {
+            try {
+                const u = new URL(rawUrl);
+                const host = u.hostname.replace(/^(www\.|m\.)/i, '').toLowerCase();
+                let videoId = null;
+                const params = new URLSearchParams();
+
+                if (host === 'youtube.com' || host === 'youtube-nocookie.com') {
+                    const embedMatch = u.pathname.match(/^\/embed\/([a-zA-Z0-9_-]{6,})/);
+                    const shortsMatch = u.pathname.match(/^\/shorts\/([a-zA-Z0-9_-]{6,})/);
+                    const liveMatch = u.pathname.match(/^\/live\/([a-zA-Z0-9_-]{6,})/);
+                    if (embedMatch) {
+                        videoId = embedMatch[1];
+                        u.searchParams.forEach(function (v, k) { params.set(k, v); });
+                    } else if (shortsMatch) {
+                        videoId = shortsMatch[1];
+                    } else if (liveMatch) {
+                        videoId = liveMatch[1];
+                    } else if (u.pathname === '/watch') {
+                        videoId = u.searchParams.get('v');
+                    }
+                } else if (host === 'youtu.be') {
+                    const idMatch = u.pathname.match(/^\/([a-zA-Z0-9_-]{6,})/);
+                    if (idMatch) videoId = idMatch[1];
+                }
+
+                if (!videoId) return null;
+
+                if (u.searchParams.get('si') && !params.has('si')) {
+                    params.set('si', u.searchParams.get('si'));
+                }
+                const t = u.searchParams.get('t') || u.searchParams.get('start');
+                if (t && !params.has('start')) {
+                    const sec = parseInt(String(t).replace(/s$/i, ''), 10);
+                    if (!isNaN(sec) && sec > 0) params.set('start', String(sec));
+                }
+                const domain = host === 'youtube-nocookie.com' ? 'www.youtube-nocookie.com' : 'www.youtube.com';
+                const qs = params.toString();
+                return 'https://' + domain + '/embed/' + videoId + (qs ? '?' + qs : '');
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function buildIframeHtml(src, width, height) {
+            const w = /^\d+%?$/.test(String(width || '')) ? String(width) : '560';
+            const h = /^\d+$/.test(String(height || '')) ? String(height) : '315';
+            return '<iframe class="embed-iframe" width="' + w + '" height="' + h + '" src="' + escapeHtml(src) + '" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen loading="lazy"></iframe>';
+        }
+
+        function parseIframeTag(tag) {
+            let rawSrc = '';
+            const srcAttr = tag.match(/\bsrc\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i);
+            if (srcAttr) {
+                rawSrc = srcAttr[1] || srcAttr[2] || srcAttr[3] || '';
+            }
+            if (!rawSrc || rawSrc.indexOf('[') !== -1) {
+                const urlInTag = tag.match(/https?:\/\/[^\s"'\]>)]+/i);
+                if (urlInTag) rawSrc = urlInTag[0];
+            }
+            rawSrc = rawSrc
+                .replace(/&amp;/gi, '&')
+                .replace(/&quot;?/gi, '')
+                .replace(/(?:%22|["';])+$/g, '')
+                .trim();
+            if (rawSrc.indexOf('//') === 0) rawSrc = 'https:' + rawSrc;
+            if (!/^https?:\/\//i.test(rawSrc)) return null;
+
+            const ytEmbed = getYouTubeEmbedUrl(rawSrc);
+            const finalSrc = ytEmbed || rawSrc;
+
+            const wMatch = tag.match(/\bwidth\s*=\s*["']?(\d+%?)["']?/i);
+            const hMatch = tag.match(/\bheight\s*=\s*["']?(\d+)["']?/i);
+            return buildIframeHtml(finalSrc, wMatch ? wMatch[1] : '560', hMatch ? hMatch[1] : '315');
+        }
+
+        function insertTag(boxId, openTag, closeTag) {
+            const box = document.getElementById(boxId);
+            if (!box) return;
+            const start = box.selectionStart || 0;
+            const end = box.selectionEnd || 0;
+            const selected = box.value.slice(start, end);
+            const replacement = openTag + selected + closeTag;
+            box.value = box.value.slice(0, start) + replacement + box.value.slice(end);
+            box.focus();
+            const cursor = selected ? start + replacement.length : start + openTag.length;
+            box.setSelectionRange(cursor, cursor);
+        }
+
         function formatContent(text) {
             if (!text) return '';
-            let escaped = escapeHtml(text);
-            escaped = escaped.replace(/(https?:\/\/[^\s<]+)/g, function (url) {
-                const clean = url.replace(/[.,);!?]+$/, '');
-                const trailing = url.slice(clean.length);
+            const embeds = [];
+            let withTokens = String(text).replace(/<iframe\b[^>]*>(?:[\s\S]*?<\/iframe>)?/gi, function (match) {
+                const html = parseIframeTag(match);
+                if (!html) return match;
+                const token = '\u0000EMBED_' + embeds.length + '\u0000';
+                embeds.push(html);
+                return token;
+            });
+
+            withTokens = withTokens.replace(/\[code\]([\s\S]*?)\[\/code\]/gi, function (full, code) {
+                const token = '\u0000EMBED_' + embeds.length + '\u0000';
+                embeds.push('<pre class="xf-code">' + escapeHtml(code.replace(/^\n+|\n+$/g, '')) + '</pre>');
+                return token;
+            });
+
+            let escaped = escapeHtml(withTokens);
+            escaped = escaped.replace(/(https?:\/\/[^\s<\u0000[\]]+)/g, function (url) {
+                let urlPart = url;
+                let entitySuffix = '';
+                const entityMatch = urlPart.match(/&(quot|gt|lt|#039|#39);/);
+                if (entityMatch) {
+                    entitySuffix = urlPart.slice(entityMatch.index);
+                    urlPart = urlPart.slice(0, entityMatch.index);
+                }
+                const unescapedUrl = urlPart.replace(/&amp;/g, '&');
+                const cleanRaw = unescapedUrl.replace(/[.,);!?]+$/, '');
+                const trailingPunct = unescapedUrl.slice(cleanRaw.length);
+                const clean = escapeHtml(cleanRaw);
+                const trailing = escapeHtml(trailingPunct) + entitySuffix;
+
+                const ytEmbed = getYouTubeEmbedUrl(cleanRaw);
+                if (ytEmbed) {
+                    return buildIframeHtml(ytEmbed, '560', '315') + trailing;
+                }
+
                 const isImage =
-                    /\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i.test(clean) ||
-                    /res\.cloudinary\.com\/[^/]+\/image\//i.test(clean) ||
-                    /i\.imgur\.com\//i.test(clean) ||
-                    /imgur\.com\/[a-z0-9]+$/i.test(clean);
+                    /\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i.test(cleanRaw) ||
+                    /res\.cloudinary\.com\/[^/]+\/image\//i.test(cleanRaw) ||
+                    /i\.imgur\.com\//i.test(cleanRaw) ||
+                    /imgur\.com\/[a-z0-9]+$/i.test(cleanRaw);
                 const isVideo =
-                    /\.(mp4|webm|mov)(\?.*)?$/i.test(clean) ||
-                    /res\.cloudinary\.com\/[^/]+\/video\//i.test(clean);
+                    /\.(mp4|webm|mov)(\?.*)?$/i.test(cleanRaw) ||
+                    /res\.cloudinary\.com\/[^/]+\/video\//i.test(cleanRaw);
                 if (isVideo) return '<video class="embed-media" controls src="' + clean + '"></video>' + trailing;
                 if (isImage) {
-                    let src = clean;
-                    if (/imgur\.com\/[a-z0-9]+$/i.test(clean) && !/i\.imgur\.com/i.test(clean)) {
-                        src = clean.replace('imgur.com/', 'i.imgur.com/') + '.jpg';
+                    let src = cleanRaw;
+                    if (/imgur\.com\/[a-z0-9]+$/i.test(cleanRaw) && !/i\.imgur\.com/i.test(cleanRaw)) {
+                        src = cleanRaw.replace('imgur.com/', 'i.imgur.com/') + '.jpg';
                     }
-                    return '<img class="embed-media" src="' + src + '" alt="embedded" loading="lazy">' + trailing;
+                    return '<img class="embed-media" src="' + escapeHtml(src) + '" alt="embedded" loading="lazy">' + trailing;
                 }
                 return '<a href="' + clean + '" target="_blank" rel="noopener noreferrer">' + clean + '</a>' + trailing;
             });
+
+            // BBCode formatting
+            escaped = escaped
+                .replace(/\[b\]([\s\S]*?)\[\/b\]/gi, '<strong>$1</strong>')
+                .replace(/\[i\]([\s\S]*?)\[\/i\]/gi, '<em>$1</em>')
+                .replace(/\[u\]([\s\S]*?)\[\/u\]/gi, '<u>$1</u>')
+                .replace(/\[s\]([\s\S]*?)\[\/s\]/gi, '<s>$1</s>')
+                .replace(/\[quote(?:=([^\]]+))?\]([\s\S]*?)\[\/quote\]/gi, function (full, author, body) {
+                    const hdr = author ? '<div class="xf-quote-header"><span>' + author + ' said:</span></div>' : '';
+                    return '<div class="xf-quote">' + hdr + '<div class="xf-quote-content">' + body + '<div class="xf-quote-expand" onclick="expandQuote(this)">Click to expand...</div></div></div>';
+                })
+                .replace(/\[spoiler(?:=([^\]]+))?\]([\s\S]*?)\[\/spoiler\]/gi, function (full, title, body) {
+                    const label = title ? 'Spoiler: ' + title : 'Spoiler';
+                    return '<div class="xf-spoiler"><button type="button" class="xf-spoiler-btn" onclick="toggleSpoiler(this)">' + label + '</button><div class="xf-spoiler-body">' + body + '</div></div>';
+                });
+
             escaped = escaped.replace(/@([a-zA-Z0-9_]{1,32})/g, function (full, name) {
                 return '<a class="mention" href="/profile.html?user=' + encodeURIComponent(name) + '">@' + name + '</a>';
             });
             escaped = escaped.replace(/\n/g, '<br>');
+            escaped = escaped.replace(/\u0000EMBED_(\d+)\u0000/g, function (full, idx) {
+                return embeds[Number(idx)] || '';
+            });
             return escaped;
         }
 
@@ -355,7 +1094,7 @@
             return '<span class="prefix-badge" style="background:' + color + ';color:' + textColor + '">' + prefix + '</span> ';
         }
 
-        // ——— @mention autocomplete ———
+        // @mention autocomplete
         function hideMentionDropdown() {
             mentionState.active = false;
             document.getElementById('mentionDropdown').style.display = 'none';
@@ -442,65 +1181,423 @@
             setTimeout(hideMentionDropdown, 150);
         });
 
+        let threadPinned = false;
+        let threadTitleRaw = '';
+        let threadPrefixRaw = '';
+        let allFlatPosts = [];
+        let currentPage = 1;
+        const POSTS_PER_PAGE = 20;
+        const ROLE_COLORS = {
+            owner: '#d4a017',
+            moderator: '#2ecc71',
+            mod: '#2ecc71',
+            janitor: '#1abc9c',
+            trusted: '#9b59b6',
+            member: '#0165fc'
+        };
+
+        function renderThreadHeader() {
+            const pinBadge = threadPinned ? ' <span class="prefix-badge" style="background:#2b4570;color:#fffd01;">Pinned</span>' : '';
+            document.getElementById('thread-title').innerHTML = prefixBadge(threadPrefixRaw) + escapeHtml(threadTitleRaw || 'Untitled') + pinBadge;
+            document.getElementById('bcThreadTitle').textContent = threadTitleRaw || 'd1sc';
+            document.getElementById('lockBanner').style.display = threadLocked ? 'block' : 'none';
+        }
+
+        async function checkStaffControls() {
+            if (!username) return;
+            let isMod = username === '20k';
+            if (!isMod) {
+                const me = await fetchProfile(username);
+                const t = ((me && me.title) || '').toLowerCase();
+                isMod = t === 'owner' || t === 'moderator' || t === 'mod';
+            }
+            const ctrl = document.getElementById('staffControls');
+            if (!isMod || !ctrl) return;
+            ctrl.style.display = 'block';
+            ctrl.innerHTML =
+                '<button class="action-btn" onclick="toggleLockThread()">' + (threadLocked ? 'Unlock Thread' : 'Lock Thread') + '</button> ' +
+                '<button class="action-btn" onclick="togglePinThread()">' + (threadPinned ? 'Unpin Thread' : 'Pin Thread') + '</button>';
+        }
+
+        async function toggleLockThread() {
+            try {
+                const res = await fetch('/api/threads/' + encodeURIComponent(threadId) + '/lock', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: username })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    threadLocked = !!data.locked;
+                    renderThreadHeader();
+                    checkStaffControls();
+                    showNotification(data.message, '#00cc66');
+                } else {
+                    showNotification(data.message || 'Failed', '#ff4444');
+                }
+            } catch (e) {}
+        }
+
+        async function togglePinThread() {
+            try {
+                const res = await fetch('/api/threads/' + encodeURIComponent(threadId) + '/pin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: username })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    threadPinned = data.pinned !== undefined ? !!data.pinned : !threadPinned;
+                    renderThreadHeader();
+                    checkStaffControls();
+                    showNotification(data.message, '#00cc66');
+                } else {
+                    showNotification(data.message || 'Failed', '#ff4444');
+                }
+            } catch (e) {}
+        }
+
         async function loadThreadInfo() {
             try {
                 const res = await fetch(
-    '/api/threads/' + encodeURIComponent(threadId) +
-    (username ? ('?username=' + encodeURIComponent(username)) : '')
-);
+                    '/api/threads/' + encodeURIComponent(threadId) +
+                    (username ? ('?username=' + encodeURIComponent(username)) : '')
+                );
                 const data = await res.json();
-                document.getElementById('thread-title').innerHTML = prefixBadge(data.prefix) + escapeHtml(data.title || 'Untitled');
+                threadTitleRaw = data.title || 'Untitled';
+                threadPrefixRaw = data.prefix || '';
+                threadLocked = !!data.locked;
+                threadPinned = !!data.pinned;
+                threadCreator = data.creator || '';
+                renderThreadHeader();
                 document.getElementById('thread-creator').textContent = data.creator || 'Unknown';
                 document.getElementById('thread-views').textContent = (data.views || 0) + ' views';
-                threadLocked = !!data.locked;
-                document.getElementById('lockBanner').style.display = threadLocked ? 'block' : 'none';
+                if (data.forum_id) {
+                    const backEl = document.getElementById('backToBoardLink');
+                    if (backEl) {
+                        backEl.href = '/thread-list.html?id=' + encodeURIComponent(data.forum_id);
+                        backEl.textContent = 's1k/' + data.forum_id + '/';
+                    }
+                }
+                if (allFlatPosts.length) renderCurrentPage();
+                checkStaffControls();
             } catch (e) {
                 document.getElementById('thread-title').textContent = 'Thread not found';
             }
         }
 
-        function renderPosts(posts, depth) {
-            depth = depth || 0;
-            if (!posts || !posts.length) return depth === 0 ? '<p>No posts yet.</p>' : '';
+        let postsMap = {};
+
+        function formatPostDate(d) {
+            if (!d) return '';
+            try {
+                return new Date(d).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric'
+                });
+            } catch (e) {
+                return '';
+            }
+        }
+
+        function formatShortJoin(d) {
+            if (!d) return 'N/A';
+            try {
+                return new Date(d).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+            } catch (e) {
+                return 'N/A';
+            }
+        }
+
+        function timeAgo(date) {
+            if (!date) return '';
+            const s = Math.floor((Date.now() - new Date(date)) / 1000);
+            if (s < 60) return 'just now';
+            const m = Math.floor(s / 60);
+            if (m < 60) return m + 'm ago';
+            const h = Math.floor(m / 60);
+            if (h < 24) return h + 'h ago';
+            const d = Math.floor(h / 24);
+            return d + 'd ago';
+        }
+
+        function flattenPosts(rawPosts) {
+            const flat = [];
+            function walk(list) {
+                if (!Array.isArray(list)) return;
+                list.forEach(function (p) {
+                    if (!p) return;
+                    flat.push(p);
+                    if (p.replies && p.replies.length) {
+                        walk(p.replies);
+                    }
+                });
+            }
+            walk(rawPosts);
+            flat.sort(function (a, b) {
+                return new Date(a.created_at || 0) - new Date(b.created_at || 0);
+            });
+            postsMap = {};
+            flat.forEach(function (p, idx) {
+                p._index = idx;
+                postsMap[p.id] = p;
+            });
+            flat.forEach(function (p) {
+                if (p.parent_id && !p.replyTo && postsMap[p.parent_id]) {
+                    const parent = postsMap[p.parent_id];
+                    p.replyTo = {
+                        id: parent.id,
+                        user_id: parent.user_id,
+                        content: parent.content,
+                        fileUrls: parent.fileUrls && parent.fileUrls.length ? parent.fileUrls : (parent.fileUrl ? [parent.fileUrl] : [])
+                    };
+                }
+            });
+            return flat;
+        }
+
+        function expandQuote(btn) {
+            const content = btn && btn.parentElement;
+            if (content) content.classList.remove('collapsed');
+        }
+
+        function toggleSpoiler(btn) {
+            const body = btn && btn.nextElementSibling;
+            if (!body) return;
+            body.style.display = body.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function initCollapsibleQuotes() {
+            document.querySelectorAll('.xf-quote-content').forEach(function (el) {
+                if (el.scrollHeight > 165) {
+                    el.classList.add('collapsed');
+                }
+            });
+        }
+
+        function renderQuoteBlock(replyTo, fallbackParentId) {
+            if (!replyTo && (!fallbackParentId || !postsMap[fallbackParentId])) return '';
+            const q = replyTo || postsMap[fallbackParentId];
+            if (!q) return '';
+            const qFiles = q.fileUrls && q.fileUrls.length ? q.fileUrls : (q.fileUrl ? [q.fileUrl] : []);
+            const qBody = formatContent(q.content || '') + renderMediaFiles(qFiles, q.content || '');
+            const jsParentId = String(q.id || fallbackParentId || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+            return '<div class="xf-quote">' +
+                '<div class="xf-quote-header">' +
+                    '<a class="xf-quote-link" href="#post-' + escapeHtml(q.id || fallbackParentId) + '" onclick="jumpToPost(\'' + jsParentId + '\'); return false;">' +
+                        escapeHtml(q.user_id || 'Someone') + ' said: <span class="xf-quote-arrow" title="Go to quoted post">↑</span>' +
+                    '</a>' +
+                '</div>' +
+                '<div class="xf-quote-content">' +
+                    (qBody || '<span>(media attachment)</span>') +
+                    '<div class="xf-quote-expand" onclick="expandQuote(this)">Click to expand...</div>' +
+                '</div>' +
+            '</div>';
+        }
+
+        function jumpToPost(postId) {
+            const targetPost = postsMap[postId];
+            if (targetPost && typeof targetPost._index === 'number') {
+                const targetPage = Math.floor(targetPost._index / POSTS_PER_PAGE) + 1;
+                if (targetPage !== currentPage) {
+                    currentPage = targetPage;
+                    renderCurrentPage();
+                }
+            }
+            const el = document.getElementById('post-' + postId);
+            if (!el) return;
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            el.classList.remove('post-highlight');
+            void el.offsetWidth;
+            el.classList.add('post-highlight');
+        }
+
+        function renderReactionsBar(postId, reactions) {
+            const list = Array.isArray(reactions) ? reactions : [];
+            if (!list.length) return '<span id="rx-summary-' + escapeHtml(postId) + '"></span>';
+            const keys = [];
+            list.forEach(function (r) {
+                const k = REACTION_SVGS[r.reaction] ? r.reaction : 'like';
+                if (keys.indexOf(k) === -1) keys.push(k);
+            });
+            const iconsHtml = keys.map(function (k) { return REACTION_SVGS[k]; }).join('');
+            const names = list.slice(0, 3).map(function (r) { return escapeHtml(r.user_id); });
+            const extra = list.length > 3 ? ' and ' + (list.length - 3) + ' others' : '';
+            return '<span id="rx-summary-' + escapeHtml(postId) + '" class="reaction-summary">' +
+                '<span class="rx-icon-group">' + iconsHtml + '</span> ' +
+                '<span>' + names.join(', ') + extra + '</span>' +
+            '</span>';
+        }
+
+        function toggleReactionPicker(postId, ev) {
+            ev.stopPropagation();
+            document.querySelectorAll('.reaction-picker').forEach(function (p) {
+                if (p.id !== 'rx-picker-' + postId) p.classList.remove('open');
+            });
+            const picker = document.getElementById('rx-picker-' + postId);
+            if (picker) picker.classList.toggle('open');
+        }
+
+        async function reactToPost(postId, reaction) {
+            if (!username) return showNotification('Login required to react', '#ff4444');
+            const picker = document.getElementById('rx-picker-' + postId);
+            if (picker) picker.classList.remove('open');
+            try {
+                const res = await fetch('/api/posts/' + encodeURIComponent(postId) + '/react', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: username, reaction: reaction })
+                });
+                const data = await res.json();
+                if (data.success && postsMap[postId]) {
+                    postsMap[postId].reactions = data.reactions || [];
+                    renderCurrentPage();
+                }
+            } catch (e) {}
+        }
+
+        function renderPaginationControls(totalPages) {
+            const topEl = document.getElementById('paginationTop');
+            const botEl = document.getElementById('paginationBottom');
+            if (totalPages <= 1) {
+                topEl.style.display = 'none';
+                botEl.style.display = 'none';
+                return;
+            }
+            let btns = '<button class="page-btn" ' + (currentPage <= 1 ? 'disabled' : 'onclick="goToPage(' + (currentPage - 1) + ')"') + '>‹ Prev</button>';
+            for (let p = 1; p <= totalPages; p++) {
+                btns += '<button class="page-btn ' + (p === currentPage ? 'active' : '') + '" onclick="goToPage(' + p + ')">' + p + '</button>';
+            }
+            btns += '<button class="page-btn" ' + (currentPage >= totalPages ? 'disabled' : 'onclick="goToPage(' + (currentPage + 1) + ')"') + '>Next ›</button>';
+            const barHtml = '<div style="font-size:0.88em;color:#c5d4eb;">Page <strong>' + currentPage + '</strong> of <strong>' + totalPages + '</strong></div><div class="page-buttons">' + btns + '</div>';
+            topEl.innerHTML = barHtml;
+            botEl.innerHTML = barHtml;
+            topEl.style.display = 'flex';
+            botEl.style.display = 'flex';
+        }
+
+        function goToPage(page) {
+            const totalPages = Math.max(1, Math.ceil(allFlatPosts.length / POSTS_PER_PAGE));
+            currentPage = Math.min(Math.max(1, page), totalPages);
+            renderCurrentPage();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function renderCurrentPage() {
+            if (!allFlatPosts.length) {
+                document.getElementById('postsList').innerHTML = '<p>No posts yet.</p>';
+                renderPaginationControls(1);
+                return;
+            }
+            const totalPages = Math.max(1, Math.ceil(allFlatPosts.length / POSTS_PER_PAGE));
+            if (currentPage > totalPages) currentPage = totalPages;
+            renderPaginationControls(totalPages);
+
+            const startIdx = (currentPage - 1) * POSTS_PER_PAGE;
+            const pagePosts = allFlatPosts.slice(startIdx, startIdx + POSTS_PER_PAGE);
             let html = '';
-            posts.forEach(function (p, i) {
-                const isOp = depth === 0 && i === 0 && !p.parent_id;
-                const cls = isOp ? 'original-post post' : 'reply-post post';
+
+            pagePosts.forEach(function (p, idx) {
+                const globalIdx = startIdx + idx;
+                const isFirstPost = globalIdx === 0;
+                const isOpAuthor = (threadCreator && p.user_id === threadCreator) || isFirstPost;
+                const cls = isFirstPost ? 'original-post post' : 'reply-post post';
                 const canEdit = username && (username === p.user_id || username === '20k');
                 const files = p.fileUrls && p.fileUrls.length ? p.fileUrls : (p.fileUrl ? [p.fileUrl] : []);
                 const safeUser = escapeHtml(p.user_id);
                 const jsUser = String(p.user_id || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                const jsPostId = String(p.id || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                const postNum = globalIdx + 1;
+                const quoteHtml = p.parent_id ? renderQuoteBlock(p.replyTo, p.parent_id) : '';
+                const roleTitle = p.userTitle || (p.user_id === '20k' ? 'Owner' : 'Member');
+                const roleColor = ROLE_COLORS[roleTitle.toLowerCase()] || '#0165fc';
+                const myReaction = (p.reactions || []).find(function (r) { return r.user_id === username; });
+                const myRxKey = myReaction && REACTION_SVGS[myReaction.reaction] ? myReaction.reaction : 'like';
+                const reactBtnLabel = myReaction
+                    ? REACTION_SVGS[myRxKey] + ' ' + (REACTION_NAMES[myRxKey] || 'Liked')
+                    : REACTION_SVGS.like + ' Like';
 
-                html += '<div class="' + cls + '" id="post-' + p.id + '" style="' + (depth ? 'margin-left:' + Math.min(depth * 20, 60) + 'px' : '') + '">';
-                html += '<div class="user-row"><img class="user-pfp" src="' + escapeHtml(p.pfp || 'https://i.imgur.com/oJCfWc8.png') + '" alt="">';
-                html += '<div><a class="username-link" href="/profile.html?user=' + encodeURIComponent(p.user_id) + '" ';
-                html += 'onmouseenter="showProfileHover(\'' + jsUser + '\', event)" onmouseleave="hideProfileHover()">' + safeUser + '</a></div></div>';
-                html += '<div class="post-body">' + formatContent(p.content) + renderMediaFiles(files, p.content) + '</div>';
-                html += '<div style="margin-top:8px;">';
-                if (username) {
-                    html += '<button class="button" style="padding:4px 10px;font-size:12px;background:transparent;border:1px solid #0165fc;color:#ccc;" onclick="setReply(\'' + p.id + '\',\'' + jsUser + '\')">Reply</button>';
+                html += '<div class="' + cls + '" id="post-' + p.id + '">';
+                html += '<div class="post-sidebar">' +
+                    '<div class="avatar-wrap" style="margin-bottom:8px;">' +
+                        '<img class="user-pfp" src="' + escapeHtml(p.pfp || 'https://i.imgur.com/oJCfWc8.png') + '" alt="">' +
+                        (p.userOnline ? '<span class="online-dot" title="Online now"></span>' : '') +
+                    '</div>' +
+                    '<div>' +
+                        '<a class="username-link" href="/profile.html?user=' + encodeURIComponent(p.user_id) + '" ' +
+                        'onmouseenter="showProfileHover(\'' + jsUser + '\', event)" onmouseleave="hideProfileHover()">' + safeUser + '</a>' +
+                        '<div class="postbit-badges">' +
+                            '<span class="postbit-role" style="background:' + roleColor + ';">' + escapeHtml(roleTitle) + '</span>' +
+                            (isOpAuthor ? '<span class="op-badge" title="Thread Starter">OP</span>' : '') +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="postbit-stats">' +
+                        '<div>Posts: <strong>' + (p.userPostCount || 1) + '</strong></div>' +
+                        '<div>Reactions: <strong>' + (p.userReactions || 0) + '</strong></div>' +
+                        '<div>Joined: <strong>' + escapeHtml(formatShortJoin(p.userJoined || p.created_at)) + '</strong></div>' +
+                    '</div>' +
+                '</div>';
+
+                html += '<div class="post-main">';
+                html += '<div class="post-meta-bar">' +
+                    '<span>' + escapeHtml(formatPostDate(p.created_at)) + (isFirstPost ? ' · <strong style="color:#fffd01;">Original Post</strong>' : '') + '</span>' +
+                    '<a class="post-num" href="#post-' + escapeHtml(p.id) + '" onclick="jumpToPost(\'' + jsPostId + '\'); return false;">#' + postNum + '</a>' +
+                '</div>';
+                html += '<div class="post-body">' + quoteHtml + formatContent(p.content) + renderMediaFiles(files, p.content) + '</div>';
+
+                if (p.edited_at) {
+                    html += '<div class="post-edited">Last edited: ' + escapeHtml(timeAgo(p.edited_at)) + '</div>';
                 }
-                html += '</div>';
+                if (p.userSignature) {
+                    html += '<div class="post-signature">' + formatContent(p.userSignature) + '</div>';
+                }
+
+                html += '<div class="post-footer">' +
+                    renderReactionsBar(p.id, p.reactions) +
+                    '<div class="post-actions">';
+                if (username) {
+                    html += '<div class="reaction-picker" id="rx-picker-' + p.id + '" onclick="event.stopPropagation();">' +
+                        '<button type="button" onclick="reactToPost(\'' + jsPostId + '\',\'like\')" title="Like">' + REACTION_SVGS.like + ' Like</button>' +
+                        '<button type="button" onclick="reactToPost(\'' + jsPostId + '\',\'love\')" title="Love">' + REACTION_SVGS.love + ' Love</button>' +
+                        '<button type="button" onclick="reactToPost(\'' + jsPostId + '\',\'haha\')" title="Haha">' + REACTION_SVGS.haha + ' Haha</button>' +
+                        '<button type="button" onclick="reactToPost(\'' + jsPostId + '\',\'fire\')" title="Fire">' + REACTION_SVGS.fire + ' Fire</button>' +
+                        '<button type="button" onclick="reactToPost(\'' + jsPostId + '\',\'skull\')" title="Skull">' + REACTION_SVGS.skull + ' Skull</button>' +
+                    '</div>';
+                    html += '<button type="button" class="action-btn ' + (myReaction ? 'active' : '') + '" onclick="toggleReactionPicker(\'' + jsPostId + '\', event)">' + reactBtnLabel + '</button>';
+                    html += '<button type="button" class="action-btn" onclick="setReply(\'' + jsPostId + '\',\'' + jsUser + '\')">Reply</button>';
+                }
+                html += '</div></div>';
+
                 if (canEdit || username) {
-                    html += '<button class="menu-btn" onclick="event.stopPropagation();toggleMenu(\'' + p.id + '\')">⋮</button>';
+                    html += '<button class="menu-btn" onclick="event.stopPropagation();toggleMenu(\'' + jsPostId + '\')">⋮</button>';
                     html += '<div class="dropdown-menu" id="menu-' + p.id + '">';
                     if (canEdit) {
-                        html += '<button onclick="editPost(\'' + p.id + '\', ' + JSON.stringify(p.content || '').replace(/</g, '\\u003c') + ')">Edit</button>';
-                        html += '<button onclick="openDeleteModal(\'' + p.id + '\')">Delete</button>';
+                        html += '<button onclick="editPost(\'' + jsPostId + '\')">Edit</button>';
+                        html += '<button onclick="openDeleteModal(\'' + jsPostId + '\')">Delete</button>';
                     }
-                    html += '<button onclick="openReportModal(\'' + p.id + '\')">Report</button></div>';
+                    html += '<button onclick="openReportModal(\'' + jsPostId + '\')">Report</button></div>';
                 }
-                if (p.replies && p.replies.length) html += renderPosts(p.replies, depth + 1);
-                html += '</div>';
+                html += '</div></div>';
             });
-            return html;
+
+            document.getElementById('postsList').innerHTML = html;
+            initCollapsibleQuotes();
         }
 
-        async function loadPosts() {
+        async function loadPosts(jumpToLastPage) {
             try {
                 const res = await fetch('/api/threads/' + encodeURIComponent(threadId) + '/posts');
                 const posts = await res.json();
-                document.getElementById('postsList').innerHTML = renderPosts(posts);
+                allFlatPosts = flattenPosts(posts);
+                if (jumpToLastPage) {
+                    currentPage = Math.max(1, Math.ceil(allFlatPosts.length / POSTS_PER_PAGE));
+                }
+                renderCurrentPage();
+                if (window.location.hash && window.location.hash.indexOf('#post-') === 0) {
+                    const targetId = window.location.hash.slice(6);
+                    setTimeout(function () { jumpToPost(targetId); }, 100);
+                }
             } catch (e) {
                 document.getElementById('postsList').innerHTML = '<p>Failed to load posts.</p>';
             }
@@ -515,14 +1612,28 @@
         }
         document.addEventListener('click', function () {
             document.querySelectorAll('.dropdown-menu').forEach(function (m) { m.style.display = 'none'; });
+            document.querySelectorAll('.reaction-picker').forEach(function (p) { p.classList.remove('open'); });
         });
 
         function setReply(parentId, user) {
             replyParentId = parentId;
             const t = document.getElementById('replyTarget');
+            const quoted = postsMap[parentId];
+            const previewText = quoted && quoted.content
+                ? escapeHtml(quoted.content.length > 180 ? quoted.content.slice(0, 180) + '...' : quoted.content)
+                : '(media attachment)';
             t.style.display = 'block';
-            t.innerHTML = 'Replying to <strong>' + escapeHtml(user) + '</strong> <span style="color:#ff4444;cursor:pointer;" onclick="cancelReply()">[cancel]</span>';
+            t.innerHTML =
+                '<div class="xf-quote" style="margin:0 0 8px 0;">' +
+                    '<div class="xf-quote-header">' +
+                        '<span>' + escapeHtml(user) + ' said: <span class="xf-quote-arrow">↑</span></span>' +
+                        '<span style="color:#ff8080;cursor:pointer;font-weight:bold;" onclick="cancelReply()">[cancel]</span>' +
+                    '</div>' +
+                    '<div class="xf-quote-content" style="padding:6px 12px;font-size:0.88em;">' + previewText + '</div>' +
+                '</div>';
             document.getElementById('cancelReplyBtn').style.display = 'inline-block';
+            const replyBox = document.getElementById('replyBox');
+            if (replyBox) replyBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
             document.getElementById('postContent').focus();
         }
         function cancelReply() {
@@ -531,13 +1642,43 @@
             document.getElementById('cancelReplyBtn').style.display = 'none';
         }
 
+        function renderMediaPreviews() {
+            const container = document.getElementById('mediaPreviewList');
+            if (!container) return;
+            if (!uploadedUrls.length) {
+                container.innerHTML = '';
+                return;
+            }
+            container.innerHTML = uploadedUrls.map(function (url, idx) {
+                const isVid = /\.(mp4|webm|mov)(\?|$)/i.test(url) || /\/video\//i.test(url);
+                const mediaEl = isVid
+                    ? '<video src="' + escapeHtml(url) + '" muted></video>'
+                    : '<img src="' + escapeHtml(url) + '" alt="">';
+                return '<div class="media-preview-item">' +
+                    mediaEl +
+                    '<button type="button" class="media-preview-remove" onclick="removeAttachment(' + idx + ')" title="Remove">x</button>' +
+                '</div>';
+            }).join('');
+        }
+
+        function removeAttachment(idx) {
+            const removed = uploadedUrls.splice(idx, 1)[0];
+            if (removed) {
+                const box = document.getElementById('postContent');
+                box.value = box.value.replace(removed, '').replace(/\n{3,}/g, '\n\n').trim();
+            }
+            renderMediaPreviews();
+            document.getElementById('uploadStatus').textContent = uploadedUrls.length
+                ? uploadedUrls.length + ' attachment(s) ready'
+                : '';
+        }
+
         document.getElementById('mediaFile').addEventListener('change', async function () {
             const files = this.files;
             if (!files.length) return;
             const status = document.getElementById('uploadStatus');
             const box = document.getElementById('postContent');
-            status.textContent = 'Uploading...';
-            uploadedUrls = [];
+            status.textContent = 'Uploading ' + files.length + ' file(s)...';
             for (let i = 0; i < files.length; i++) {
                 const fd = new FormData();
                 fd.append('file', files[i]);
@@ -550,8 +1691,9 @@
                     }
                 } catch (e) {}
             }
+            renderMediaPreviews();
             status.textContent = uploadedUrls.length
-                ? 'Uploaded ' + uploadedUrls.length + ' file(s) — links added'
+                ? uploadedUrls.length + ' attachment(s) ready'
                 : 'Upload failed (check Cloudinary keys)';
         });
 
@@ -583,16 +1725,18 @@
                 document.getElementById('mediaFile').value = '';
                 document.getElementById('uploadStatus').textContent = '';
                 uploadedUrls = [];
+                renderMediaPreviews();
                 cancelReply();
-                loadPosts();
+                loadPosts(true);
             } catch (err) {
                 showNotification('Server error', '#ff4444');
             }
         });
 
-        function editPost(id, content) {
+        function editPost(id) {
             currentEditId = id;
-            document.getElementById('editContent').value = content || '';
+            const postObj = postsMap[id];
+            document.getElementById('editContent').value = (postObj && postObj.content) || '';
             document.getElementById('editModal').style.display = 'flex';
         }
         function closeEditModal() {
@@ -660,10 +1804,27 @@
             } catch (e) {}
         }
 
+        async function loadAlertBadge() {
+            if (!username) return;
+            try {
+                const res = await fetch('/api/alerts/' + encodeURIComponent(username));
+                if (!res.ok) return;
+                const data = await res.json();
+                const badge = document.getElementById('alert-badge');
+                if (!badge) return;
+                if (data.unread > 0) {
+                    badge.style.display = 'inline';
+                    badge.textContent = data.unread > 99 ? '99+' : data.unread;
+                } else badge.style.display = 'none';
+            } catch (e) {}
+        }
+
         loadThreadInfo();
         loadPosts();
         checkBan();
+        loadAlertBadge();
         setInterval(checkBan, 8000);
+        setInterval(loadAlertBadge, 15000);
     </script>
 </body>
 </html>

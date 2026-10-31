@@ -10,41 +10,127 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 
     <style>
+        .xf-block {
+            background: #1e2f4f;
+            border: 1px solid #2b4570;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .xf-block-header {
+            background: #0f1c2e;
+            border-bottom: 2px solid #0165fc;
+            padding: 10px 16px;
+            font-weight: bold;
+            color: #fffd01;
+            font-size: 1.05em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .xf-block-body {
+            padding: 16px;
+        }
+        .quick-links-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 14px;
+        }
+        .quick-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 8px 14px;
+            border-radius: 4px;
+            font-weight: bold;
+            text-decoration: none;
+            font-size: 0.94em;
+        }
+        .quick-btn.primary {
+            background: #0165fc;
+            color: #ffffff;
+            border: 1px solid #0165fc;
+        }
+        .quick-btn.primary:hover {
+            background: #fffd01;
+            border-color: #fffd01;
+            color: #162437;
+        }
+        .quick-btn.rules {
+            background: #fffd01;
+            color: #162437;
+            border: 1px solid #fffd01;
+        }
+        .quick-btn.rules:hover {
+            background: #e6e400;
+        }
         .announcement {
             background: #1e2f4f;
-            padding: 18px;
-            margin: 15px 0;
-            border-radius: 8px;
-            border-left: 5px solid #fffd01;
+            padding: 14px 16px;
+            border-bottom: 1px solid #2b4570;
             position: relative;
         }
+        .announcement:last-child {
+            border-bottom: none;
+        }
         .pinned-announcement {
-            border-left-color: #ffd700;
-            background: #2a3f5f;
+            background: #223556;
+        }
+        .pinned-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.76em;
+            color: #fffd01;
+            background: #0f1c2e;
+            border: 1px solid #2b4570;
+            padding: 2px 7px;
+            border-radius: 3px;
+            font-weight: bold;
+            margin-bottom: 8px;
         }
         .admin-controls {
             position: absolute;
-            top: 10px;
-            right: 10px;
-            font-size: 18px;
+            top: 12px;
+            right: 12px;
+            display: flex;
+            gap: 6px;
+        }
+        .admin-controls button {
+            background: #0f1c2e;
+            border: 1px solid #2b4570;
+            color: #c5d4eb;
+            border-radius: 4px;
+            padding: 3px 8px;
+            cursor: pointer;
+            font-size: 0.8em;
+            font-family: inherit;
+            font-weight: bold;
+        }
+        .admin-controls button:hover {
+            border-color: #0165fc;
+            color: #fffd01;
         }
         .admin-create {
-            background: #0f1b2e;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 20px 0;
-            border: 2px solid #0165fc;
+            background: #162437;
+            padding: 14px;
+            border-bottom: 1px solid #2b4570;
         }
         .admin-create textarea {
             width: 100%;
-            min-height: 90px;
-            box-sizing: border-box;
-            background: #1e2f4f;
-            color: white;
-            border: 2px solid #0165fc;
-            border-radius: 6px;
+            min-height: 85px;
+            background: #0f1c2e;
+            color: #ffffff;
+            border: 1px solid #2b4570;
+            border-radius: 4px;
             padding: 10px;
             font-family: inherit;
+            margin-bottom: 10px;
+            outline: none;
+        }
+        .admin-create textarea:focus {
+            border-color: #0165fc;
         }
         .modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -53,37 +139,23 @@
         }
         .modal-content {
             background: #1e2f4f;
-            padding: 25px;
-            border-radius: 12px;
-            border: 3px solid #0165fc;
+            padding: 22px;
+            border-radius: 4px;
+            border: 1px solid #2b4570;
             width: 90%;
-            max-width: 400px;
+            max-width: 380px;
             color: white;
             text-align: center;
-        }
-        .button {
-            padding: 10px 20px;
-            margin: 10px 5px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        .notification {
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-            padding: 15px 25px; border-radius: 6px; z-index: 20000;
-            color: white; font-weight: bold;
         }
         .mention-dropdown {
             position: fixed;
             z-index: 30000;
-            background: #0f1b2e;
-            border: 2px solid #0165fc;
-            border-radius: 8px;
+            background: #0f1c2e;
+            border: 1px solid #2b4570;
+            border-radius: 4px;
             max-height: 220px;
             overflow-y: auto;
             min-width: 200px;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
             display: none;
         }
         .mention-item {
@@ -99,57 +171,157 @@
             width: 28px; height: 28px; border-radius: 50%; object-fit: cover;
         }
         .mention-item .mi-name { font-weight: bold; }
-        .mention-item .mi-title { font-size: 0.75em; color: #aaa; }
+        .mention-item .mi-title { font-size: 0.75em; color: #c5d4eb; }
+        .announcement a { color: #7eb3ff; }
         .announcement a.mention {
             color: #fffd01;
             font-weight: bold;
             text-decoration: none;
         }
         .announcement a.mention:hover { text-decoration: underline; }
+        .announcement img.embed-media, .announcement video.embed-media {
+            max-width: min(100%, 420px);
+            max-height: 360px;
+            border-radius: 4px;
+            margin: 10px 0;
+            display: block;
+            object-fit: contain;
+        }
+        .announcement iframe.embed-iframe {
+            width: 100%;
+            max-width: 560px;
+            aspect-ratio: 16 / 9;
+            border: none;
+            border-radius: 4px;
+            margin: 10px 0;
+            display: block;
+        }
+        /* Sidebar items */
+        .recent-item {
+            display: flex; align-items: flex-start; gap: 10px;
+            padding: 8px 0; border-bottom: 1px solid #283e64;
+        }
+        .recent-item:last-child { border-bottom: none; padding-bottom: 0; }
+        .recent-item:first-child { padding-top: 0; }
+        .recent-pfp {
+            width: 30px; height: 30px; border-radius: 50%; object-fit: cover;
+            border: 1px solid #2b4570; background: #0f1c2e;
+        }
+        .recent-info { flex: 1; min-width: 0; }
+        .recent-title {
+            display: block; color: #7eb3ff; font-weight: bold; text-decoration: none;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .recent-title:hover { color: #fffd01; text-decoration: underline; }
+        .recent-meta { font-size: 0.82em; color: #c5d4eb; }
+        .recent-meta a { color: #c5d4eb; text-decoration: none; font-weight: bold; }
+        .recent-meta a:hover { color: #fffd01; text-decoration: underline; }
+        .online-user-link {
+            display: inline-block;
+            color: #7eb3ff;
+            text-decoration: none;
+            font-weight: bold;
+            margin-right: 6px;
+        }
+        .online-user-link:hover { color: #fffd01; text-decoration: underline; }
+        .stat-kv {
+            display: flex; justify-content: space-between; padding: 5px 0;
+            border-bottom: 1px solid #283e64; color: #c5d4eb;
+        }
+        .stat-kv:last-child { border-bottom: none; }
+        .stat-kv strong { color: #ffffff; }
     </style>
 </head>
 <body>
     <header>
-        <img src="https://i.imgur.com/oJCfWc8.png" alt="Logo" class="logo">
+        <img src="https://i.imgur.com/oJCfWc8.png" alt="Logo" class="logo" onclick="window.location.href='/'">
         <h1>20Thousand Forums</h1>
     </header>
 
     <nav>
-        <a href="/">Home</a> |
-        <a href="/forums">Boards</a> |
-        <a href="/search.html">Search</a> |
-        <a href="/alerts.html">Alerts <span id="alert-badge" style="display:none; background:#ff4444; color:white; border-radius:10px; padding:1px 7px; font-size:12px; margin-left:4px;">0</span></a> |
+        <a href="/" class="active">Home</a>
+        <a href="/forums">Boards</a>
+        <a href="/search.html">Search</a>
+        <a href="/alerts.html">Alerts <span id="alert-badge" style="display:none; background:#d93838; color:white; border-radius:3px; padding:1px 6px; font-size:11px; margin-left:4px;">0</span></a>
         <span id="user-nav"></span>
+        <form action="/search.html" method="get" class="nav-search">
+            <input name="q" placeholder="Search users or d1scs...">
+            <button type="submit">Search</button>
+        </form>
     </nav>
 
-    <form action="/search.html" method="get" style="display:inline; margin-left:8px;">
-        <input name="q" placeholder="user: / d1sc:" style="padding:4px 8px; border-radius:4px; border:1px solid #0165fc; background:#0f1b2e; color:white;">
-    </form>
-
-    <div id="global-banner" style="display:none; background:#fffd01; color:#162437; padding:12px; text-align:center; font-weight:bold;"></div>
+    <div id="global-banner" style="display:none; background:#fffd01; color:#162437; padding:10px 16px; text-align:center; font-weight:bold;"></div>
 
     <div class="container">
-        <div class="board">
-            <h3>Welcome to 20Thousand Forums</h3>
-            <p style="color:#ccc; line-height:1.5;">
-                An open discussion forum built around free speech and minimal censorship.
-                Argue, joke, post opinions, and speak freely. Just don't break the rules.
-            </p>
+        <div class="xf-layout">
+            <div class="xf-main">
+                <div class="xf-block">
+                    <div class="xf-block-header">
+                        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zm0 7.5l-6-3 6-3 6 3-6 3zm0 2.5l-10-5v10l10 5 10-5V7l-10 5z"/></svg>
+                        <span>Welcome to 20Thousand Forums</span>
+                    </div>
+                    <div class="xf-block-body">
+                        <p style="color:#d6e4f7; margin:0;">
+                            An open discussion forum built around free speech and minimal censorship.
+                            Argue, joke, post opinions, and speak freely. Just don't break the rules.
+                        </p>
+                        <div class="quick-links-row">
+                            <a href="/forums" class="quick-btn primary">
+                                <svg class="svg-icon" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+                                <span>Browse All Boards (s1k/)</span>
+                            </a>
+                            <a href="/commandments.html" class="quick-btn rules">
+                                <svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm1 14h-2v2h2v-2zm0-6h-2v4h2v-4z"/></svg>
+                                <span>20Thousand Commandments (Rules)</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
 
-            <h3 style="margin-top:25px;">Quick Links</h3>
-            <p><a href="/forums">→ Browse all Boards</a></p>
-            <p style="margin-top:15px;">
-                <a href="/commandments.html"
-                   style="display:inline-block; padding:12px 18px; background:#fffd01; color:#162437; font-weight:bold; border-radius:8px; text-decoration:none;">
-                    ⚠ View 20Thousand Commandments (Rules)
-                </a>
-            </p>
-        </div>
+                <div class="xf-block" id="announcements-section">
+                    <div class="xf-block-header">
+                        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M18 11v2h4v-2h-4zm-2 6.61c.96.71 2.21 1.65 3.2 2.39.4-.53.8-1.07 1.2-1.6-.99-.74-2.24-1.68-3.2-2.4-.4.54-.8 1.08-1.2 1.61zM20.4 5.6c-.4-.53-.8-1.07-1.2-1.6-.99.74-2.24 1.68-3.2 2.4.4.53.8 1.07 1.2 1.6.96-.72 2.21-1.65 3.2-2.4zM4 9c-1.1 0-2 .9-2 2v2c0 1.1.9 2 2 2h1v4h2v-4h1l5 3V6L8 9H4zm11.5 3c0-1.33-.58-2.53-1.5-3.35v6.69c.92-.81 1.5-2.01 1.5-3.34z"/></svg>
+                        <span>Announcements</span>
+                    </div>
+                    <div id="admin-create-area"></div>
+                    <div id="announcementsList" style="padding:4px 0;">Loading announcements...</div>
+                </div>
+            </div>
 
-        <div id="announcements-section">
-            <h3>Announcements</h3>
-            <div id="admin-create-area"></div>
-            <div id="announcementsList">Loading announcements...</div>
+            <aside class="xf-sidebar">
+                <div class="xf-widget">
+                    <div class="xf-widget-header">
+                        <span>Latest Posts</span>
+                        <a href="/forums" style="font-size:0.84em;color:#7eb3ff;text-decoration:none;">Boards</a>
+                    </div>
+                    <div class="xf-widget-body" id="recent-posts-list">
+                        Loading recent activity...
+                    </div>
+                </div>
+
+                <div class="xf-widget">
+                    <div class="xf-widget-header">
+                        <span>Members Online</span>
+                        <span id="stat-online-badge" style="background:#162437;border:1px solid #2b4570;color:#ffffff;padding:1px 7px;border-radius:3px;font-size:0.8em;">0</span>
+                    </div>
+                    <div class="xf-widget-body" id="online-list">
+                        Loading...
+                    </div>
+                </div>
+
+                <div class="xf-widget">
+                    <div class="xf-widget-header">
+                        <span>Forum Statistics</span>
+                    </div>
+                    <div class="xf-widget-body">
+                        <div class="stat-kv"><span>d1scs:</span><strong id="stat-threads">0</strong></div>
+                        <div class="stat-kv"><span>Posts:</span><strong id="stat-posts">0</strong></div>
+                        <div class="stat-kv"><span>Members:</span><strong id="stat-members">0</strong></div>
+                        <div class="stat-kv"><span>Online now:</span><strong id="stat-online">0</strong></div>
+                        <div class="stat-kv"><span>Latest member:</span><strong id="stat-newest">None</strong></div>
+                    </div>
+                </div>
+            </aside>
         </div>
     </div>
 
@@ -158,6 +330,7 @@
     <script>
         const username = localStorage.getItem('username');
         let mentionState = { active: false, start: -1, query: '', index: 0, list: [], boxId: 'announcementContent' };
+        let announcementsCache = {};
 
         function escapeHtml(s) {
             return String(s || '')
@@ -167,12 +340,151 @@
                 .replace(/"/g, '&quot;');
         }
 
+        function timeAgo(date) {
+            if (!date) return '';
+            const s = Math.floor((Date.now() - new Date(date)) / 1000);
+            if (s < 60) return 'just now';
+            const m = Math.floor(s / 60);
+            if (m < 60) return m + 'm ago';
+            const h = Math.floor(m / 60);
+            if (h < 24) return h + 'h ago';
+            const d = Math.floor(h / 24);
+            return d + 'd ago';
+        }
+
+        function getYouTubeEmbedUrl(rawUrl) {
+            try {
+                const u = new URL(rawUrl);
+                const host = u.hostname.replace(/^(www\.|m\.)/i, '').toLowerCase();
+                let videoId = null;
+                const params = new URLSearchParams();
+
+                if (host === 'youtube.com' || host === 'youtube-nocookie.com') {
+                    const embedMatch = u.pathname.match(/^\/embed\/([a-zA-Z0-9_-]{6,})/);
+                    const shortsMatch = u.pathname.match(/^\/shorts\/([a-zA-Z0-9_-]{6,})/);
+                    const liveMatch = u.pathname.match(/^\/live\/([a-zA-Z0-9_-]{6,})/);
+                    if (embedMatch) {
+                        videoId = embedMatch[1];
+                        u.searchParams.forEach(function (v, k) { params.set(k, v); });
+                    } else if (shortsMatch) {
+                        videoId = shortsMatch[1];
+                    } else if (liveMatch) {
+                        videoId = liveMatch[1];
+                    } else if (u.pathname === '/watch') {
+                        videoId = u.searchParams.get('v');
+                    }
+                } else if (host === 'youtu.be') {
+                    const idMatch = u.pathname.match(/^\/([a-zA-Z0-9_-]{6,})/);
+                    if (idMatch) videoId = idMatch[1];
+                }
+
+                if (!videoId) return null;
+
+                if (u.searchParams.get('si') && !params.has('si')) {
+                    params.set('si', u.searchParams.get('si'));
+                }
+                const t = u.searchParams.get('t') || u.searchParams.get('start');
+                if (t && !params.has('start')) {
+                    const sec = parseInt(String(t).replace(/s$/i, ''), 10);
+                    if (!isNaN(sec) && sec > 0) params.set('start', String(sec));
+                }
+                const domain = host === 'youtube-nocookie.com' ? 'www.youtube-nocookie.com' : 'www.youtube.com';
+                const qs = params.toString();
+                return 'https://' + domain + '/embed/' + videoId + (qs ? '?' + qs : '');
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function buildIframeHtml(src, width, height) {
+            const w = /^\d+%?$/.test(String(width || '')) ? String(width) : '560';
+            const h = /^\d+$/.test(String(height || '')) ? String(height) : '315';
+            return '<iframe class="embed-iframe" width="' + w + '" height="' + h + '" src="' + escapeHtml(src) + '" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen loading="lazy"></iframe>';
+        }
+
+        function parseIframeTag(tag) {
+            let rawSrc = '';
+            const srcAttr = tag.match(/\bsrc\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i);
+            if (srcAttr) {
+                rawSrc = srcAttr[1] || srcAttr[2] || srcAttr[3] || '';
+            }
+            if (!rawSrc || rawSrc.indexOf('[') !== -1) {
+                const urlInTag = tag.match(/https?:\/\/[^\s"'\]>)]+/i);
+                if (urlInTag) rawSrc = urlInTag[0];
+            }
+            rawSrc = rawSrc
+                .replace(/&amp;/gi, '&')
+                .replace(/&quot;?/gi, '')
+                .replace(/(?:%22|["';])+$/g, '')
+                .trim();
+            if (rawSrc.indexOf('//') === 0) rawSrc = 'https:' + rawSrc;
+            if (!/^https?:\/\//i.test(rawSrc)) return null;
+
+            const ytEmbed = getYouTubeEmbedUrl(rawSrc);
+            const finalSrc = ytEmbed || rawSrc;
+
+            const wMatch = tag.match(/\bwidth\s*=\s*["']?(\d+%?)["']?/i);
+            const hMatch = tag.match(/\bheight\s*=\s*["']?(\d+)["']?/i);
+            return buildIframeHtml(finalSrc, wMatch ? wMatch[1] : '560', hMatch ? hMatch[1] : '315');
+        }
+
         function formatAnnouncement(text) {
-            return escapeHtml(text)
-                .replace(/@([a-zA-Z0-9_]{1,32})/g, function (full, name) {
-                    return '<a class="mention" href="/profile.html?user=' + encodeURIComponent(name) + '">@' + name + '</a>';
-                })
-                .replace(/\n/g, '<br>');
+            if (!text) return '';
+            const embeds = [];
+            const withTokens = String(text).replace(/<iframe\b[^>]*>(?:[\s\S]*?<\/iframe>)?/gi, function (match) {
+                const html = parseIframeTag(match);
+                if (!html) return match;
+                const token = '\u0000EMBED_' + embeds.length + '\u0000';
+                embeds.push(html);
+                return token;
+            });
+
+            let escaped = escapeHtml(withTokens);
+            escaped = escaped.replace(/(https?:\/\/[^\s<\u0000]+)/g, function (url) {
+                let urlPart = url;
+                let entitySuffix = '';
+                const entityMatch = urlPart.match(/&(quot|gt|lt|#039|#39);/);
+                if (entityMatch) {
+                    entitySuffix = urlPart.slice(entityMatch.index);
+                    urlPart = urlPart.slice(0, entityMatch.index);
+                }
+                const unescapedUrl = urlPart.replace(/&amp;/g, '&');
+                const cleanRaw = unescapedUrl.replace(/[.,);!?]+$/, '');
+                const trailingPunct = unescapedUrl.slice(cleanRaw.length);
+                const clean = escapeHtml(cleanRaw);
+                const trailing = escapeHtml(trailingPunct) + entitySuffix;
+
+                const ytEmbed = getYouTubeEmbedUrl(cleanRaw);
+                if (ytEmbed) {
+                    return buildIframeHtml(ytEmbed, '560', '315') + trailing;
+                }
+
+                const isImage =
+                    /\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i.test(cleanRaw) ||
+                    /res\.cloudinary\.com\/[^/]+\/image\//i.test(cleanRaw) ||
+                    /i\.imgur\.com\//i.test(cleanRaw) ||
+                    /imgur\.com\/[a-z0-9]+$/i.test(cleanRaw);
+                const isVideo =
+                    /\.(mp4|webm|mov)(\?.*)?$/i.test(cleanRaw) ||
+                    /res\.cloudinary\.com\/[^/]+\/video\//i.test(cleanRaw);
+                if (isVideo) return '<video class="embed-media" controls src="' + clean + '"></video>' + trailing;
+                if (isImage) {
+                    let src = cleanRaw;
+                    if (/imgur\.com\/[a-z0-9]+$/i.test(cleanRaw) && !/i\.imgur\.com/i.test(cleanRaw)) {
+                        src = cleanRaw.replace('imgur.com/', 'i.imgur.com/') + '.jpg';
+                    }
+                    return '<img class="embed-media" src="' + escapeHtml(src) + '" alt="embedded" loading="lazy">' + trailing;
+                }
+                return '<a href="' + clean + '" target="_blank" rel="noopener noreferrer">' + clean + '</a>' + trailing;
+            });
+            escaped = escaped.replace(/@([a-zA-Z0-9_]{1,32})/g, function (full, name) {
+                return '<a class="mention" href="/profile.html?user=' + encodeURIComponent(name) + '">@' + name + '</a>';
+            });
+            escaped = escaped.replace(/\n/g, '<br>');
+            escaped = escaped.replace(/\u0000EMBED_(\d+)\u0000/g, function (full, idx) {
+                return embeds[Number(idx)] || '';
+            });
+            return escaped;
         }
 
         function hideMentionDropdown() {
@@ -267,17 +579,17 @@
         document.addEventListener('DOMContentLoaded', function () {
             const userNav = document.getElementById('user-nav');
             if (username) {
-                userNav.innerHTML = 'Logged in as: <a href="/profile.html?user=' + encodeURIComponent(username) + '" style="color:inherit; text-decoration:none;"><strong>' + username + '</strong></a> | <a href="#" onclick="showLogoutModal();return false;">Logout</a>';
+                userNav.innerHTML = '<span class="nav-user-bar"><a href="/profile.html?user=' + encodeURIComponent(username) + '"><strong>' + escapeHtml(username) + '</strong></a>' + (username === '20k' ? ' · <a href="/admin.html">Admin</a>' : '') + ' · <a href="#" onclick="showLogoutModal();return false;">Logout</a></span>';
             } else {
-                userNav.innerHTML = '<a href="/login">Login</a> | <a href="/register">Register</a>';
+                userNav.innerHTML = '<a href="/login">Login</a> <a href="/register">Register</a>';
             }
 
             if (username === '20k') {
                 document.getElementById('admin-create-area').innerHTML =
                     '<div class="admin-create">' +
-                    '<h4>Create Announcement</h4>' +
-                    '<textarea id="announcementContent" placeholder="Write announcement... type @ to tag someone"></textarea><br><br>' +
-                    '<button onclick="createAnnouncement()" class="button" style="background:#0165fc; color:white;">Post Announcement</button>' +
+                    '<div style="font-weight:bold;color:#fffd01;margin-bottom:6px;">New Announcement</div>' +
+                    '<textarea id="announcementContent" placeholder="Write announcement..."></textarea>' +
+                    '<button onclick="createAnnouncement()" class="button">Post Announcement</button>' +
                     '</div>';
                 bindMentionBox('announcementContent');
             }
@@ -290,8 +602,8 @@
                     '<div class="modal-content">' +
                     '<h3>Logout?</h3>' +
                     '<p>Are you sure you want to logout?</p>' +
-                    '<button onclick="doLogout()" class="button" style="background:#ff4444;color:white;">Yes, Logout</button>' +
-                    '<button onclick="this.parentElement.parentElement.remove()" class="button">Cancel</button>' +
+                    '<button onclick="doLogout()" class="button" style="background:#d93838;border-color:#d93838;color:white;">Yes, Logout</button> ' +
+                    '<button onclick="this.parentElement.parentElement.remove()" class="button" style="background:#2b4570;border-color:#2b4570;">Cancel</button>' +
                     '</div>';
                 document.body.appendChild(modal);
             };
@@ -308,12 +620,11 @@
                     const el = document.getElementById('global-banner');
                     if (data && data.active && (data.text || data.imageUrl)) {
                         let content = data.text || '';
-                        // show @mentions as links in banner text if plain
                         content = escapeHtml(content).replace(/@([a-zA-Z0-9_]{1,32})/g, function (full, name) {
                             return '<a href="/profile.html?user=' + encodeURIComponent(name) + '" style="color:#162437;font-weight:bold;">@' + name + '</a>';
                         });
                         if (data.imageUrl) {
-                            content += '<br><img src="' + data.imageUrl + '" style="max-width:100%; margin-top:8px;">';
+                            content += '<br><img src="' + escapeHtml(data.imageUrl) + '" style="max-width:100%; margin-top:8px;">';
                         }
                         el.innerHTML = content;
                         el.style.display = 'block';
@@ -330,28 +641,99 @@
                     const list = document.getElementById('announcementsList');
 
                     if (!data || data.length === 0) {
-                        list.innerHTML = '<p>No announcements yet.</p>';
+                        list.innerHTML = '<p style="color:#c5d4eb;padding:8px 16px;">No announcements yet.</p>';
                         return;
                     }
 
+                    announcementsCache = {};
                     let html = '';
                     data.forEach(function (a) {
+                        announcementsCache[a.id] = a.content || '';
                         html += '<div class="announcement ' + (a.pinned ? 'pinned-announcement' : '') + '">';
                         if (username === '20k') {
                             html += '<div class="admin-controls">' +
-                                '<button onclick="editAnnouncement(\'' + a.id + '\')">✏️</button> ' +
-                                '<button onclick="deleteAnnouncement(\'' + a.id + '\')">🗑</button> ' +
-                                '<button onclick="togglePinAnnouncement(\'' + a.id + '\')">📌</button>' +
+                                '<button onclick="editAnnouncement(\'' + a.id + '\')">Edit</button>' +
+                                '<button onclick="deleteAnnouncement(\'' + a.id + '\')">Delete</button>' +
+                                '<button onclick="togglePinAnnouncement(\'' + a.id + '\')">' + (a.pinned ? 'Unpin' : 'Pin') + '</button>' +
                                 '</div>';
                         }
+                        if (a.pinned) {
+                            html += '<div class="pinned-label">Pinned</div>';
+                        }
                         html += '<div>' + formatAnnouncement(a.content) + '</div>';
-                        html += '<small style="color:#aaa;">— ' + escapeHtml(a.author) + ' • ' + new Date(a.created_at).toLocaleString() + '</small>';
+                        html += '<div style="margin-top:8px;"><small style="color:#c5d4eb;">Posted by <a href="/profile.html?user=' + encodeURIComponent(a.author || '20k') + '" style="color:#fffd01;text-decoration:none;font-weight:bold;">' + escapeHtml(a.author) + '</a> · ' + new Date(a.created_at).toLocaleString() + '</small></div>';
                         html += '</div>';
                     });
                     list.innerHTML = html;
                 } catch (e) {
-                    document.getElementById('announcementsList').innerHTML = '<p>Error loading announcements.</p>';
+                    document.getElementById('announcementsList').innerHTML = '<p style="padding:8px 16px;">Error loading announcements.</p>';
                 }
+            }
+
+            async function loadRecentPosts() {
+                const box = document.getElementById('recent-posts-list');
+                if (!box) return;
+                try {
+                    const res = await fetch('/api/recent-posts');
+                    const items = await res.json();
+                    if (!Array.isArray(items) || !items.length) {
+                        box.innerHTML = '<span style="color:#c5d4eb;">No recent posts yet.</span>';
+                        return;
+                    }
+                    box.innerHTML = items.map(function (item) {
+                        const url = '/thread.html?id=' + encodeURIComponent(item.threadId) + '&title=' + encodeURIComponent(item.title || '') + '#post-' + encodeURIComponent(item.postId);
+                        return '<div class="recent-item">' +
+                            '<div class="avatar-wrap">' +
+                                '<img class="recent-pfp" src="' + escapeHtml(item.pfp) + '" alt="">' +
+                                (item.online ? '<span class="online-dot" style="width:9px;height:9px;"></span>' : '') +
+                            '</div>' +
+                            '<div class="recent-info">' +
+                                '<a class="recent-title" href="' + url + '">' + escapeHtml(item.title) + '</a>' +
+                                '<div class="recent-meta"><a href="/profile.html?user=' + encodeURIComponent(item.user) + '">' + escapeHtml(item.user) + '</a> · ' + escapeHtml(timeAgo(item.at)) + ' · <a href="/thread-list.html?id=' + encodeURIComponent(item.forum_id) + '">s1k/' + escapeHtml(item.forum_id) + '/</a></div>' +
+                            '</div>' +
+                        '</div>';
+                    }).join('');
+                } catch (e) {
+                    box.innerHTML = '<span style="color:#c5d4eb;">Failed to load recent posts.</span>';
+                }
+            }
+
+            async function loadOnlineStats() {
+                try {
+                    const res = await fetch('/api/online-stats');
+                    const data = await res.json();
+                    document.getElementById('stat-members').textContent = data.members || 0;
+                    document.getElementById('stat-threads').textContent = data.threads || 0;
+                    document.getElementById('stat-posts').textContent = data.posts || 0;
+                    document.getElementById('stat-online').textContent = data.onlineCount || 0;
+                    const badgeEl = document.getElementById('stat-online-badge');
+                    if (badgeEl) badgeEl.textContent = data.onlineCount || 0;
+                    const newestEl = document.getElementById('stat-newest');
+                    if (newestEl) {
+                        newestEl.innerHTML = data.newestMember
+                            ? '<a href="/profile.html?user=' + encodeURIComponent(data.newestMember) + '" style="color:#7eb3ff;text-decoration:none;">' + escapeHtml(data.newestMember) + '</a>'
+                            : 'None';
+                    }
+                    const list = document.getElementById('online-list');
+                    if (!data.online || !data.online.length) {
+                        list.innerHTML = '<span style="color:#c5d4eb;">Nobody online right now.</span>';
+                        return;
+                    }
+                    list.innerHTML = data.online.map(function (u) {
+                        return '<a class="online-user-link" href="/profile.html?user=' + encodeURIComponent(u.username) + '">' + escapeHtml(u.username) + '</a>';
+                    }).join(', ');
+                } catch (e) {}
+            }
+
+            async function heartbeat() {
+                if (!username) return;
+                try {
+                    await fetch('/api/heartbeat', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username: username })
+                    });
+                } catch (e) {}
             }
 
             window.createAnnouncement = async function () {
@@ -380,8 +762,9 @@
             };
 
             window.editAnnouncement = async function (id) {
-                const newContent = prompt('Edit announcement:');
-                if (!newContent) return;
+                const current = announcementsCache[id] || '';
+                const newContent = prompt('Edit announcement:', current);
+                if (newContent === null || !newContent.trim()) return;
                 await fetch('/api/announcements/' + id, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
@@ -423,9 +806,15 @@
 
             loadGlobalBanner();
             loadAnnouncements();
+            loadRecentPosts();
+            loadOnlineStats();
+            heartbeat();
             checkBan();
             loadAlertBadge();
             setInterval(checkBan, 8000);
+            setInterval(heartbeat, 30000);
+            setInterval(loadRecentPosts, 20000);
+            setInterval(loadOnlineStats, 20000);
             setInterval(loadAlertBadge, 15000);
         });
     </script>
