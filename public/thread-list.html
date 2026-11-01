@@ -2,161 +2,269 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>20Thousand Forums</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Board - 20Thousand Forums</title>
     <link rel="stylesheet" href="/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="https://i.imgur.com/oJCfWc8.png">
     <style>
-        .modal {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); display: none; align-items: center;
-            justify-content: center; z-index: 10000;
+        .block-outer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 10px;
         }
-        .modal-content {
-            background: #1e2f4f; padding: 22px; border-radius: 4px;
-            border: 1px solid #2b4570; width: 90%; max-width: 480px; color: white;
-            max-height: 90vh; overflow-y: auto; position: relative;
-        }
-        .notification {
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-            padding: 12px 22px; border-radius: 4px; z-index: 20000;
-            color: white; font-weight: bold;
-        }
-        .board-header-bar {
-            display: flex; align-items: center; justify-content: space-between;
-            flex-wrap: wrap; gap: 12px; background: #0f1c2e;
-            border: 1px solid #2b4570; border-bottom: 2px solid #0165fc;
-            border-radius: 4px; padding: 12px 16px; margin-bottom: 14px;
-        }
-        .board-header-bar h2 {
-            margin: 0; color: #fffd01; font-size: 1.25em;
-        }
-        .prefix-filter-bar {
-            display: none; align-items: center; flex-wrap: wrap; gap: 6px;
-            margin-bottom: 12px; padding: 8px 12px;
-            background: #0f1c2e; border: 1px solid #2b4570; border-radius: 4px;
-        }
-        .filter-pill {
-            background: #1e2f4f; color: #c5d4eb; border: 1px solid #2b4570;
-            border-radius: 3px; padding: 3px 10px; font-size: 0.8em; font-weight: bold;
-            cursor: pointer; font-family: inherit;
-        }
-        .filter-pill:hover, .filter-pill.active {
-            background: #0165fc; color: #ffffff; border-color: #0165fc;
-        }
-        .threads-block {
-            border: 1px solid #2b4570;
-            border-radius: 4px;
-            background: #1e2f4f;
+        .composer-block {
+            display: none;
+            background: #202738;
+            border: 1px solid #2d364d;
+            border-radius: 3px;
+            margin-bottom: 16px;
             overflow: hidden;
         }
-        .thread {
-            background: #1e2f4f; padding: 12px 44px 12px 16px; margin: 0;
-            border-bottom: 1px solid #283e64; position: relative; cursor: pointer;
-            display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+        .composer-block.open {
+            display: block;
         }
-        .thread:last-child { border-bottom: none; }
-        .thread-main { flex: 1; min-width: 220px; }
-        .thread-stats-col {
-            display: flex; gap: 16px; text-align: center; font-size: 0.82em; color: #c5d4eb;
-            min-width: 110px; justify-content: center;
+        .composer-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
         }
-        .thread-stats-col strong {
-            display: block; color: #ffffff; font-size: 1.08em;
+        .composer-row select {
+            min-width: 140px;
         }
-        .thread-lastpost {
-            text-align: right; font-size: 0.84em; color: #c5d4eb; min-width: 155px;
-            border-left: 1px solid #283e64; padding-left: 14px;
+        .composer-row input {
+            flex: 1;
+            min-width: 220px;
         }
-        .thread-lastpost a { color: #7eb3ff; text-decoration: none; font-weight: bold; }
-        .thread-lastpost a:hover { color: #fffd01; text-decoration: underline; }
+        .composer-block textarea {
+            width: 100%;
+            min-height: 110px;
+            resize: vertical;
+        }
+        .composer-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
         .bb-toolbar {
-            display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-bottom: 8px;
         }
         .bb-btn {
-            background: #0f1b2e; color: #c5d4eb; border: 1px solid #2b4570;
-            border-radius: 3px; padding: 4px 9px; font-size: 12px; cursor: pointer;
-            font-family: inherit; font-weight: bold;
+            background: #181f30;
+            color: #cbd5e1;
+            border: 1px solid #2d364d;
+            border-radius: 2px;
+            padding: 3px 9px;
+            font-size: 12px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: 600;
         }
-        .bb-btn:hover { background: #0165fc; border-color: #0165fc; color: #fff; }
-        .thread:hover { background: #24385c; }
-        .pinned {
-            background: #223556;
+        .bb-btn:hover {
+            background: #283147;
+            color: #ffffff;
         }
-        .status-tag {
-            display: inline-flex; align-items: center; gap: 3px;
-            font-size: 0.72em; padding: 1px 6px; border-radius: 3px;
-            background: #0f1c2e; border: 1px solid #2b4570; color: #fffd01;
-            margin-left: 6px; vertical-align: middle;
+        .struct-container {
+            background: #202738;
+            border: 1px solid #2d364d;
+            border-radius: 3px;
+            overflow: hidden;
         }
-        .menu-btn {
-            position: absolute; top: 10px; right: 10px; background: none; border: none;
-            font-size: 20px; cursor: pointer; color: #c5d4eb;
+        .block-filter-bar {
+            background: #252d40;
+            border-bottom: 1px solid #2f384f;
+            padding: 7px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #94a1bd;
         }
-        .dropdown-menu {
-            display: none; position: absolute; top: 36px; right: 10px;
-            background: #0f1b2e; border: 1px solid #2b4570; border-radius: 4px;
-            z-index: 50; min-width: 140px;
+        .filter-controls {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
         }
-        .dropdown-menu button {
-            display: block; width: 100%; text-align: left; background: none; border: none;
-            color: white; padding: 9px 14px; cursor: pointer; font-family: inherit;
+        .filter-controls select {
+            padding: 3px 8px;
+            font-size: 12px;
+            background: #181f30;
+            border: 1px solid #2d364d;
+            color: #dce2ec;
         }
-        .dropdown-menu button:hover { background: #1e2f4f; color: #fffd01; }
-        .prefix-badge {
-            display: inline-block; padding: 2px 7px; border-radius: 3px;
-            font-size: 0.74em; font-weight: bold; margin-right: 6px; color: #fff;
+        .struct-item {
+            display: grid;
+            grid-template-columns: 44px minmax(0, 1fr) 115px 190px;
+            align-items: center;
+            gap: 12px;
+            padding: 9px 14px;
+            border-bottom: 1px solid #293247;
+            background: #202738;
         }
-        .prefix-select, .modal-content input[type="text"], .modal-content textarea {
-            width: 100%; padding: 9px 10px; margin-bottom: 12px; border-radius: 4px;
-            border: 1px solid #2b4570; background: #0f1b2e; color: white;
-            font-size: 15px; box-sizing: border-box; font-family: inherit; outline: none;
+        .struct-item:last-child {
+            border-bottom: none;
         }
-        .prefix-select:focus, .modal-content input[type="text"]:focus, .modal-content textarea:focus {
-            border-color: #0165fc;
+        .struct-item:hover {
+            background: #242c3f;
         }
-        .modal-content textarea { min-height: 110px; resize: vertical; }
-        .upload-status { font-size: 13px; color: #c5d4eb; margin-bottom: 10px; min-height: 18px; }
-        .thread-title-line { color: #ffffff; font-size: 1.06em; font-weight: bold; word-break: break-word; }
-        .thread:hover .thread-title-line { color: #fffd01; }
-        .thread-meta { color: #c5d4eb; font-size: 0.85em; margin-top: 3px; }
-        .thread-meta a { color: #7eb3ff; text-decoration: none; font-weight: bold; }
-        .thread-meta a:hover { color: #fffd01; text-decoration: underline; }
-        .mention-dropdown {
-            position: fixed; z-index: 30000; background: #0f1b2e;
-            border: 1px solid #2b4570; border-radius: 4px; max-height: 220px;
-            overflow-y: auto; min-width: 200px; display: none;
+        .struct-main {
+            min-width: 0;
         }
-        .mention-item {
-            display: flex; align-items: center; gap: 10px; padding: 8px 12px;
-            cursor: pointer; color: white;
+        .struct-title-row {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 8px;
         }
-        .mention-item:hover, .mention-item.active { background: #1e2f4f; }
-        .mention-item img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; }
-        .mention-item .mi-name { font-weight: bold; }
-        .mention-item .mi-title { font-size: 0.75em; color: #c5d4eb; }
+        .struct-title-wrap {
+            min-width: 0;
+            line-height: 1.35;
+        }
+        .struct-title {
+            color: #eceff4;
+            font-weight: 700;
+            font-size: 14px;
+            text-decoration: none;
+            word-break: break-word;
+        }
+        .struct-title:hover {
+            color: #55a6f8;
+            text-decoration: underline;
+        }
+        .struct-statuses {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: #8c98b3;
+            flex-shrink: 0;
+            padding-top: 2px;
+        }
+        .struct-minor {
+            margin-top: 3px;
+            font-size: 12px;
+            color: #8c98b3;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        .struct-page-jump {
+            display: inline-flex;
+            gap: 3px;
+            margin-left: 4px;
+        }
+        .struct-page-jump a {
+            background: #181f30;
+            border: 1px solid #2d364d;
+            border-radius: 2px;
+            padding: 0 5px;
+            font-size: 11px;
+            color: #94a1bd;
+            text-decoration: none;
+        }
+        .struct-page-jump a:hover {
+            background: #283147;
+            color: #ffffff;
+        }
+        .struct-stats {
+            font-size: 12px;
+            padding-right: 8px;
+        }
+        .struct-latest {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 10px;
+            min-width: 0;
+        }
+        .struct-latest-meta {
+            text-align: right;
+            min-width: 0;
+            flex: 1;
+            line-height: 1.35;
+        }
+        .struct-latest-date {
+            display: block;
+            color: #eceff4;
+            font-size: 12px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-decoration: none;
+        }
+        .struct-latest-date:hover {
+            color: #55a6f8;
+            text-decoration: underline;
+        }
+        .struct-latest-user {
+            display: block;
+            font-size: 11.5px;
+            color: #8c98b3;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .delete-thread-btn {
+            background: #2b1d24;
+            color: #f87171;
+            border: 1px solid #5c2833;
+            padding: 2px 6px;
+            border-radius: 2px;
+            cursor: pointer;
+            font-size: 11px;
+            font-family: inherit;
+        }
+        .delete-thread-btn:hover {
+            background: #991b1b;
+            color: #ffffff;
+        }
+        @media (max-width: 760px) {
+            .struct-item {
+                grid-template-columns: 38px minmax(0, 1fr);
+            }
+            .struct-stats, .struct-latest {
+                grid-column: 2;
+                justify-content: flex-start;
+                text-align: left;
+            }
+            .struct-latest-meta {
+                text-align: left;
+            }
+        }
     </style>
 </head>
 <body>
     <header>
-        <img src="https://i.imgur.com/oJCfWc8.png" alt="Logo" class="logo" onclick="window.location.href='/'">
-        <h1>20Thousand Forums</h1>
+        <div class="header-inner">
+            <img src="https://i.imgur.com/oJCfWc8.png" class="logo" alt="Logo" onclick="window.location.href='/'">
+            <h1 onclick="window.location.href='/'">20Thousand Forums</h1>
+        </div>
     </header>
 
     <nav>
         <a href="/">Home</a>
         <a href="/forums" class="active">Boards</a>
+        <a href="/members.html">Members</a>
+        <a href="/watched.html">Watched</a>
+        <a href="/bookmarks.html">Bookmarks</a>
         <a href="/search.html">Search</a>
-        <a href="/alerts.html">Alerts <span id="alert-badge" style="display:none; background:#d93838; color:white; border-radius:3px; padding:1px 6px; font-size:11px; margin-left:4px;">0</span></a>
+        <a href="/inbox.html">Inbox <span id="inbox-badge" class="nav-badge" style="display:none;">0</span></a>
+        <a href="/alerts.html">Alerts <span id="alert-badge" class="nav-badge" style="display:none;">0</span></a>
         <span id="user-nav"></span>
         <form action="/search.html" method="get" class="nav-search">
-            <input name="q" placeholder="Search users or d1scs...">
+            <input name="q" placeholder="Search...">
             <button type="submit">Search</button>
         </form>
     </nav>
-
-    <div id="global-banner" style="display:none; background:#fffd01; color:#162437; padding:10px 16px; text-align:center; font-weight:bold;"></div>
 
     <div class="container">
         <div class="breadcrumbs">
@@ -167,117 +275,276 @@
             <span class="bc-current" id="bcBoardName">Board</span>
         </div>
 
-        <div class="board-header-bar">
-            <h2 id="boardTitle">Loading...</h2>
-            <div id="createArea"></div>
-        </div>
-
-        <div id="prefixFilterBar" class="prefix-filter-bar"></div>
-        <div id="threadsList" class="threads-block"><div style="padding:14px 16px;">Loading discussions...</div></div>
-    </div>
-
-    <div id="createModal" class="modal">
-        <div class="modal-content">
-            <h3 style="margin-top:0;color:#fffd01;">Create d1sc</h3>
-            <select id="threadPrefix" class="prefix-select">
-                <option value="">(No prefix)</option>
-                <option value="News">News</option>
-                <option value="Serious">Serious</option>
-                <option value="Discussion">Discussion</option>
-                <option value="Question">Question</option>
-                <option value="Vent">Vent</option>
-                <option value="Media">Media</option>
-                <option value="Art">Art</option>
-                <option value="Tech">Tech</option>
-                <option value="Brainrot">Brainrot</option>
-                <option value="NSFW">NSFW</option>
-                <option value="Story">Story</option>
-                <option value="Help">Help</option>
-                <option value="Announcement">Announcement</option>
-            </select>
-            <input type="text" id="threadTitle" placeholder="Title" maxlength="120">
-            <div class="bb-toolbar">
-                <button type="button" class="bb-btn" onclick="insertTag('threadContent','[b]','[/b]')"><b>B</b></button>
-                <button type="button" class="bb-btn" onclick="insertTag('threadContent','[i]','[/i]')"><i>I</i></button>
-                <button type="button" class="bb-btn" onclick="insertTag('threadContent','[u]','[/u]')"><u>U</u></button>
-                <button type="button" class="bb-btn" onclick="insertTag('threadContent','[s]','[/s]')"><s>S</s></button>
-                <button type="button" class="bb-btn" onclick="insertTag('threadContent','[code]','[/code]')">Code</button>
-                <button type="button" class="bb-btn" onclick="insertTag('threadContent','[spoiler=Spoiler]','[/spoiler]')">Spoiler</button>
+        <div class="p-body-header">
+            <div>
+                <h2 class="p-title-value" id="board-title">Loading...</h2>
+                <p class="p-description" id="board-desc"></p>
             </div>
-            <textarea id="threadContent" placeholder="Write your post..."></textarea>
-            <div style="margin-bottom:8px;">
-                <label for="threadFiles" class="attach-btn">
-                    <svg class="svg-icon" viewBox="0 0 24 24"><path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/></svg>
-                    <span>Attach image / video</span>
-                </label>
-                <input type="file" id="threadFiles" multiple accept="image/*,video/*" style="display:none;">
-            </div>
-            <div class="media-preview-list" id="modalMediaPreviewList"></div>
-            <div class="upload-status" id="uploadStatus"></div>
-            <div style="display:flex;gap:8px;justify-content:flex-end;">
-                <button class="button" onclick="createThread()">Create d1sc</button>
-                <button class="button" style="background:#2b4570;border-color:#2b4570;" onclick="closeCreateModal()">Cancel</button>
+            <div id="postThreadBtnWrap">
+                <button type="button" class="button" id="toggleComposerBtn" onclick="toggleComposer()">Post Thread</button>
             </div>
         </div>
+
+        <div class="composer-block" id="newThreadBox">
+            <div class="xf-block-header">
+                <span>Post a New d1sc</span>
+                <button type="button" class="button-secondary" onclick="toggleComposer()">Close</button>
+            </div>
+            <div class="xf-block-body">
+                <form id="newThreadForm">
+                    <div class="composer-row">
+                        <select id="threadPrefix">
+                            <option value="">(No prefix)</option>
+                            <option value="Discussion">Discussion</option>
+                            <option value="Question">Question</option>
+                            <option value="Serious">Serious</option>
+                            <option value="News">News</option>
+                            <option value="Vent">Vent</option>
+                            <option value="Media">Media</option>
+                            <option value="Art">Art</option>
+                            <option value="Tech">Tech</option>
+                            <option value="Brainrot">Brainrot</option>
+                            <option value="Story">Story</option>
+                            <option value="Help">Help</option>
+                            <option value="NSFW">NSFW</option>
+                        </select>
+                        <input type="text" id="threadTitle" placeholder="Thread title..." required>
+                    </div>
+                    <div class="bb-toolbar">
+                        <button type="button" class="bb-btn" onclick="insertTag('threadContent','[b]','[/b]')"><b>B</b></button>
+                        <button type="button" class="bb-btn" onclick="insertTag('threadContent','[i]','[/i]')"><i>I</i></button>
+                        <button type="button" class="bb-btn" onclick="insertTag('threadContent','[u]','[/u]')"><u>U</u></button>
+                        <button type="button" class="bb-btn" onclick="insertTag('threadContent','[s]','[/s]')"><s>S</s></button>
+                        <button type="button" class="bb-btn" onclick="insertTag('threadContent','[code]','[/code]')">Code</button>
+                        <button type="button" class="bb-btn" onclick="insertTag('threadContent','[quote]','[/quote]')">Quote</button>
+                        <button type="button" class="bb-btn" onclick="insertTag('threadContent','[spoiler=Spoiler]','[/spoiler]')">Spoiler</button>
+                    </div>
+                    <textarea id="threadContent" placeholder="Write your post... (paste image/video/YouTube links or upload below)" required></textarea>
+                    <div class="media-preview-list" id="threadMediaPreviewList"></div>
+                    <div id="uploadStatus" style="font-size:12px;color:#8c98b3;margin-top:4px;"></div>
+
+                    <div style="margin-top:10px;border-top:1px solid #293247;padding-top:10px;">
+                        <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:12.5px;color:#d6deeb;font-weight:600;">
+                            <input type="checkbox" id="enablePollToggle" onchange="togglePollBuilder()">
+                            <span>Create a Poll with this thread</span>
+                        </label>
+                        <div id="pollBuilderBox" style="display:none;background:#181f30;border:1px solid #2d364d;border-radius:2px;padding:10px 12px;margin-top:8px;">
+                            <label style="display:block;font-size:12px;color:#8c98b3;margin-bottom:4px;">Poll Question</label>
+                            <input type="text" id="pollQuestion" placeholder="Ask a question..." style="width:100%;margin-bottom:8px;">
+                            <label style="display:block;font-size:12px;color:#8c98b3;margin-bottom:4px;">Poll Choices (2 to 6)</label>
+                            <div id="pollChoicesList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;">
+                                <input type="text" class="poll-choice-input" placeholder="Choice 1">
+                                <input type="text" class="poll-choice-input" placeholder="Choice 2">
+                            </div>
+                            <button type="button" class="button-secondary" id="addPollChoiceBtn" style="padding:3px 9px;font-size:11.5px;margin-bottom:10px;" onclick="addPollChoiceInput()">+ Add Choice</button>
+                            <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center;font-size:12px;color:#d6deeb;">
+                                <label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer;">
+                                    <input type="checkbox" id="pollMultipleChoice">
+                                    <span>Allow multiple selections</span>
+                                </label>
+                                <label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer;">
+                                    <input type="checkbox" id="pollAllowChange" checked>
+                                    <span>Allow voters to change their votes</span>
+                                </label>
+                                <label style="display:inline-flex;align-items:center;gap:6px;">
+                                    <span style="color:#8c98b3;">Poll closes (optional):</span>
+                                    <input type="date" id="pollClosesAt" style="padding:3px 7px;font-size:12px;">
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="composer-footer">
+                        <div>
+                            <label for="mediaFile" class="attach-btn">
+                                <svg class="svg-icon" viewBox="0 0 16 16"><path d="M4.5 3a2.5 2.5 0 0 1 5 0v9a1.5 1.5 0 0 1-3 0V5a.5.5 0 0 1 1 0v7a.5.5 0 0 0 1 0V3a1.5 1.5 0 1 0-3 0v9a2.5 2.5 0 0 0 5 0V5a.5.5 0 0 1 1 0v7a3.5 3.5 0 1 1-7 0V3z"/></svg>
+                                Attach files
+                            </label>
+                            <input type="file" id="mediaFile" multiple accept="image/*,video/*" style="display:none;">
+                        </div>
+                        <button type="submit" class="button">Post d1sc</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="block-outer">
+            <div id="paginationTop" class="page-buttons"></div>
+        </div>
+
+        <div class="struct-container">
+            <div class="block-filter-bar">
+                <span id="threadCountLabel">Showing threads</span>
+                <div class="filter-controls">
+                    <label for="prefixFilter">Prefix:</label>
+                    <select id="prefixFilter" onchange="applyFilterAndRender()">
+                        <option value="">All</option>
+                        <option value="Discussion">Discussion</option>
+                        <option value="Question">Question</option>
+                        <option value="Serious">Serious</option>
+                        <option value="News">News</option>
+                        <option value="Vent">Vent</option>
+                        <option value="Media">Media</option>
+                        <option value="Art">Art</option>
+                        <option value="Tech">Tech</option>
+                        <option value="Brainrot">Brainrot</option>
+                        <option value="Story">Story</option>
+                        <option value="Help">Help</option>
+                        <option value="NSFW">NSFW</option>
+                    </select>
+                    <label for="sortFilter">Sort:</label>
+                    <select id="sortFilter" onchange="applyFilterAndRender()">
+                        <option value="latest">Last message</option>
+                        <option value="created">Creation date</option>
+                        <option value="replies">Replies</option>
+                        <option value="views">Views</option>
+                    </select>
+                </div>
+            </div>
+            <div id="threadsList">
+                <div style="padding:18px;color:#8c98b3;">Loading threads...</div>
+            </div>
+        </div>
+
+        <div class="block-outer" style="margin-top:10px;">
+            <div id="paginationBottom" class="page-buttons"></div>
+        </div>
+
+        <div class="viewers-block" id="forumViewersBlock">
+            <div class="viewers-block-header">
+                <span>Users Viewing This Forum</span>
+                <span id="forumViewersCount" style="font-size:11.5px;color:#8c98b3;font-weight:400;"></span>
+            </div>
+            <div class="viewers-block-body" id="forumViewersList">Loading active viewers...</div>
+        </div>
     </div>
 
-    <div id="mentionDropdown" class="mention-dropdown"></div>
-
-    <div id="deleteModal" class="modal">
+    <div id="deleteThreadModal" class="modal">
         <div class="modal-content" style="text-align:center;">
-            <h3>Delete d1sc?</h3>
-            <p>This cannot be undone.</p>
-            <button class="button" style="background:#d93838;border-color:#d93838;" onclick="confirmDelete()">Yes, Delete</button>
-            <button class="button" style="background:#2b4570;border-color:#2b4570;" onclick="closeDeleteModal()">Cancel</button>
+            <h3>Delete this d1sc?</h3>
+            <p style="color:#8c98b3;">This will permanently delete the thread and all its replies.</p>
+            <button class="button" style="background:#dc2626;border-color:#dc2626;" onclick="confirmDeleteThread()">Yes, Delete</button>
+            <button class="button-secondary" onclick="closeDeleteThreadModal()">Cancel</button>
         </div>
     </div>
 
-    <div id="reportModal" class="modal">
-        <div class="modal-content">
-            <h3>Report d1sc</h3>
-            <textarea id="reportReason" placeholder="Reason"></textarea>
-            <button class="button" onclick="submitReport()">Submit Report</button>
-            <button class="button" style="background:#2b4570;border-color:#2b4570;" onclick="closeReportModal()">Cancel</button>
+    <footer class="site-footer">
+        <div class="site-footer-inner">
+            <span>20Thousand Forums</span>
+            <div>
+                <a href="/">Home</a>
+                <a href="/forums">Boards</a>
+                <a href="/tos">Terms &amp; Rules</a>
+            </div>
         </div>
-    </div>
+    </footer>
 
     <script>
-        const params = new URLSearchParams(window.location.search);
-        const forumId = params.get('id') || '';
-        const forumName = params.get('name') || forumId;
+        const urlParams = new URLSearchParams(window.location.search);
+        const forumId = urlParams.get('id') || 'b';
         const username = localStorage.getItem('username');
-        let pendingDeleteId = null;
-        let pendingReportId = null;
+        let pendingDeleteThreadId = null;
         let uploadedUrls = [];
-        let allBoardThreads = [];
-        let activePrefixFilter = '';
-        let mentionState = { active: false, start: -1, query: '', index: 0, list: [], boxId: 'threadContent' };
+        let allThreads = [];
+        let ignoredUsersSet = new Set();
+        let revealedIgnoredThreads = new Set();
+        let currentPage = 1;
+        const THREADS_PER_PAGE = 25;
+
+        const SVG_PIN = '<svg class="svg-icon" title="Pinned" viewBox="0 0 16 16"><path d="M4.146.146A.5.5 0 0 1 4.5 0h7a.5.5 0 0 1 .5.5c0 .68-.342 1.174-.646 1.479-.126.125-.25.224-.354.298v4.431l.078.048c.203.127.476.314.751.555C12.36 7.775 13 8.527 13 9.5a.5.5 0 0 1-.5.5h-4v4.5c0 .276-.224 1.5-.5 1.5s-.5-1.224-.5-1.5V10h-4a.5.5 0 0 1-.5-.5c0-.973.64-1.725 1.17-2.189A5.921 5.921 0 0 1 5 6.708V2.277a2.77 2.77 0 0 1-.354-.298C4.342 1.674 4 1.179 4 .5a.5.5 0 0 1 .146-.354z"/></svg>';
+        const SVG_LOCK = '<svg class="svg-icon" title="Locked" viewBox="0 0 16 16"><path d="M8 1a4 4 0 0 0-4 4v2H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-1V5a4 4 0 0 0-4-4zm-2 4a2 2 0 1 1 4 0v2H6V5z"/></svg>';
+        const SVG_POLL = '<svg class="svg-icon" title="Poll" viewBox="0 0 16 16"><path d="M4 11H2v3h2v-3zm5-4H7v7h2V7zm5-5v12h-2V2h2zm-2-1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1h-2zM6 7a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm-5 4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3z"/></svg>';
+
+        const BOARDS = {
+            "news": { title: "News & Announcements", desc: "Official updates, patch notes, and announcements from 20k & staff." },
+            "rules": { title: "Rules & Site Info", desc: "Read the rules before posting. Feedback, bug reports & site suggestions." },
+            "b": { title: "General / Random", desc: "Anything goes (within site rules). Casual chat, random thoughts, daily threads." },
+            "serious": { title: "Serious Discussion", desc: "Debates, hot takes, philosophy, politics, and real talk." },
+            "vent": { title: "Venting / Off My Chest", desc: "Rants, personal struggles, confessions, and getting things off your chest." },
+            "int": { title: "International", desc: "Languages, cultures, countries, and global discussion." },
+            "brainrot": { title: "Brainrot / Memes", desc: "Shitposts, memes, tier lists, copypastas, and pure chaos." },
+            "art": { title: "Art & OCs", desc: "Drawings, original characters, edits, design, and creative showcases." },
+            "media": { title: "Music, Vidya & Media", desc: "Video games, anime, movies, shows, music, and YouTube." },
+            "tech": { title: "Tech & Coding", desc: "PC builds, programming, web dev, Linux, phones, and AI." },
+            "nsfw": { title: "18+ / NSFW", desc: "Mature topics and edgy content. Strictly no illegal content." },
+            "stories": { title: "Greentexts & Stories", desc: "Storytimes, greentexts, lore, and creative writing." },
+            "qna": { title: "Questions & Advice", desc: "Ask the community anything, get help, or share advice." }
+        };
 
         const PREFIX_COLORS = {
-            "News": "#2ecc71", "Serious": "#3498db", "Discussion": "#9b59b6",
-            "Question": "#1abc9c", "Vent": "#8e44ad", "Media": "#e67e22",
-            "Art": "#e91e63", "Tech": "#00bcd4", "Brainrot": "#ff5722",
-            "NSFW": "#e74c3c", "Story": "#16a085", "Help": "#f39c12",
-            "Announcement": "#fffd01"
+            "News": "#16a34a", "Serious": "#2563eb", "Discussion": "#7c3aed",
+            "Question": "#0d9488", "Vent": "#6d28d9", "Media": "#d97706",
+            "Art": "#db2777", "Tech": "#0284c7", "Brainrot": "#ea580c",
+            "NSFW": "#dc2626", "Story": "#059669", "Help": "#ca8a04",
+            "Announcement": "#e11d48"
         };
 
         function escapeHtml(s) {
-            return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+            return String(s || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
         }
 
-        const boardLabel = forumName && forumName !== forumId ? 's1k/' + forumId + '/ · ' + forumName : 's1k/' + forumId + '/';
-        document.getElementById('boardTitle').textContent = boardLabel;
-        document.getElementById('bcBoardName').textContent = 's1k/' + forumId + '/';
+        function roleClass(title) {
+            const t = String(title || 'member').toLowerCase();
+            if (t === 'owner') return 'role-owner';
+            if (t === 'moderator' || t === 'mod') return 'role-moderator';
+            if (t === 'janitor') return 'role-janitor';
+            if (t === 'trusted') return 'role-trusted';
+            return 'role-member';
+        }
+
         document.getElementById('user-nav').innerHTML = username
-            ? '<span class="nav-user-bar"><a href="/profile.html?user=' + encodeURIComponent(username) + '"><strong>' + escapeHtml(username) + '</strong></a>' + (username === '20k' ? ' · <a href="/admin.html">Admin</a>' : '') + ' · <a href="#" onclick="showLogoutModal();return false;">Logout</a></span>'
-            : '<a href="/register">Register</a> <a href="/login">Login</a>';
+            ? `<span class="nav-user-bar">Signed in as <a href="/profile.html?user=${encodeURIComponent(username)}"><strong>${escapeHtml(username)}</strong></a>${username === '20k' ? ' · <a href="/admin.html">Admin</a>' : ''} · <a href="#" onclick="showLogoutModal();return false;">Logout</a></span>`
+            : `<a href="/login">Login</a> <a href="/register">Register</a>`;
 
-        function prefixBadge(prefix) {
-            if (!prefix) return '';
-            const color = PREFIX_COLORS[prefix] || '#0165fc';
-            const textColor = prefix === 'Announcement' ? '#162437' : '#fff';
-            return '<span class="prefix-badge" style="background:' + color + ';color:' + textColor + '">' + escapeHtml(prefix) + '</span>';
+        function showLogoutModal() {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.display = 'flex';
+            modal.innerHTML = `<div class="modal-content" style="text-align:center;"><h3>Logout?</h3><p>Are you sure you want to logout?</p><button class="button" style="background:#dc2626;border-color:#dc2626;" onclick="localStorage.removeItem('username');location.href='/'">Yes, Logout</button> <button class="button-secondary" onclick="this.parentElement.parentElement.remove()">Cancel</button></div>`;
+            document.body.appendChild(modal);
         }
+
+        const boardInfo = BOARDS[forumId] || { title: `s1k/${forumId}/`, desc: "" };
+        document.getElementById('board-title').textContent = boardInfo.title;
+        document.getElementById('board-desc').textContent = boardInfo.desc;
+        document.getElementById('bcBoardName').textContent = boardInfo.title;
+        document.title = `${boardInfo.title} - 20Thousand Forums`;
+
+        function toggleComposer() {
+            const box = document.getElementById('newThreadBox');
+            if (!box) return;
+            if (!username) {
+                showNotification("Login required to post a thread", "#dc2626");
+                return;
+            }
+            box.classList.toggle('open');
+            if (box.classList.contains('open')) {
+                document.getElementById('threadTitle').focus();
+            }
+        }
+
+        async function checkNewsPermission() {
+            if (forumId !== "news") return;
+            const wrap = document.getElementById('postThreadBtnWrap');
+            if (!username) {
+                wrap.innerHTML = `<span style="color:#8c98b3;font-size:12.5px;">Staff only board</span>`;
+                return;
+            }
+            try {
+                const res = await fetch(`/api/profile/${encodeURIComponent(username)}`);
+                const data = await res.json();
+                const title = ((data && data.title) || "").toLowerCase();
+                const allowed = username === "20k" || title === "owner" || title === "moderator" || title === "mod" || title === "janitor";
+                if (!allowed) {
+                    wrap.innerHTML = `<span style="color:#8c98b3;font-size:12.5px;">Only Staff can post in News &amp; Announcements</span>`;
+                }
+            } catch (e) {}
+        }
+        checkNewsPermission();
 
         function showNotification(text, color) {
             const notif = document.createElement('div');
@@ -285,222 +552,7 @@
             notif.style.background = color;
             notif.textContent = text;
             document.body.appendChild(notif);
-            setTimeout(function () { notif.remove(); }, 2500);
-        }
-
-        function showLogoutModal() {
-            const modal = document.createElement('div');
-            modal.className = 'modal';
-            modal.style.display = 'flex';
-            modal.innerHTML = '<div class="modal-content" style="text-align:center;"><h3>Logout?</h3><p>Are you sure?</p><button class="button" style="background:#d93838;border-color:#d93838;" onclick="localStorage.removeItem(\'username\');location.href=\'/\'">Yes, Logout</button> <button class="button" style="background:#2b4570;border-color:#2b4570;" onclick="this.parentElement.parentElement.remove()">Cancel</button></div>';
-            document.body.appendChild(modal);
-        }
-
-        // Mentions
-        function hideMentionDropdown() {
-            mentionState.active = false;
-            document.getElementById('mentionDropdown').style.display = 'none';
-        }
-
-        async function updateMentionDropdown(textarea) {
-            const val = textarea.value;
-            const pos = textarea.selectionStart;
-            const before = val.slice(0, pos);
-            const match = before.match(/@([a-zA-Z0-9_]*)$/);
-            if (!match) { hideMentionDropdown(); return; }
-            mentionState.active = true;
-            mentionState.start = pos - match[0].length;
-            mentionState.query = match[1];
-            mentionState.boxId = textarea.id;
-            try {
-                const res = await fetch('/api/users/suggest?q=' + encodeURIComponent(mentionState.query));
-                mentionState.list = await res.json() || [];
-                mentionState.index = 0;
-            } catch (e) { mentionState.list = []; }
-            const dd = document.getElementById('mentionDropdown');
-            if (!mentionState.list.length) { dd.style.display = 'none'; return; }
-            dd.innerHTML = mentionState.list.map(function (u, i) {
-                return '<div class="mention-item ' + (i === 0 ? 'active' : '') + '" onmousedown="event.preventDefault();pickMention(' + i + ')">' +
-                    '<img src="' + escapeHtml(u.pfp) + '" alt=""><div><div class="mi-name">@' + escapeHtml(u.username) + '</div>' +
-                    '<div class="mi-title">' + escapeHtml(u.title || 'Member') + '</div></div></div>';
-            }).join('');
-            const rect = textarea.getBoundingClientRect();
-            dd.style.left = rect.left + 'px';
-            dd.style.top = (rect.bottom + 4) + 'px';
-            dd.style.width = Math.min(rect.width, 280) + 'px';
-            dd.style.display = 'block';
-        }
-
-        function pickMention(i) {
-            const u = mentionState.list[i];
-            if (!u) return;
-            const box = document.getElementById(mentionState.boxId);
-            const val = box.value;
-            const pos = box.selectionStart;
-            const before = val.slice(0, mentionState.start);
-            const after = val.slice(pos);
-            const insert = '@' + u.username + ' ';
-            box.value = before + insert + after;
-            const newPos = before.length + insert.length;
-            box.focus();
-            box.setSelectionRange(newPos, newPos);
-            hideMentionDropdown();
-        }
-
-        function bindMentionBox(id) {
-            const box = document.getElementById(id);
-            if (!box) return;
-            box.addEventListener('input', function () { updateMentionDropdown(this); });
-            box.addEventListener('blur', function () { setTimeout(hideMentionDropdown, 150); });
-            box.addEventListener('keydown', function (e) {
-                if (!mentionState.active || !mentionState.list.length) return;
-                if (e.key === 'ArrowDown') {
-                    e.preventDefault();
-                    mentionState.index = (mentionState.index + 1) % mentionState.list.length;
-                    document.querySelectorAll('.mention-item').forEach(function (el, i) {
-                        el.classList.toggle('active', i === mentionState.index);
-                    });
-                } else if (e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    mentionState.index = (mentionState.index - 1 + mentionState.list.length) % mentionState.list.length;
-                    document.querySelectorAll('.mention-item').forEach(function (el, i) {
-                        el.classList.toggle('active', i === mentionState.index);
-                    });
-                } else if (e.key === 'Enter' || e.key === 'Tab') {
-                    e.preventDefault();
-                    pickMention(mentionState.index);
-                } else if (e.key === 'Escape') hideMentionDropdown();
-            });
-        }
-        bindMentionBox('threadContent');
-
-        async function canPostHere() {
-            if (forumId !== 'news') return true;
-            if (!username) return false;
-            if (username === '20k') return true;
-            try {
-                const r = await fetch('/api/profile/' + encodeURIComponent(username));
-                const d = await r.json();
-                const t = (d.title || '').toLowerCase();
-                return t === 'owner' || t === 'moderator' || t === 'mod' || t === 'janitor';
-            } catch (e) { return false; }
-        }
-
-        async function setupCreateArea() {
-            const area = document.getElementById('createArea');
-            if (!username) {
-                area.innerHTML = '<a href="/login" class="button" style="text-decoration:none;">Login to post</a>';
-                return;
-            }
-            const allowed = await canPostHere();
-            if (!allowed) {
-                area.innerHTML = '<span style="color:#fffd01;font-size:0.9em;font-weight:bold;">Staff only board</span>';
-                return;
-            }
-            area.innerHTML = '<button class="button" onclick="openCreateModal()">+ Create d1sc</button>';
-        }
-
-        function renderModalPreviews() {
-            const container = document.getElementById('modalMediaPreviewList');
-            if (!container) return;
-            if (!uploadedUrls.length) {
-                container.innerHTML = '';
-                return;
-            }
-            container.innerHTML = uploadedUrls.map(function (url, idx) {
-                const isVid = /\.(mp4|webm|mov)(\?|$)/i.test(url) || /\/video\//i.test(url);
-                const mediaEl = isVid
-                    ? '<video src="' + escapeHtml(url) + '" muted></video>'
-                    : '<img src="' + escapeHtml(url) + '" alt="">';
-                return '<div class="media-preview-item">' +
-                    mediaEl +
-                    '<button type="button" class="media-preview-remove" onclick="removeModalAttachment(' + idx + ')" title="Remove">X</button>' +
-                '</div>';
-            }).join('');
-        }
-
-        function removeModalAttachment(idx) {
-            const removed = uploadedUrls.splice(idx, 1)[0];
-            if (removed) {
-                const box = document.getElementById('threadContent');
-                box.value = box.value.replace(removed, '').replace(/\n{3,}/g, '\n\n').trim();
-            }
-            renderModalPreviews();
-            document.getElementById('uploadStatus').textContent = uploadedUrls.length
-                ? uploadedUrls.length + ' attachment(s) ready'
-                : '';
-        }
-
-        function openCreateModal() {
-            uploadedUrls = [];
-            renderModalPreviews();
-            document.getElementById('threadPrefix').value = '';
-            document.getElementById('threadTitle').value = '';
-            document.getElementById('threadContent').value = '';
-            document.getElementById('threadFiles').value = '';
-            document.getElementById('uploadStatus').textContent = '';
-            document.getElementById('createModal').style.display = 'flex';
-        }
-        function closeCreateModal() {
-            hideMentionDropdown();
-            document.getElementById('createModal').style.display = 'none';
-        }
-
-        document.getElementById('threadFiles').addEventListener('change', async function () {
-            const files = this.files;
-            if (!files.length) return;
-            const status = document.getElementById('uploadStatus');
-            const contentBox = document.getElementById('threadContent');
-            status.textContent = 'Uploading ' + files.length + ' file(s)...';
-            for (let i = 0; i < files.length; i++) {
-                const fd = new FormData();
-                fd.append('file', files[i]);
-                try {
-                    const r = await fetch('/api/upload', { method: 'POST', body: fd });
-                    const d = await r.json();
-                    if (d.success && d.url) {
-                        uploadedUrls.push(d.url);
-                        contentBox.value = (contentBox.value ? contentBox.value + '\n\n' : '') + d.url;
-                    }
-                } catch (e) {}
-            }
-            renderModalPreviews();
-            status.textContent = uploadedUrls.length
-                ? uploadedUrls.length + ' attachment(s) ready'
-                : 'Upload failed (check Cloudinary keys / terminal)';
-        });
-
-        async function createThread() {
-            const title = document.getElementById('threadTitle').value.trim();
-            const content = document.getElementById('threadContent').value.trim();
-            const prefix = document.getElementById('threadPrefix').value;
-            if (!title) return showNotification('Enter a title', '#d93838');
-            if (!username) return showNotification('Login required', '#d93838');
-            try {
-                const res = await fetch('/api/threads', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        title: title, content: content, forum_id: forumId,
-                        username: username, fileUrls: uploadedUrls, prefix: prefix
-                    })
-                });
-                const data = await res.json();
-                showNotification(data.message || (data.success ? 'Created!' : 'Failed'), data.success ? '#00cc66' : '#d93838');
-                if (data.success) { closeCreateModal(); loadThreads(); }
-            } catch (e) { showNotification('Server error', '#d93838'); }
-        }
-
-        function timeAgo(date) {
-            if (!date) return '';
-            const s = Math.floor((Date.now() - new Date(date)) / 1000);
-            if (s < 60) return 'just now';
-            const m = Math.floor(s / 60);
-            if (m < 60) return m + 'm ago';
-            const h = Math.floor(m / 60);
-            if (h < 24) return h + 'h ago';
-            const d = Math.floor(h / 24);
-            return d + 'd ago';
+            setTimeout(() => notif.remove(), 2800);
         }
 
         function insertTag(boxId, openTag, closeTag) {
@@ -516,209 +568,468 @@
             box.setSelectionRange(cursor, cursor);
         }
 
-        function renderPrefixFilterBar() {
-            const bar = document.getElementById('prefixFilterBar');
-            if (!bar) return;
-            const prefixes = [];
-            allBoardThreads.forEach(function (t) {
-                if (t.prefix && prefixes.indexOf(t.prefix) === -1) prefixes.push(t.prefix);
-            });
-            if (!prefixes.length) {
-                bar.style.display = 'none';
+        function renderThreadMediaPreviews() {
+            const container = document.getElementById('threadMediaPreviewList');
+            if (!container) return;
+            if (!uploadedUrls.length) {
+                container.innerHTML = '';
                 return;
             }
-            let html = '<span style="font-size:0.82em;color:#c5d4eb;margin-right:4px;">Prefix:</span>';
-            html += '<button type="button" class="filter-pill ' + (!activePrefixFilter ? 'active' : '') + '" onclick="setPrefixFilter(\'\')">All (' + allBoardThreads.length + ')</button>';
-            prefixes.forEach(function (pf) {
-                const jsPf = String(pf).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-                html += '<button type="button" class="filter-pill ' + (activePrefixFilter === pf ? 'active' : '') + '" onclick="setPrefixFilter(\'' + jsPf + '\')">' + escapeHtml(pf) + '</button>';
-            });
-            bar.innerHTML = html;
-            bar.style.display = 'flex';
+            container.innerHTML = uploadedUrls.map((url, idx) => {
+                const isVid = /\.(mp4|webm|mov)(\?|$)/i.test(url) || /\/video\//i.test(url);
+                const mediaEl = isVid
+                    ? `<video src="${escapeHtml(url)}" muted></video>`
+                    : `<img src="${escapeHtml(url)}" alt="">`;
+                return `<div class="media-preview-item">${mediaEl}<button type="button" class="media-preview-remove" onclick="removeThreadAttachment(${idx})" title="Remove">x</button></div>`;
+            }).join('');
         }
 
-        function setPrefixFilter(pf) {
-            activePrefixFilter = pf;
-            renderPrefixFilterBar();
-            renderThreadRows();
+        function removeThreadAttachment(idx) {
+            const removed = uploadedUrls.splice(idx, 1)[0];
+            if (removed) {
+                const box = document.getElementById('threadContent');
+                box.value = box.value.replace(removed, '').replace(/\n{3,}/g, '\n\n').trim();
+            }
+            renderThreadMediaPreviews();
+            document.getElementById('uploadStatus').textContent = uploadedUrls.length
+                ? `${uploadedUrls.length} attachment(s) ready`
+                : '';
         }
 
-        function renderThreadRows() {
-            const filtered = activePrefixFilter
-                ? allBoardThreads.filter(function (t) { return t.prefix === activePrefixFilter; })
-                : allBoardThreads;
-            if (!filtered.length) {
-                document.getElementById('threadsList').innerHTML = '<div style="padding:14px 16px;color:#c5d4eb;">No discussions match this filter.</div>';
+        document.getElementById('mediaFile').addEventListener('change', async function () {
+            const files = this.files;
+            if (!files.length) return;
+            const status = document.getElementById('uploadStatus');
+            const box = document.getElementById('threadContent');
+            status.textContent = `Uploading ${files.length} file(s)...`;
+            for (const f of files) {
+                const fd = new FormData();
+                fd.append('file', f);
+                try {
+                    const r = await fetch('/api/upload', { method: 'POST', body: fd });
+                    const d = await r.json();
+                    if (d.success && d.url) {
+                        uploadedUrls.push(d.url);
+                        box.value = (box.value ? box.value + "\n\n" : "") + d.url;
+                    }
+                } catch (e) {}
+            }
+            renderThreadMediaPreviews();
+            status.textContent = uploadedUrls.length
+                ? `${uploadedUrls.length} attachment(s) ready`
+                : "Upload failed";
+        });
+
+        function timeAgo(date) {
+            if (!date) return "";
+            const s = Math.floor((Date.now() - new Date(date)) / 1000);
+            if (s < 60) return "A moment ago";
+            const m = Math.floor(s / 60);
+            if (m < 60) return m + "m ago";
+            const h = Math.floor(m / 60);
+            if (h < 24) return h + "h ago";
+            const d = Math.floor(h / 24);
+            if (d < 7) return d + "d ago";
+            return new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+
+        function formatCreatedDate(date) {
+            if (!date) return "";
+            try {
+                return new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            } catch (e) {
+                return "";
+            }
+        }
+
+        function prefixBadge(prefix) {
+            if (!prefix) return "";
+            const color = PREFIX_COLORS[prefix] || "#2563eb";
+            return `<span class="prefix-badge" style="background:${color};">${escapeHtml(prefix)}</span>`;
+        }
+
+        function togglePollBuilder() {
+            const checked = document.getElementById('enablePollToggle').checked;
+            document.getElementById('pollBuilderBox').style.display = checked ? 'block' : 'none';
+        }
+
+        function addPollChoiceInput() {
+            const list = document.getElementById('pollChoicesList');
+            const inputs = list.querySelectorAll('.poll-choice-input');
+            if (inputs.length >= 6) {
+                showNotification('Maximum 6 poll choices allowed', '#dc2626');
+                return;
+            }
+            const inp = document.createElement('input');
+            inp.type = 'text';
+            inp.className = 'poll-choice-input';
+            inp.placeholder = 'Choice ' + (inputs.length + 1);
+            list.appendChild(inp);
+            if (inputs.length + 1 >= 6) {
+                document.getElementById('addPollChoiceBtn').style.display = 'none';
+            }
+        }
+
+        function revealIgnoredThread(threadId) {
+            revealedIgnoredThreads.add(String(threadId));
+            applyFilterAndRender();
+        }
+
+        function renderThreadRow(t) {
+            if (ignoredUsersSet.has(t.user_id) && !revealedIgnoredThreads.has(String(t.id))) {
+                const jsId = String(t.id || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                return `
+                    <div class="ignored-notice" style="margin:0;border-left:none;border-right:none;border-top:none;">
+                        <span>Thread started by ignored member (${escapeHtml(t.user_id)}).</span>
+                        <a href="#" onclick="revealIgnoredThread('${jsId}'); return false;">Show thread</a>
+                    </div>
+                `;
+            }
+
+            const canDelete = username && (username === "20k" || username === t.user_id);
+            const totalPosts = t.postCount || 1;
+            const replies = t.repliesCount !== undefined ? t.repliesCount : Math.max(0, totalPosts - 1);
+            const totalThreadPages = Math.ceil(totalPosts / 20);
+            let pageJumpHtml = '';
+            if (totalThreadPages > 1) {
+                const links = [];
+                for (let p = 2; p <= Math.min(totalThreadPages, 5); p++) {
+                    links.push(`<a href="/thread.html?id=${encodeURIComponent(t.id)}&title=${encodeURIComponent(t.title || '')}&page=${p}">${p}</a>`);
+                }
+                pageJumpHtml = `<span class="struct-page-jump">${links.join('')}</span>`;
+            }
+
+            const lastUser = (t.lastPost && t.lastPost.user) || t.user_id || 'Unknown';
+            const lastRole = (t.lastPost && t.lastPost.role) || t.creatorRole || 'Member';
+            const lastPfp = (t.lastPost && t.lastPost.pfp) || t.creatorPfp || 'https://i.imgur.com/oJCfWc8.png';
+            const lastAt = (t.lastPost && t.lastPost.at) || t.created_at;
+            const lastUrl = `/thread.html?id=${encodeURIComponent(t.id)}&title=${encodeURIComponent(t.title || '')}` +
+                (t.lastPost && t.lastPost.id ? `#post-${encodeURIComponent(t.lastPost.id)}` : '');
+            const viewerHtml = t.viewers > 0
+                ? ` <span class="viewer-count-inline">(${t.viewers} Viewing)</span>`
+                : '';
+
+            return `
+                <div class="struct-item">
+                    <div>
+                        <a href="/profile.html?user=${encodeURIComponent(t.user_id)}">
+                            <img class="avatar-sq" src="${escapeHtml(t.creatorPfp || 'https://i.imgur.com/oJCfWc8.png')}" alt="">
+                        </a>
+                    </div>
+                    <div class="struct-main">
+                        <div class="struct-title-row">
+                            <div class="struct-title-wrap">
+                                ${prefixBadge(t.prefix)}<a class="struct-title" href="/thread.html?id=${encodeURIComponent(t.id)}&title=${encodeURIComponent(t.title || '')}">${escapeHtml(t.title)}</a>${viewerHtml}
+                            </div>
+                            <div class="struct-statuses">
+                                ${t.hasPoll ? SVG_POLL : ''}
+                                ${t.locked ? SVG_LOCK : ''}
+                                ${t.pinned ? SVG_PIN : ''}
+                            </div>
+                        </div>
+                        <div class="struct-minor">
+                            <a class="${roleClass(t.creatorRole)}" href="/profile.html?user=${encodeURIComponent(t.user_id)}">${escapeHtml(t.user_id)}</a>
+                            <span>·</span>
+                            <span>${formatCreatedDate(t.created_at)}</span>
+                            ${pageJumpHtml}
+                        </div>
+                    </div>
+                    <div class="struct-stats">
+                        <dl class="pairs-justified"><dt>Replies:</dt><dd>${replies}</dd></dl>
+                        <dl class="pairs-justified"><dt>Views:</dt><dd>${t.views || 0}</dd></dl>
+                    </div>
+                    <div class="struct-latest">
+                        <div class="struct-latest-meta">
+                            <a class="struct-latest-date" href="${lastUrl}">${timeAgo(lastAt)}</a>
+                            <a class="struct-latest-user ${roleClass(lastRole)}" href="/profile.html?user=${encodeURIComponent(lastUser)}">${escapeHtml(lastUser)}</a>
+                        </div>
+                        <a href="/profile.html?user=${encodeURIComponent(lastUser)}">
+                            <img class="avatar-sq-sm" src="${escapeHtml(lastPfp)}" alt="">
+                        </a>
+                        ${canDelete ? `<button class="delete-thread-btn" onclick="openDeleteThreadModal('${escapeHtml(t.id)}')" title="Delete thread">Delete</button>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderPagination(totalPages) {
+            const top = document.getElementById('paginationTop');
+            const bot = document.getElementById('paginationBottom');
+            if (totalPages <= 1) {
+                top.innerHTML = '';
+                bot.innerHTML = '';
                 return;
             }
             let html = '';
-            filtered.forEach(function (t) {
-                const canManage = username === '20k' || username === t.user_id;
-                const safeTitle = String(t.title || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-                const last = t.lastPost || { user: t.user_id, at: t.created_at, id: '' };
-                const lastUrl = '/thread.html?id=' + encodeURIComponent(t.id) + '&title=' + encodeURIComponent(t.title || '') + (last.id ? '#post-' + encodeURIComponent(last.id) : '');
-                const replies = Math.max(0, (t.postCount || 1) - 1);
-                html += '<div class="thread ' + (t.pinned ? 'pinned' : '') + '" onclick="goThread(\'' + t.id + '\',\'' + safeTitle + '\')">';
-                html += '<div class="thread-main"><div class="thread-title-line">' + prefixBadge(t.prefix) + escapeHtml(t.title || 'Untitled');
-                if (t.pinned) html += '<span class="status-tag">Pinned</span>';
-                if (t.locked) html += '<span class="status-tag" style="color:#ff8080;">Locked</span>';
-                html += '</div><div class="thread-meta">Started by <a href="/profile.html?user=' + encodeURIComponent(t.user_id || '') + '" onclick="event.stopPropagation();">' + escapeHtml(t.user_id || 'Unknown') + '</a> · ' + escapeHtml(timeAgo(t.created_at)) + '</div></div>';
-                html += '<div class="thread-stats-col">' +
-                    '<div><strong>' + replies + '</strong>Replies</div>' +
-                    '<div><strong>' + (t.views || 0) + '</strong>Views</div>' +
-                '</div>';
-                html += '<div class="thread-lastpost" onclick="event.stopPropagation();">' +
-                    '<div><a href="' + lastUrl + '">Last post</a> by <a href="/profile.html?user=' + encodeURIComponent(last.user || '') + '">' + escapeHtml(last.user || 'Unknown') + '</a></div>' +
-                    '<div>' + escapeHtml(timeAgo(last.at)) + '</div>' +
-                '</div>';
-                html += '<button class="menu-btn" onclick="event.stopPropagation();showDropdown(\'' + t.id + '\',event)">⋮</button>';
-                html += '<div class="dropdown-menu" id="dropdown-' + t.id + '">';
-                if (username === '20k') html += '<button onclick="event.stopPropagation();togglePin(\'' + t.id + '\')">' + (t.pinned ? 'Unpin' : 'Pin') + '</button>';
-                if (canManage) html += '<button onclick="event.stopPropagation();openDeleteModal(\'' + t.id + '\')">Delete</button>';
-                html += '<button onclick="event.stopPropagation();openReportModal(\'' + t.id + '\')">Report</button></div></div>';
-            });
-            document.getElementById('threadsList').innerHTML = html;
-        }
-
-        async function loadThreads() {
-            try {
-                const res = await fetch('/api/forums/' + encodeURIComponent(forumId) + '/threads');
-                const threads = await res.json();
-                if (!Array.isArray(threads)) {
-                    document.getElementById('threadsList').innerHTML = '<div style="padding:14px 16px;">Failed to load discussions.</div>';
-                    return;
-                }
-                allBoardThreads = threads;
-                if (!threads.length) {
-                    document.getElementById('prefixFilterBar').style.display = 'none';
-                    document.getElementById('threadsList').innerHTML = '<div style="padding:14px 16px;color:#c5d4eb;">No discussions yet. Be the first to create a d1sc!</div>';
-                    return;
-                }
-                renderPrefixFilterBar();
-                renderThreadRows();
-            } catch (err) {
-                document.getElementById('threadsList').innerHTML = '<div style="padding:14px 16px;">Failed to load discussions.</div>';
+            if (currentPage > 1) {
+                html += `<button class="page-btn" onclick="goToPage(${currentPage - 1})">‹ Prev</button>`;
             }
+            for (let p = 1; p <= totalPages; p++) {
+                html += `<button class="page-btn ${p === currentPage ? 'active' : ''}" onclick="goToPage(${p})">${p}</button>`;
+            }
+            if (currentPage < totalPages) {
+                html += `<button class="page-btn" onclick="goToPage(${currentPage + 1})">Next ›</button>`;
+            }
+            top.innerHTML = html;
+            bot.innerHTML = html;
         }
 
-        function goThread(id, title) {
-            window.location.href = '/thread.html?id=' + encodeURIComponent(id) + '&title=' + encodeURIComponent(title || '');
+        function goToPage(p) {
+            currentPage = p;
+            applyFilterAndRender();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
-        function showDropdown(threadId, e) {
-            e.stopPropagation();
-            document.querySelectorAll('.dropdown-menu').forEach(function (m) { m.style.display = 'none'; });
-            const el = document.getElementById('dropdown-' + threadId);
-            if (el) el.style.display = 'block';
-        }
-        document.addEventListener('click', function () {
-            document.querySelectorAll('.dropdown-menu').forEach(function (m) { m.style.display = 'none'; });
-        });
 
-        async function togglePin(threadId) {
+        function applyFilterAndRender() {
+            const prefixVal = document.getElementById('prefixFilter').value;
+            const sortVal = document.getElementById('sortFilter').value;
+
+            let filtered = allThreads.slice();
+            if (prefixVal) {
+                filtered = filtered.filter(t => (t.prefix || '') === prefixVal);
+            }
+
+            const pinned = filtered.filter(t => t.pinned);
+            const normal = filtered.filter(t => !t.pinned);
+
+            function sortFn(a, b) {
+                if (sortVal === 'created') {
+                    return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+                }
+                if (sortVal === 'replies') {
+                    return (b.postCount || 0) - (a.postCount || 0);
+                }
+                if (sortVal === 'views') {
+                    return (b.views || 0) - (a.views || 0);
+                }
+                const aLast = (a.lastPost && a.lastPost.at) || a.created_at || 0;
+                const bLast = (b.lastPost && b.lastPost.at) || b.created_at || 0;
+                return new Date(bLast) - new Date(aLast);
+            }
+
+            pinned.sort(sortFn);
+            normal.sort(sortFn);
+
+            document.getElementById('threadCountLabel').textContent =
+                `Showing ${filtered.length} thread${filtered.length === 1 ? '' : 's'}`;
+
+            const totalPages = Math.max(1, Math.ceil(normal.length / THREADS_PER_PAGE));
+            if (currentPage > totalPages) currentPage = totalPages;
+            renderPagination(totalPages);
+
+            const startIdx = (currentPage - 1) * THREADS_PER_PAGE;
+            const pagedNormal = normal.slice(startIdx, startIdx + THREADS_PER_PAGE);
+
+            const list = document.getElementById('threadsList');
+            if (!pinned.length && !pagedNormal.length) {
+                list.innerHTML = `<div style="padding:18px;color:#8c98b3;">No threads found in this board.</div>`;
+                return;
+            }
+
+            let html = '';
+            if (pinned.length && currentPage === 1) {
+                html += `<div class="xf-sub-header">Sticky Threads</div>`;
+                html += pinned.map(renderThreadRow).join('');
+                if (pagedNormal.length) {
+                    html += `<div class="xf-sub-header">Normal Threads</div>`;
+                }
+            }
+            html += pagedNormal.map(renderThreadRow).join('');
+            list.innerHTML = html;
+        }
+
+        async function loadIgnoredUsers() {
+            if (!username) return;
             try {
-                const res = await fetch('/api/threads/' + threadId + '/pin', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: username })
-                });
-                const data = await res.json();
-                showNotification(data.message, data.success ? '#00cc66' : '#d93838');
-                if (data.success) loadThreads();
-            } catch (err) { showNotification('Pin failed', '#d93838'); }
-        }
-
-        function openDeleteModal(id) {
-            pendingDeleteId = id;
-            document.getElementById('deleteModal').style.display = 'flex';
-        }
-        function closeDeleteModal() {
-            pendingDeleteId = null;
-            document.getElementById('deleteModal').style.display = 'none';
-        }
-        async function confirmDelete() {
-            if (!pendingDeleteId) return;
-            const res = await fetch('/api/threads/' + pendingDeleteId, {
-                method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: username })
-            });
-            const data = await res.json();
-            showNotification(data.message, data.success ? '#00cc66' : '#d93838');
-            closeDeleteModal();
-            if (data.success) loadThreads();
-        }
-
-        function openReportModal(id) {
-            pendingReportId = id;
-            document.getElementById('reportReason').value = '';
-            document.getElementById('reportModal').style.display = 'flex';
-        }
-        function closeReportModal() {
-            pendingReportId = null;
-            document.getElementById('reportModal').style.display = 'none';
-        }
-        async function submitReport() {
-            const reason = document.getElementById('reportReason').value.trim();
-            if (!reason) return showNotification('Enter a reason', '#d93838');
-            await fetch('/api/report', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ post_id: pendingReportId, reported_by: username, reason: reason })
-            });
-            closeReportModal();
-            showNotification('Report submitted', '#00cc66');
-        }
-
-        async function checkBan() {
-            const currentUser = localStorage.getItem('username');
-            if (!currentUser) return;
-            try {
-                const res = await fetch('/api/check-ban/' + encodeURIComponent(currentUser));
-                const data = await res.json();
-                if (data.banned) {
-                    localStorage.clear();
-                    window.location.href = '/banned.html?reason=' + encodeURIComponent(data.reason || 'No reason') + '&type=' + (data.type || 'permanent');
+                const res = await fetch('/api/ignores?username=' + encodeURIComponent(username));
+                const list = await res.json();
+                if (Array.isArray(list)) {
+                    ignoredUsersSet = new Set(list.map(i => i.username));
                 }
             } catch (e) {}
         }
 
-        async function loadGlobalBanner() {
+        async function loadThreads() {
+            const list = document.getElementById('threadsList');
             try {
-                const res = await fetch('/api/global-banner');
+                await loadIgnoredUsers();
+                const res = await fetch(`/api/forums/${encodeURIComponent(forumId)}/threads`);
+                const threads = await res.json();
+                allThreads = Array.isArray(threads) ? threads : [];
+                applyFilterAndRender();
+            } catch (e) {
+                list.innerHTML = "<div style='padding:18px;color:#8c98b3;'>Failed to load threads.</div>";
+            }
+        }
+
+        function openDeleteThreadModal(id) {
+            pendingDeleteThreadId = id;
+            document.getElementById('deleteThreadModal').style.display = 'flex';
+        }
+        function closeDeleteThreadModal() {
+            pendingDeleteThreadId = null;
+            document.getElementById('deleteThreadModal').style.display = 'none';
+        }
+        async function confirmDeleteThread() {
+            if (!pendingDeleteThreadId) return;
+            const res = await fetch(`/api/threads/${encodeURIComponent(pendingDeleteThreadId)}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username })
+            });
+            const data = await res.json();
+            closeDeleteThreadModal();
+            if (data.success) {
+                showNotification("Thread deleted", "#16a34a");
+                loadThreads();
+            } else {
+                showNotification(data.message || "Failed", "#dc2626");
+            }
+        }
+
+        document.getElementById('newThreadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!username) {
+                showNotification("Login required to post", "#dc2626");
+                return;
+            }
+            const title = document.getElementById('threadTitle').value.trim();
+            const content = document.getElementById('threadContent').value.trim();
+            const prefix = document.getElementById('threadPrefix').value;
+
+            let pollPayload = null;
+            if (document.getElementById('enablePollToggle').checked) {
+                const question = document.getElementById('pollQuestion').value.trim();
+                const options = Array.from(document.querySelectorAll('.poll-choice-input'))
+                    .map(el => el.value.trim())
+                    .filter(Boolean);
+                if (!question || options.length < 2) {
+                    showNotification("Poll requires a question and at least 2 choices", "#dc2626");
+                    return;
+                }
+                pollPayload = {
+                    question,
+                    options,
+                    multiple_choice: document.getElementById('pollMultipleChoice').checked,
+                    allow_change: document.getElementById('pollAllowChange').checked,
+                    closes_at: document.getElementById('pollClosesAt').value || null
+                };
+            }
+
+            try {
+                const res = await fetch('/api/threads', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title,
+                        content,
+                        prefix,
+                        forum_id: forumId,
+                        username,
+                        fileUrls: uploadedUrls,
+                        poll: pollPayload
+                    })
+                });
                 const data = await res.json();
-                const el = document.getElementById('global-banner');
-                if (!el) return;
-                if (data && data.active && (data.text || data.imageUrl)) {
-                    let content = escapeHtml(data.text || '');
-                    if (data.imageUrl) content += '<br><img src="' + escapeHtml(data.imageUrl) + '" style="max-width:100%;margin-top:8px;">';
-                    el.innerHTML = content;
-                    el.style.display = 'block';
-                } else el.style.display = 'none';
+                if (data.success) {
+                    showNotification(data.message, "#16a34a");
+                    document.getElementById('newThreadForm').reset();
+                    document.getElementById('pollBuilderBox').style.display = 'none';
+                    document.getElementById('uploadStatus').textContent = "";
+                    uploadedUrls = [];
+                    renderThreadMediaPreviews();
+                    document.getElementById('newThreadBox').classList.remove('open');
+                    loadThreads();
+                } else {
+                    showNotification(data.message || "Error", "#dc2626");
+                }
+            } catch (err) {
+                showNotification("Cannot connect to server", "#dc2626");
+            }
+        });
+
+        function getGuestSessionKey() {
+            let key = localStorage.getItem('xf_guest_sid');
+            if (!key) {
+                key = 'guest_' + Math.random().toString(36).slice(2, 10) + '_' + Date.now().toString(36);
+                localStorage.setItem('xf_guest_sid', key);
+            }
+            return key;
+        }
+
+        async function sendHeartbeatAndLoadViewers() {
+            try {
+                const res = await fetch('/api/heartbeat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: username || null,
+                        sessionKey: getGuestSessionKey(),
+                        locationType: 'forum',
+                        locationId: forumId
+                    })
+                });
+                const data = await res.json();
+                if (data && data.success) {
+                    const countEl = document.getElementById('forumViewersCount');
+                    const listEl = document.getElementById('forumViewersList');
+                    if (countEl) {
+                        countEl.textContent = `(Members: ${data.memberCount || 0}, Guests: ${data.guests || 0})`;
+                    }
+                    if (listEl) {
+                        if (data.members && data.members.length) {
+                            listEl.innerHTML = data.members.map(u => `<a href="/profile.html?user=${encodeURIComponent(u)}">${escapeHtml(u)}</a>`).join(', ');
+                        } else {
+                            listEl.textContent = data.guests > 0 ? 'No registered members (Guests browsing)' : 'None';
+                        }
+                    }
+                }
+            } catch (e) {}
+        }
+
+        async function checkBan() {
+            const u = localStorage.getItem('username');
+            if (!u) return;
+            try {
+                const res = await fetch(`/api/check-ban/${encodeURIComponent(u)}`);
+                const data = await res.json();
+                if (data.banned) {
+                    localStorage.clear();
+                    window.location.href = `/banned.html?reason=${encodeURIComponent(data.reason || 'No reason')}&type=${data.type || 'permanent'}`;
+                }
             } catch (e) {}
         }
 
         async function loadAlertBadge() {
             if (!username) return;
             try {
-                const res = await fetch('/api/alerts/' + encodeURIComponent(username));
+                const res = await fetch(`/api/alerts/${encodeURIComponent(username)}`);
                 if (!res.ok) return;
                 const data = await res.json();
                 const badge = document.getElementById('alert-badge');
-                if (!badge) return;
-                if (data.unread > 0) {
-                    badge.style.display = 'inline';
-                    badge.textContent = data.unread > 99 ? '99+' : data.unread;
-                } else badge.style.display = 'none';
+                if (badge) {
+                    if (data.unread > 0) {
+                        badge.style.display = 'inline';
+                        badge.textContent = data.unread > 99 ? '99+' : data.unread;
+                    } else badge.style.display = 'none';
+                }
+                const inboxBadge = document.getElementById('inbox-badge');
+                if (inboxBadge) {
+                    if (data.unreadInbox > 0) {
+                        inboxBadge.style.display = 'inline';
+                        inboxBadge.textContent = data.unreadInbox > 99 ? '99+' : data.unreadInbox;
+                    } else inboxBadge.style.display = 'none';
+                }
             } catch (e) {}
         }
 
-        setupCreateArea();
         loadThreads();
-        loadGlobalBanner();
         checkBan();
         loadAlertBadge();
+        sendHeartbeatAndLoadViewers();
         setInterval(checkBan, 8000);
         setInterval(loadAlertBadge, 15000);
+        setInterval(sendHeartbeatAndLoadViewers, 25000);
     </script>
 </body>
 </html>

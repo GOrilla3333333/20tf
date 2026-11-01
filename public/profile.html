@@ -5,330 +5,384 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profile - 20Thousand Forums</title>
     <link rel="stylesheet" href="/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="https://i.imgur.com/oJCfWc8.png">
     <style>
-        .profile-card {
-            background: #1e2f4f;
-            border: 1px solid #2b4570;
-            border-radius: 4px;
+        .member-header {
+            background: #202738;
+            border: 1px solid #2d364d;
+            border-radius: 3px;
             overflow: hidden;
         }
-        .profile-banner {
+        .member-banner {
             width: 100%;
-            height: 180px;
-            background: #0f1c2e;
+            height: 165px;
+            background: #181f30;
             background-size: cover;
             background-position: center;
-            border-bottom: 1px solid #2b4570;
+            border-bottom: 1px solid #2d364d;
         }
-        .profile-header {
+        .member-main {
             display: flex;
             align-items: flex-end;
             justify-content: space-between;
             flex-wrap: wrap;
             gap: 16px;
-            margin-top: -50px;
-            padding: 0 20px;
+            margin-top: -46px;
+            padding: 0 18px;
         }
-        .profile-header-left {
+        .member-main-left {
             display: flex;
             align-items: flex-end;
             gap: 16px;
             flex-wrap: wrap;
         }
-        .profile-pfp-wrap {
+        .member-avatar-wrap {
             position: relative;
             display: inline-flex;
         }
-        .profile-pfp {
-            width: 108px;
-            height: 108px;
-            border-radius: 50%;
-            border: 3px solid #1e2f4f;
-            outline: 1px solid #355387;
+        .member-avatar {
+            width: 96px;
+            height: 96px;
+            border-radius: 2px;
+            border: 3px solid #202738;
+            outline: 1px solid #2d364d;
             object-fit: cover;
-            background: #0f1b2e;
+            background: #141926;
+            display: block;
         }
-        .profile-pfp-wrap .online-dot {
-            width: 16px;
-            height: 16px;
-            bottom: 5px;
-            right: 5px;
-            border-width: 2px;
+        .member-avatar-wrap .online-dot {
+            bottom: -4px;
+            right: auto;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 10px;
+            height: 10px;
+            border: 2px solid #202738;
         }
-        .profile-info {
-            padding: 16px 20px 20px;
+        .member-body {
+            padding: 14px 18px 18px;
         }
-        .bio {
-            margin-top: 8px;
-            color: #ffffff;
-            white-space: pre-wrap;
-            background: #142238;
-            border: 1px solid #2b4570;
-            border-radius: 4px;
-            padding: 12px 14px;
-        }
-        .profile-title-badge {
+        .member-role-badge {
             display: inline-block;
-            background: #0165fc;
-            color: #ffffff;
-            padding: 2px 9px;
-            border-radius: 3px;
-            font-size: 0.74em;
-            font-weight: bold;
-            margin-left: 8px;
+            background: #252d40;
+            border: 1px solid #36415c;
+            color: #dce2ec;
+            padding: 1px 8px;
+            border-radius: 2px;
+            font-size: 11.5px;
+            font-weight: 600;
+            margin-left: 6px;
             vertical-align: middle;
         }
         .online-pill {
             display: inline-block;
-            font-size: 0.72em;
-            padding: 2px 8px;
-            border-radius: 3px;
+            font-size: 11px;
+            padding: 1px 7px;
+            border-radius: 2px;
             margin-left: 6px;
             vertical-align: middle;
-            font-weight: bold;
+            font-weight: 600;
         }
         .online-pill.on {
-            background: #173826;
-            color: #4be38a;
-            border: 1px solid #2ecc71;
+            background: #143325;
+            color: #34d399;
+            border: 1px solid #10b981;
         }
         .online-pill.off {
-            background: #142238;
-            color: #c5d4eb;
-            border: 1px solid #2b4570;
+            background: #181f30;
+            color: #8c98b3;
+            border: 1px solid #2d364d;
         }
-        .profile-stats-inline {
+        .member-stats-bar {
             display: flex;
             flex-wrap: wrap;
             align-items: center;
-            gap: 20px;
+            gap: 24px;
             margin-top: 12px;
-            padding: 10px 14px;
-            background: #142238;
-            border: 1px solid #2b4570;
-            border-radius: 4px;
-            font-size: 0.9em;
-            color: #c5d4eb;
+            padding: 9px 14px;
+            background: #1b2130;
+            border: 1px solid #2d364d;
+            border-radius: 2px;
+            font-size: 12.5px;
+            color: #8c98b3;
         }
-        .profile-stats-inline strong {
-            color: #fffd01;
+        .member-stats-bar strong {
+            color: #eceff4;
             margin-left: 4px;
         }
-        .profile-signature {
+        .bio {
+            margin-top: 10px;
+            color: #e5e9f0;
+            white-space: pre-wrap;
+            background: #1b2130;
+            border: 1px solid #2d364d;
+            border-radius: 2px;
+            padding: 10px 14px;
+            font-size: 13.5px;
+        }
+        .member-signature {
             margin-top: 12px;
-            padding-top: 10px;
-            border-top: 1px solid #2b4570;
-            color: #c5d4eb;
-            font-size: 0.9em;
+            padding-top: 8px;
+            border-top: 1px solid #293247;
+            color: #8c98b3;
+            font-size: 12px;
             white-space: pre-wrap;
         }
         .tabs {
             display: flex;
-            gap: 6px;
-            margin: 18px 0 0 0;
-            border-bottom: 1px solid #2b4570;
+            gap: 2px;
+            margin: 16px 0 0 0;
+            background: #252d40;
+            border: 1px solid #2d364d;
+            border-bottom: none;
+            border-radius: 3px 3px 0 0;
+            padding: 0 8px;
         }
         .tab {
-            background: #142238;
-            border: 1px solid #2b4570;
-            border-bottom: none;
-            color: #c5d4eb;
-            padding: 8px 18px;
-            border-radius: 4px 4px 0 0;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: #94a1bd;
+            padding: 9px 14px;
             cursor: pointer;
             font-family: inherit;
-            font-weight: bold;
+            font-weight: 600;
+            font-size: 13px;
         }
         .tab:hover {
-            background: #1e2f4f;
             color: #ffffff;
         }
         .tab.active {
-            background: #0165fc;
             color: #ffffff;
-            border-color: #0165fc;
+            border-bottom-color: #55a6f8;
         }
         .feed-block {
-            background: #1e2f4f;
-            border: 1px solid #2b4570;
-            border-top: none;
-            border-radius: 0 0 4px 4px;
-            padding: 14px;
+            background: #202738;
+            border: 1px solid #2d364d;
+            border-radius: 0 0 3px 3px;
         }
         .item {
-            background: #142238;
-            border: 1px solid #2b4570;
-            border-radius: 4px;
-            padding: 12px 14px;
-            margin: 8px 0;
+            padding: 12px 16px;
+            border-bottom: 1px solid #293247;
         }
-        .item a {
-            color: #fffd01;
+        .item:last-child {
+            border-bottom: none;
+        }
+        .item a.item-title {
+            color: #eceff4;
             text-decoration: none;
-            font-weight: bold;
+            font-weight: 600;
+            font-size: 13.5px;
         }
-        .item a:hover {
+        .item a.item-title:hover {
+            color: #55a6f8;
             text-decoration: underline;
         }
         .comment-user {
             display: flex;
             align-items: center;
             gap: 10px;
-            margin-bottom: 8px;
-        }
-        .comment-pfp {
-            width: 34px;
-            height: 34px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 1px solid #355387;
-        }
-        .edit-btn {
-            background: #0165fc;
-            color: #ffffff;
-            border: 1px solid #0165fc;
-            padding: 7px 14px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-            font-family: inherit;
-        }
-        .edit-btn:hover {
-            background: #fffd01;
-            border-color: #fffd01;
-            color: #162437;
-        }
-        .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.85);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 10000;
-        }
-        .modal-content {
-            background: #1e2f4f;
-            padding: 22px;
-            border-radius: 4px;
-            border: 1px solid #2b4570;
-            width: 90%;
-            max-width: 400px;
-            color: #ffffff;
-            text-align: center;
+            margin-bottom: 6px;
         }
     </style>
 </head>
 <body>
     <header>
-        <img src="https://i.imgur.com/oJCfWc8.png" class="logo" alt="Logo" onclick="window.location.href='/'">
-        <h1>20Thousand Forums</h1>
+        <div class="header-inner">
+            <img src="https://i.imgur.com/oJCfWc8.png" class="logo" alt="Logo" onclick="window.location.href='/'">
+            <h1 onclick="window.location.href='/'">20Thousand Forums</h1>
+        </div>
     </header>
 
     <nav>
         <a href="/">Home</a>
         <a href="/forums">Boards</a>
+        <a href="/members.html">Members</a>
+        <a href="/watched.html">Watched</a>
+        <a href="/bookmarks.html">Bookmarks</a>
         <a href="/search.html">Search</a>
-        <a href="/alerts.html">Alerts <span id="alert-badge" style="display:none; background:#ff4444; color:white; border-radius:4px; padding:1px 6px; font-size:12px; margin-left:4px;">0</span></a>
+        <a href="/inbox.html">Inbox <span id="inbox-badge" class="nav-badge" style="display:none;">0</span></a>
+        <a href="/alerts.html">Alerts <span id="alert-badge" class="nav-badge" style="display:none;">0</span></a>
         <span id="user-nav"></span>
         <form action="/search.html" method="get" class="nav-search">
-            <input name="q" placeholder="Search users or d1scs...">
+            <input name="q" placeholder="Search...">
             <button type="submit">Search</button>
         </form>
     </nav>
 
-    <div id="global-banner" style="display:none; background:#fffd01; color:#162437; padding:12px; text-align:center; font-weight:bold;"></div>
+    <div id="global-banner" style="display:none; background:#252d40; border-bottom:1px solid #2d364d; color:#eceff4; padding:10px 16px; text-align:center; font-weight:600;"></div>
 
-    <div class="container" style="max-width:860px;">
+    <div class="container" style="max-width:960px;">
         <div class="breadcrumbs">
             <a href="/">Home</a>
             <span class="bc-sep">›</span>
-            <a href="/forums">Boards</a>
+            <a href="/members.html">Members</a>
             <span class="bc-sep">›</span>
             <span class="bc-current" id="bcProfileName">Profile</span>
         </div>
 
-        <div class="profile-card">
-            <div class="profile-banner" id="banner"></div>
+        <div class="member-header">
+            <div class="member-banner" id="banner"></div>
 
-            <div class="profile-header">
-                <div class="profile-header-left">
-                    <div class="profile-pfp-wrap">
-                        <img id="pfp" class="profile-pfp" src="https://i.imgur.com/oJCfWc8.png" alt="">
+            <div class="member-main">
+                <div class="member-main-left">
+                    <div class="member-avatar-wrap">
+                        <img id="pfp" class="member-avatar" src="https://i.imgur.com/oJCfWc8.png" alt="">
                         <span id="profileOnlineDot" class="online-dot" style="display:none;" title="Online now"></span>
                     </div>
                     <div>
-                        <h2 style="margin:0; color:#fffd01;">
-                            <span id="username">Loading...</span>
-                            <span id="userTitleBadge" class="profile-title-badge" style="display:none;"></span>
+                        <h2 style="margin:0; font-size:19px;">
+                            <span id="username" class="role-member">Loading...</span>
+                            <span id="userTitleBadge" class="member-role-badge" style="display:none;"></span>
                             <span id="onlineStatusPill" class="online-pill" style="display:none;"></span>
                         </h2>
-                        <p id="joined" style="color:#c5d4eb; margin:4px 0 0 0; font-size:0.9em;"></p>
+                        <div id="userCustomTitleLine" style="font-size:12.5px;color:#d6deeb;margin-top:2px;display:none;"></div>
+                        <div id="userRankStars" style="display:inline-flex;gap:2px;color:#f59e0b;margin-top:3px;"></div>
+                        <p id="joined" style="color:#8c98b3; margin:2px 0 0 0; font-size:12px;"></p>
                     </div>
                 </div>
-                <div>
-                    <button id="editBtn" class="edit-btn" style="display:none;" onclick="toggleEdit()">Edit Profile</button>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                    <button id="editBtn" class="button-secondary" style="display:none;" onclick="toggleEdit()">Edit profile</button>
+                    <a id="startConvoBtn" class="button" style="display:none;text-decoration:none;" href="/inbox.html">Start conversation</a>
+                    <button id="ignoreMemberBtn" class="button-secondary" style="display:none;" onclick="toggleIgnoreProfileUser()">Ignore</button>
+                    <button id="warnMemberBtn" class="button-secondary" style="display:none;color:#f59e0b;border-color:#78350f;" onclick="openProfileWarnModal()">Warn</button>
                 </div>
             </div>
 
-            <div class="profile-info">
+            <div class="member-body">
+                <div class="member-stats-bar" id="profileStatsBar"></div>
                 <div class="bio" id="bio">Loading...</div>
-                <div class="profile-stats-inline" id="profileStatsBar"></div>
-                <div class="profile-signature" id="profileSignature" style="display:none;"></div>
+                <div class="member-signature" id="profileSignature" style="display:none;"></div>
 
-                <div id="banBanner" style="display:none; margin:16px 0; padding:12px 14px; background:#3a1010; border:1px solid #ff4444; border-radius:4px; color:#ffcccc; font-weight:bold; line-height:1.4;"></div>
+                <div id="banBanner" style="display:none; margin:14px 0 0 0; padding:10px 14px; background:#2b1d24; border:1px solid #5c2833; border-radius:2px; color:#f87171; font-weight:600; font-size:12.5px; line-height:1.4;"></div>
 
-                <div id="editForm" style="display:none; margin-top:16px; background:#0f1c2e; border:1px solid #2b4570; border-radius:4px; padding:16px;">
-                    <h3 style="margin-top:0;color:#fffd01;">Edit Profile</h3>
-                    <label style="font-weight:bold;">Bio:</label><br>
-                    <textarea id="editBio" rows="3" style="width:100%; background:#142238; color:#ffffff; border:1px solid #355387; border-radius:4px; padding:8px; box-sizing:border-box; font-family:inherit; margin-top:4px;" placeholder="Your bio..."></textarea><br><br>
+                <div id="editForm" style="display:none; margin-top:14px; background:#1b2130; border:1px solid #2d364d; border-radius:2px; padding:14px;">
+                    <h3 style="margin:0 0 10px 0;font-size:14px;color:#eceff4;">Edit Profile</h3>
+                    <label style="font-weight:600;font-size:12.5px;color:#cbd5e1;">Custom User Title (displayed beneath your username):</label><br>
+                    <input type="text" id="editCustomTitle" maxlength="50" style="width:100%;max-width:360px;margin-top:4px;margin-bottom:10px;" placeholder="Optional custom title..."><br>
 
-                    <label style="font-weight:bold;">Forum Signature (shown at the bottom of your posts):</label><br>
-                    <textarea id="editSignature" rows="2" style="width:100%; background:#142238; color:#ffffff; border:1px solid #355387; border-radius:4px; padding:8px; box-sizing:border-box; font-family:inherit; margin-top:4px;" placeholder="Your forum signature..."></textarea><br><br>
+                    <label style="font-weight:600;font-size:12.5px;color:#cbd5e1;">Bio:</label><br>
+                    <textarea id="editBio" rows="3" style="width:100%; margin-top:4px;" placeholder="Your bio..."></textarea><br><br>
 
-                    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
+                    <label style="font-weight:600;font-size:12.5px;color:#cbd5e1;">Forum Signature (shown at the bottom of your posts):</label><br>
+                    <textarea id="editSignature" rows="2" style="width:100%; margin-top:4px;" placeholder="Your forum signature..."></textarea><br><br>
+
+                    <div style="margin-bottom:12px;">
+                        <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:12.5px;color:#cbd5e1;">
+                            <input type="checkbox" id="editHideActivity">
+                            <span>Hide my online and current viewing activity</span>
+                        </label>
+                    </div>
+
+                    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
                         <div>
                             <label for="editPfpFile" class="attach-btn">Change Avatar</label>
                             <input type="file" id="editPfpFile" accept="image/png,image/jpeg,image/webp,image/gif" style="display:none;">
-                            <div><small id="pfpStatus" style="color:#c5d4eb;"></small></div>
+                            <div><small id="pfpStatus" style="color:#8c98b3;"></small></div>
                         </div>
                         <div>
                             <label for="editBannerFile" class="attach-btn">Change Banner</label>
                             <input type="file" id="editBannerFile" accept="image/png,image/jpeg,image/webp,image/gif" style="display:none;">
-                            <div><small id="bannerStatus" style="color:#c5d4eb;"></small></div>
+                            <div><small id="bannerStatus" style="color:#8c98b3;"></small></div>
                         </div>
                     </div>
 
-                    <button class="button" onclick="saveProfile()" style="background:#00cc66; color:#ffffff;">Save Changes</button>
-                    <button class="button" onclick="toggleEdit()" style="background:#3a4b66; margin-left:8px;">Cancel</button>
+                    <button class="button" onclick="saveProfile()">Save changes</button>
+                    <button class="button-secondary" onclick="toggleEdit()" style="margin-left:6px;">Cancel</button>
+
+                    <div id="ignoredMembersSection" style="margin-top:16px;padding-top:12px;border-top:1px solid #293247;">
+                        <h4 style="margin:0 0 8px 0;font-size:13px;color:#dce2ec;">Ignored Members</h4>
+                        <div id="ignoredMembersList" style="font-size:12.5px;color:#8c98b3;">None</div>
+                    </div>
                 </div>
             </div>
         </div>
 
         <div class="tabs">
-            <button class="tab active" onclick="showTab('activity')">Activity</button>
-            <button class="tab" onclick="showTab('comments')">Profile Comments</button>
+            <button class="tab active" onclick="showTab('activity')">Latest activity</button>
+            <button class="tab" onclick="showTab('comments')">Profile posts</button>
+            <button class="tab" id="warningsTabBtn" style="display:none;" onclick="showTab('warnings')">Warnings</button>
         </div>
 
         <div class="feed-block">
             <div id="activityTab">
-                <div id="activityList">Loading activity...</div>
+                <div id="activityList" style="padding:14px 16px;color:#8c98b3;">Loading activity...</div>
             </div>
 
             <div id="commentsTab" style="display:none;">
-                <div id="commentBox" style="display:none; margin-bottom:14px; background:#0f1c2e; border:1px solid #2b4570; border-radius:4px; padding:12px;">
-                    <textarea id="commentContent" rows="3" style="width:100%; background:#142238; color:#ffffff; border:1px solid #355387; border-radius:4px; padding:10px; box-sizing:border-box; font-family:inherit;" placeholder="Leave a comment on this profile..."></textarea><br>
-                    <button onclick="postComment()" class="button" style="margin-top:8px;">Post comment</button>
+                <div id="commentBox" style="display:none; padding:14px 16px; border-bottom:1px solid #293247; background:#1b2130;">
+                    <textarea id="commentContent" rows="3" style="width:100%;" placeholder="Update your status or leave a comment on this profile..."></textarea>
+                    <div style="margin-top:8px;text-align:right;">
+                        <button onclick="postComment()" class="button">Post</button>
+                    </div>
                 </div>
-                <div id="commentsList">Loading comments...</div>
+                <div id="commentsList">
+                    <div style="padding:14px 16px;color:#8c98b3;">Loading profile posts...</div>
+                </div>
+            </div>
+
+            <div id="warningsTab" style="display:none;">
+                <div id="warningsList" style="padding:14px 16px;color:#8c98b3;">No warnings on record.</div>
             </div>
         </div>
     </div>
+
+    <div id="profileWarnModal" class="modal">
+        <div class="modal-content">
+            <h3>Issue Warning / Infraction</h3>
+            <p id="profileWarnTargetLabel" style="color:#8c98b3;margin:0 0 10px 0;font-size:12.5px;"></p>
+            <label style="display:block;font-size:12px;color:#8c98b3;margin-bottom:4px;">Violated Commandment / Rule</label>
+            <select id="profileWarnRuleSelect" style="width:100%;margin-bottom:10px;" onchange="onProfileWarnRuleChange()">
+                <option value="Law 01: Respect Everyone (No Harassment/Doxxing)" data-pts="2">Law 01: Respect Everyone (No Harassment/Doxxing)</option>
+                <option value="Law 02: Zero Tolerance for Hate Speech" data-pts="3">Law 02: Zero Tolerance for Hate Speech</option>
+                <option value="Law 03: Keep It Legal" data-pts="5">Law 03: Keep It Legal</option>
+                <option value="Law 04: Protect Privacy (No Doxxing)" data-pts="4">Law 04: Protect Privacy (No Doxxing)</option>
+                <option value="Law 05: Stay On Topic" data-pts="1">Law 05: Stay On Topic</option>
+                <option value="Law 06: No Spam or Self-Promotion" data-pts="1">Law 06: No Spam or Self-Promotion</option>
+                <option value="Law 07: NSFW stays in /nsfw/ (18+ Only)" data-pts="2">Law 07: NSFW stays in /nsfw/ (18+ Only)</option>
+                <option value="Law 08: Absolute Ban on CSAM & Exploitation" data-pts="10">Law 08: Absolute Ban on CSAM &amp; Exploitation</option>
+                <option value="Law 09: No Gore or Extreme Violence" data-pts="4">Law 09: No Gore or Extreme Violence</option>
+                <option value="Law 10: Constructive Arguments Only" data-pts="1">Law 10: Constructive Arguments Only</option>
+                <option value="Law 11: No Backseat Moderating" data-pts="1">Law 11: No Backseat Moderating</option>
+                <option value="Law 12: One Person, One Account (No Ban Evasion)" data-pts="5">Law 12: One Person, One Account (No Ban Evasion)</option>
+                <option value="Law 13: English in Main Boards" data-pts="1">Law 13: English in Main Boards</option>
+                <option value="Law 14: Respect Staff & 20k's Final Word" data-pts="2">Law 14: Respect Staff &amp; 20k's Final Word</option>
+                <option value="Law 15: No Scams, Phishing, or Malware" data-pts="5">Law 15: No Scams, Phishing, or Malware</option>
+                <option value="Law 16: Spoiler Tag Sensitive Media" data-pts="1">Law 16: Spoiler Tag Sensitive Media</option>
+                <option value="Law 17: Don't Necrobump Dead Threads" data-pts="1">Law 17: Don't Necrobump Dead Threads</option>
+                <option value="Law 18: Use Clear Thread Titles" data-pts="1">Law 18: Use Clear Thread Titles</option>
+                <option value="Law 19: No Raid Planning or Brigading" data-pts="4">Law 19: No Raid Planning or Brigading</option>
+                <option value="Law 20: Don't Be The Reason We Need Law 21" data-pts="2">Law 20: Don't Be The Reason We Need Law 21</option>
+            </select>
+            <div style="display:flex;gap:10px;margin-bottom:10px;">
+                <div style="flex:1;">
+                    <label style="display:block;font-size:12px;color:#8c98b3;margin-bottom:4px;">Warning Points</label>
+                    <input type="number" id="profileWarnPointsInput" value="2" min="1" max="20" style="width:100%;">
+                </div>
+                <div style="flex:1;">
+                    <label style="display:block;font-size:12px;color:#8c98b3;margin-bottom:4px;">Expiration Date (Optional)</label>
+                    <input type="date" id="profileWarnExpiresInput" style="width:100%;">
+                </div>
+            </div>
+            <label style="display:block;font-size:12px;color:#8c98b3;margin-bottom:4px;">Moderator Note / Explanation</label>
+            <textarea id="profileWarnReasonInput" rows="3" style="width:100%;" placeholder="Explain why this warning is being issued..."></textarea>
+            <div style="margin-top:10px;text-align:right;">
+                <button class="button-secondary" onclick="closeProfileWarnModal()">Cancel</button>
+                <button class="button" style="background:#dc2626;border-color:#dc2626;" onclick="submitProfileWarning()">Issue Warning</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="site-footer">
+        <div class="site-footer-inner">
+            <span>20Thousand Forums</span>
+            <div>
+                <a href="/">Home</a>
+                <a href="/forums">Boards</a>
+                <a href="/tos">Terms &amp; Rules</a>
+            </div>
+        </div>
+    </footer>
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
@@ -340,15 +394,12 @@
         let originalPfp = "";
         let originalBanner = "";
         let currentSignature = "";
+        let currentCustomTitle = "";
+        let currentHideActivity = false;
+        let isIgnoredByViewer = false;
+        let isViewerModerator = false;
 
-        const ROLE_COLORS = {
-            owner: '#d4a017',
-            moderator: '#2ecc71',
-            mod: '#2ecc71',
-            janitor: '#1abc9c',
-            trusted: '#9b59b6',
-            member: '#0165fc'
-        };
+        const SVG_STAR = '<svg class="svg-icon" style="width:11px;height:11px;" viewBox="0 0 16 16"><path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/></svg>';
 
         function escapeHtml(str) {
             return String(str || '')
@@ -359,6 +410,15 @@
                 .replace(/'/g, '&#039;');
         }
 
+        function roleClass(title) {
+            const t = String(title || 'member').toLowerCase();
+            if (t === 'owner') return 'role-owner';
+            if (t === 'moderator' || t === 'mod') return 'role-moderator';
+            if (t === 'janitor') return 'role-janitor';
+            if (t === 'trusted') return 'role-trusted';
+            return 'role-member';
+        }
+
         document.getElementById('user-nav').innerHTML = currentUser
             ? `<span class="nav-user-bar">Signed in as <a href="/profile.html?user=${encodeURIComponent(currentUser)}"><strong>${escapeHtml(currentUser)}</strong></a>${currentUser === '20k' ? ' · <a href="/admin.html">Admin</a>' : ''} · <a href="#" onclick="showLogoutModal();return false;">Logout</a></span>`
             : '<a href="/login">Login</a> <a href="/register">Register</a>';
@@ -367,8 +427,30 @@
             const modal = document.createElement('div');
             modal.className = 'modal';
             modal.style.display = 'flex';
-            modal.innerHTML = `<div class="modal-content"><h3>Logout?</h3><p>Are you sure you want to logout?</p><button class="button" style="background:#ff4444;" onclick="localStorage.removeItem('username');location.href='/'">Yes, Logout</button><button class="button" style="background:#3a4b66;" onclick="this.parentElement.parentElement.remove()">Cancel</button></div>`;
+            modal.innerHTML = `<div class="modal-content" style="text-align:center;"><h3>Logout?</h3><p>Are you sure you want to logout?</p><button class="button" style="background:#dc2626;border-color:#dc2626;" onclick="localStorage.removeItem('username');location.href='/'">Yes, Logout</button> <button class="button-secondary" onclick="this.parentElement.parentElement.remove()">Cancel</button></div>`;
             document.body.appendChild(modal);
+        }
+
+        function showNotification(text, color) {
+            const notif = document.createElement('div');
+            notif.className = 'notification';
+            notif.style.background = color;
+            notif.textContent = text;
+            document.body.appendChild(notif);
+            setTimeout(() => notif.remove(), 2800);
+        }
+
+        async function checkViewerModStatus() {
+            if (!currentUser) return false;
+            if (currentUser === '20k') return true;
+            try {
+                const res = await fetch(`/api/profile/${encodeURIComponent(currentUser)}`);
+                const d = await res.json();
+                const t = ((d && (d.roleTitle || d.title)) || '').toLowerCase();
+                return t === 'owner' || t === 'administrator' || t === 'admin' || t === 'moderator' || t === 'mod';
+            } catch (e) {
+                return false;
+            }
         }
 
         async function loadProfile() {
@@ -377,7 +459,11 @@
                 return;
             }
 
-            const res = await fetch(`/api/profile/${encodeURIComponent(profileUser)}`);
+            isViewerModerator = await checkViewerModStatus();
+
+            const url = `/api/profile/${encodeURIComponent(profileUser)}` +
+                (currentUser ? `?viewer=${encodeURIComponent(currentUser)}` : '');
+            const res = await fetch(url);
             const data = await res.json();
 
             if (!data.success) {
@@ -385,14 +471,35 @@
                 return;
             }
 
-            document.getElementById('username').textContent = data.username;
+            const roleTitle = data.title || 'Member';
+            const unameEl = document.getElementById('username');
+            unameEl.textContent = data.username;
+            unameEl.className = roleClass(data.roleTitle || roleTitle);
             document.getElementById('bcProfileName').textContent = data.username;
+            document.title = `${data.username} - 20Thousand Forums`;
+
             const badgeEl = document.getElementById('userTitleBadge');
             if (badgeEl) {
-                const roleTitle = data.title || 'Member';
                 badgeEl.textContent = roleTitle;
-                badgeEl.style.background = ROLE_COLORS[roleTitle.toLowerCase()] || '#0165fc';
                 badgeEl.style.display = 'inline-block';
+            }
+
+            currentCustomTitle = data.customTitle || '';
+            currentHideActivity = !!data.hideActivity;
+            const customTitleEl = document.getElementById('userCustomTitleLine');
+            if (customTitleEl) {
+                if (currentCustomTitle) {
+                    customTitleEl.textContent = currentCustomTitle;
+                    customTitleEl.style.display = 'block';
+                } else {
+                    customTitleEl.style.display = 'none';
+                }
+            }
+
+            const starsEl = document.getElementById('userRankStars');
+            if (starsEl) {
+                const starCount = Math.min(5, Math.max(1, Number(data.stars) || 1));
+                starsEl.innerHTML = SVG_STAR.repeat(starCount);
             }
 
             const dotEl = document.getElementById('profileOnlineDot');
@@ -410,15 +517,22 @@
             }
 
             document.getElementById('pfp').src = data.pfp;
-            document.getElementById('bio').textContent = data.bio;
-            const joinedDate = data.created_at ? new Date(data.created_at).toLocaleDateString() : "N/A";
+            document.getElementById('bio').textContent = data.bio || 'No bio set.';
+            const joinedDate = data.created_at ? new Date(data.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : "N/A";
             document.getElementById('joined').textContent = data.created_at
-                ? `Member since ${joinedDate}`
+                ? `Joined ${joinedDate}`
                 : "";
+
+            const canSeeWarnings = currentUser && (currentUser === profileUser || isViewerModerator);
+            const warnStatHtml = canSeeWarnings
+                ? `<span>Warning points: <strong>${data.warningPoints || 0}</strong></span>`
+                : '';
+
             document.getElementById('profileStatsBar').innerHTML =
-                `<span>Posts: <strong>${data.postCount || 0}</strong></span>` +
+                `<span>Messages: <strong>${data.postCount || 0}</strong></span>` +
                 `<span>Reaction score: <strong>${data.reactionScore || 0}</strong></span>` +
-                `<span>Joined: <strong>${escapeHtml(joinedDate)}</strong></span>`;
+                `<span>Joined: <strong>${escapeHtml(joinedDate)}</strong></span>` +
+                warnStatHtml;
 
             currentSignature = data.signature || "";
             const sigEl = document.getElementById('profileSignature');
@@ -434,8 +548,7 @@
                 const reason = data.banReason || 'No reason given';
                 const type = data.banType ? ' (' + data.banType + ')' : '';
                 banEl.innerHTML =
-                    'THIS USER IS A RULEBREAKER' + escapeHtml(type) + '<br>' +
-                    'REASON FOR BAN: <span style="color:#fffd01;">' +
+                    'Banned user' + escapeHtml(type) + ' · Reason: <span style="color:#eceff4;">' +
                     escapeHtml(reason) +
                     '</span>';
                 banEl.style.display = 'block';
@@ -453,7 +566,30 @@
             }
 
             if (currentUser === profileUser) {
-                document.getElementById('editBtn').style.display = 'inline-block';
+                document.getElementById('editBtn').style.display = 'inline-flex';
+                loadIgnoredMembersInProfile();
+            } else if (currentUser) {
+                const startConvoBtn = document.getElementById('startConvoBtn');
+                if (startConvoBtn) {
+                    startConvoBtn.href = `/inbox.html?to=${encodeURIComponent(data.username)}`;
+                    startConvoBtn.style.display = 'inline-flex';
+                }
+                const targetIsStaff = data.username === '20k' || ['owner', 'administrator', 'admin', 'moderator', 'mod', 'janitor'].includes((data.roleTitle || roleTitle).toLowerCase());
+                const ignoreBtn = document.getElementById('ignoreMemberBtn');
+                if (ignoreBtn && !targetIsStaff) {
+                    isIgnoredByViewer = !!data.isIgnored;
+                    ignoreBtn.textContent = isIgnoredByViewer ? 'Unignore' : 'Ignore';
+                    ignoreBtn.style.display = 'inline-flex';
+                }
+                const warnBtn = document.getElementById('warnMemberBtn');
+                if (warnBtn && isViewerModerator && data.username !== '20k') {
+                    warnBtn.style.display = 'inline-flex';
+                }
+            }
+
+            if (canSeeWarnings) {
+                document.getElementById('warningsTabBtn').style.display = 'inline-block';
+                loadWarnings();
             }
 
             if (currentUser) {
@@ -464,15 +600,177 @@
             loadComments();
         }
 
+        async function toggleIgnoreProfileUser() {
+            if (!currentUser || !profileUser) return;
+            try {
+                const res = await fetch('/api/ignores/toggle', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: currentUser, ignoredUsername: profileUser })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    isIgnoredByViewer = !!data.ignored;
+                    const ignoreBtn = document.getElementById('ignoreMemberBtn');
+                    if (ignoreBtn) ignoreBtn.textContent = isIgnoredByViewer ? 'Unignore' : 'Ignore';
+                    showNotification(data.message, '#16a34a');
+                } else {
+                    showNotification(data.message || 'Could not update ignore status', '#dc2626');
+                }
+            } catch (e) {}
+        }
+
+        async function loadIgnoredMembersInProfile() {
+            if (!currentUser) return;
+            const listEl = document.getElementById('ignoredMembersList');
+            if (!listEl) return;
+            try {
+                const res = await fetch(`/api/ignores?username=${encodeURIComponent(currentUser)}`);
+                const list = await res.json();
+                if (!Array.isArray(list) || !list.length) {
+                    listEl.innerHTML = '<span style="color:#8c98b3;">You are not ignoring any members.</span>';
+                    return;
+                }
+                listEl.innerHTML = list.map(u => {
+                    const jsUser = String(u.username || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid #293247;">
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <img class="avatar-sq-sm" src="${escapeHtml(u.pfp || 'https://i.imgur.com/oJCfWc8.png')}" alt="">
+                            <a href="/profile.html?user=${encodeURIComponent(u.username)}" style="font-weight:600;color:#dce2ec;">${escapeHtml(u.username)}</a>
+                        </div>
+                        <button type="button" class="button-secondary" style="padding:3px 9px;font-size:11.5px;" onclick="unignoreFromList('${jsUser}')">Unignore</button>
+                    </div>`;
+                }).join('');
+            } catch (e) {}
+        }
+
+        async function unignoreFromList(targetUser) {
+            try {
+                const res = await fetch('/api/ignores/toggle', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: currentUser, ignoredUsername: targetUser })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showNotification(data.message, '#16a34a');
+                    loadIgnoredMembersInProfile();
+                }
+            } catch (e) {}
+        }
+
+        async function loadWarnings() {
+            if (!currentUser || !profileUser) return;
+            const listEl = document.getElementById('warningsList');
+            if (!listEl) return;
+            try {
+                const res = await fetch(`/api/warnings/${encodeURIComponent(profileUser)}?viewer=${encodeURIComponent(currentUser)}`);
+                const data = await res.json();
+                if (!data.success || !Array.isArray(data.warnings) || !data.warnings.length) {
+                    listEl.innerHTML = '<div style="padding:14px 16px;color:#8c98b3;">No warnings on record.</div>';
+                    return;
+                }
+                listEl.style.padding = '0';
+                listEl.innerHTML = data.warnings.map(w => {
+                    const jsId = String(w.id || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                    const statusBadge = w.active
+                        ? `<span class="status-tag" style="color:#f59e0b;border-color:#78350f;">Active (${w.points} pts)</span>`
+                        : `<span class="status-tag">Expired (${w.points} pts)</span>`;
+                    const revokeBtn = (isViewerModerator && w.active)
+                        ? `<button type="button" class="button-secondary" style="padding:2px 8px;font-size:11px;margin-left:8px;" onclick="revokeWarning('${jsId}')">Revoke</button>`
+                        : '';
+                    return `<div class="item">
+                        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+                            <div><strong>${escapeHtml(w.rule)}</strong> ${statusBadge}</div>
+                            <div style="font-size:11.5px;color:#8c98b3;">
+                                Issued by <a href="/profile.html?user=${encodeURIComponent(w.issued_by)}">${escapeHtml(w.issued_by)}</a> · ${new Date(w.created_at).toLocaleDateString()}
+                                ${revokeBtn}
+                            </div>
+                        </div>
+                        ${w.reason ? `<div style="margin-top:4px;font-size:12.5px;color:#cbd5e1;">Note: ${escapeHtml(w.reason)}</div>` : ''}
+                        ${w.expires_at ? `<div style="margin-top:2px;font-size:11.5px;color:#8c98b3;">Expires: ${new Date(w.expires_at).toLocaleDateString()}</div>` : ''}
+                    </div>`;
+                }).join('');
+            } catch (e) {}
+        }
+
+        async function revokeWarning(warnId) {
+            if (!confirm('Revoke this warning?')) return;
+            try {
+                const res = await fetch(`/api/warnings/${encodeURIComponent(warnId)}`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ moderator: currentUser })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showNotification('Warning revoked', '#16a34a');
+                    loadProfile();
+                }
+            } catch (e) {}
+        }
+
+        function onProfileWarnRuleChange() {
+            const sel = document.getElementById('profileWarnRuleSelect');
+            const pts = document.getElementById('profileWarnPointsInput');
+            if (!sel || !pts) return;
+            const opt = sel.options[sel.selectedIndex];
+            const dPts = opt && opt.getAttribute('data-pts');
+            if (dPts) pts.value = dPts;
+        }
+
+        function openProfileWarnModal() {
+            document.getElementById('profileWarnTargetLabel').textContent = 'Target member: ' + profileUser;
+            document.getElementById('profileWarnReasonInput').value = '';
+            document.getElementById('profileWarnExpiresInput').value = '';
+            document.getElementById('profileWarnModal').style.display = 'flex';
+        }
+
+        function closeProfileWarnModal() {
+            document.getElementById('profileWarnModal').style.display = 'none';
+        }
+
+        async function submitProfileWarning() {
+            const rule = document.getElementById('profileWarnRuleSelect').value;
+            const points = Number(document.getElementById('profileWarnPointsInput').value) || 1;
+            const reason = document.getElementById('profileWarnReasonInput').value.trim();
+            const expires_at = document.getElementById('profileWarnExpiresInput').value || null;
+            try {
+                const res = await fetch('/api/warnings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        moderator: currentUser,
+                        user_id: profileUser,
+                        post_id: null,
+                        rule: rule,
+                        points: points,
+                        reason: reason,
+                        expires_at: expires_at
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    closeProfileWarnModal();
+                    showNotification('Warning issued (' + data.activePoints + ' active pts)', '#16a34a');
+                    loadProfile();
+                } else {
+                    showNotification(data.message || 'Failed to issue warning', '#dc2626');
+                }
+            } catch (e) {}
+        }
+
         function showTab(name) {
             document.getElementById('activityTab').style.display = name === 'activity' ? 'block' : 'none';
             document.getElementById('commentsTab').style.display = name === 'comments' ? 'block' : 'none';
+            document.getElementById('warningsTab').style.display = name === 'warnings' ? 'block' : 'none';
 
             document.querySelectorAll('.tab').forEach((t, i) => {
                 t.classList.toggle(
                     'active',
                     (name === 'activity' && i === 0) ||
-                    (name === 'comments' && i === 1)
+                    (name === 'comments' && i === 1) ||
+                    (name === 'warnings' && i === 2)
                 );
             });
         }
@@ -484,9 +782,11 @@
             form.style.display = isHidden ? 'block' : 'none';
 
             if (isHidden) {
-                document.getElementById('editBio').value =
-                    document.getElementById('bio').textContent;
+                const bioVal = document.getElementById('bio').textContent;
+                document.getElementById('editBio').value = bioVal === 'No bio set.' ? '' : bioVal;
                 document.getElementById('editSignature').value = currentSignature || '';
+                document.getElementById('editCustomTitle').value = currentCustomTitle || '';
+                document.getElementById('editHideActivity').checked = !!currentHideActivity;
 
                 document.getElementById('editPfpFile').value = '';
                 document.getElementById('editBannerFile').value = '';
@@ -495,6 +795,7 @@
 
                 pendingPfpFile = null;
                 pendingBannerFile = null;
+                loadIgnoredMembersInProfile();
             } else {
                 document.getElementById('pfp').src =
                     originalPfp || "https://i.imgur.com/oJCfWc8.png";
@@ -602,17 +903,19 @@
         async function saveProfile() {
             const bio = document.getElementById('editBio').value.trim();
             const signature = document.getElementById('editSignature').value.trim();
-            const body = { username: currentUser, bio, signature };
+            const customTitle = document.getElementById('editCustomTitle').value.trim();
+            const hideActivity = document.getElementById('editHideActivity').checked;
+            const body = { username: currentUser, bio, signature, customTitle, hideActivity };
 
             if (pendingPfpFile) {
                 const url = await uploadFile(pendingPfpFile, document.getElementById('pfpStatus'));
-                if (!url) return alert("PFP upload failed - check the terminal");
+                if (!url) return alert("Avatar upload failed");
                 body.pfp = url;
             }
 
             if (pendingBannerFile) {
                 const url = await uploadFile(pendingBannerFile, document.getElementById('bannerStatus'));
-                if (!url) return alert("Banner upload failed - check the terminal");
+                if (!url) return alert("Banner upload failed");
                 body.banner = url;
             }
 
@@ -628,38 +931,21 @@
                 return;
             }
 
-            const check = await fetch(`/api/profile/${encodeURIComponent(currentUser)}`);
-            const saved = await check.json();
-
-            document.getElementById('bio').textContent = saved.bio || bio;
-            currentSignature = saved.signature !== undefined ? saved.signature : signature;
-            const sigEl = document.getElementById('profileSignature');
-            if (currentSignature) {
-                sigEl.textContent = "Signature: " + currentSignature;
-                sigEl.style.display = 'block';
-            } else {
-                sigEl.style.display = 'none';
-            }
-            document.getElementById('pfp').src = saved.pfp || originalPfp;
-
-            originalPfp = saved.pfp || originalPfp;
-            originalBanner = saved.banner || originalBanner;
-
-            document.getElementById('banner').style.backgroundImage =
-                saved.banner ? `url(${saved.banner})` : "";
-
             pendingPfpFile = null;
             pendingBannerFile = null;
             document.getElementById('editForm').style.display = 'none';
+            showNotification("Profile updated", "#16a34a");
+            loadProfile();
         }
 
         async function loadActivity() {
             const res = await fetch(`/api/profile/${encodeURIComponent(profileUser)}/activity`);
             const items = await res.json();
             const list = document.getElementById('activityList');
+            list.style.padding = '0';
 
             if (!items.length) {
-                list.innerHTML = "<p style='color:#c5d4eb;margin:0;'>No activity yet.</p>";
+                list.innerHTML = "<div style='padding:14px 16px;color:#8c98b3;'>No recent activity.</div>";
                 return;
             }
 
@@ -667,9 +953,9 @@
                 if (a.type === 'thread') {
                     return `
                     <div class="item">
-                        <div style="font-size:0.85em;color:#c5d4eb;">Started a d1sc</div>
-                        <a href="${escapeHtml(a.url)}">${escapeHtml(a.title)}</a>
-                        <div style="color:#c5d4eb; font-size:0.84em; margin-top:4px;">
+                        <div style="font-size:12px;color:#8c98b3;">Started a thread</div>
+                        <a class="item-title" href="${escapeHtml(a.url)}">${escapeHtml(a.title)}</a>
+                        <div style="color:#8c98b3; font-size:11.5px; margin-top:4px;">
                             ${new Date(a.created_at).toLocaleString()}
                         </div>
                     </div>`;
@@ -677,12 +963,12 @@
 
                 return `
                 <div class="item">
-                    <div style="font-size:0.85em;color:#c5d4eb;">Replied in</div>
-                    <a href="${escapeHtml(a.url)}">${escapeHtml(a.title)}</a>
-                    <div style="color:#ffffff; margin-top:6px;">
+                    <div style="font-size:12px;color:#8c98b3;">Replied to a thread</div>
+                    <a class="item-title" href="${escapeHtml(a.url)}">${escapeHtml(a.title)}</a>
+                    <div style="color:#cbd5e1; margin-top:4px; font-size:13px;">
                         ${escapeHtml(a.preview || '')}
                     </div>
-                    <div style="color:#c5d4eb; font-size:0.84em; margin-top:4px;">
+                    <div style="color:#8c98b3; font-size:11.5px; margin-top:4px;">
                         ${new Date(a.created_at).toLocaleString()}
                     </div>
                 </div>`;
@@ -695,7 +981,7 @@
             const list = document.getElementById('commentsList');
 
             if (!comments.length) {
-                list.innerHTML = "<p style='color:#c5d4eb;margin:0;'>No profile comments yet.</p>";
+                list.innerHTML = "<div style='padding:14px 16px;color:#8c98b3;'>No profile posts yet.</div>";
                 return;
             }
 
@@ -708,24 +994,24 @@
                 return `
                 <div class="item">
                     <div class="comment-user">
-                        <img class="comment-pfp" src="${escapeHtml(c.pfp)}" alt="">
-                        <a href="/profile.html?user=${encodeURIComponent(c.user_id)}" style="color:#fffd01; text-decoration:none;">
-                            <strong>${escapeHtml(c.user_id)}</strong>
+                        <img class="avatar-sq-sm" src="${escapeHtml(c.pfp)}" alt="">
+                        <a href="/profile.html?user=${encodeURIComponent(c.user_id)}" class="role-member" style="font-weight:700;">
+                            ${escapeHtml(c.user_id)}
                         </a>
-                        <small style="color:#c5d4eb;">
+                        <span style="color:#8c98b3;font-size:11.5px;">
                             ${new Date(c.created_at).toLocaleString()}
-                        </small>
+                        </span>
 
                         ${canDelete ? `
                             <button
                                 onclick="deleteComment('${escapeHtml(c.id)}')"
-                                style="margin-left:auto; background:#3a1818; border:1px solid #6b2a2a; color:#ff9999; border-radius:3px; padding:2px 8px; font-size:12px; font-family:inherit; cursor:pointer;">
+                                style="margin-left:auto; background:#2b1d24; border:1px solid #5c2833; color:#f87171; border-radius:2px; padding:1px 7px; font-size:11px; font-family:inherit; cursor:pointer;">
                                 Delete
                             </button>
                         ` : ''}
                     </div>
 
-                    <div>
+                    <div style="padding-left:38px;color:#e5e9f0;">
                         ${escapeHtml(c.content || '').replace(/\n/g, '<br>')}
                     </div>
                 </div>`;
@@ -734,7 +1020,7 @@
 
         async function postComment() {
             const content = document.getElementById('commentContent').value.trim();
-            if (!content) return alert("Add some words");
+            if (!content) return alert("Enter a message");
 
             const res = await fetch(`/api/profile/${encodeURIComponent(profileUser)}/comments`, {
                 method: 'POST',
@@ -752,7 +1038,7 @@
         }
 
         async function deleteComment(id) {
-            if (!confirm("Delete this comment?")) return;
+            if (!confirm("Delete this profile post?")) return;
 
             await fetch(`/api/profile/comments/${encodeURIComponent(id)}`, {
                 method: 'DELETE',
@@ -802,11 +1088,19 @@
                 if (!res.ok) return;
                 const data = await res.json();
                 const badge = document.getElementById('alert-badge');
-                if (!badge) return;
-                if (data.unread > 0) {
-                    badge.style.display = 'inline';
-                    badge.textContent = data.unread > 99 ? '99+' : data.unread;
-                } else badge.style.display = 'none';
+                if (badge) {
+                    if (data.unread > 0) {
+                        badge.style.display = 'inline';
+                        badge.textContent = data.unread > 99 ? '99+' : data.unread;
+                    } else badge.style.display = 'none';
+                }
+                const inboxBadge = document.getElementById('inbox-badge');
+                if (inboxBadge) {
+                    if (data.unreadInbox > 0) {
+                        inboxBadge.style.display = 'inline';
+                        inboxBadge.textContent = data.unreadInbox > 99 ? '99+' : data.unreadInbox;
+                    } else inboxBadge.style.display = 'none';
+                }
             } catch (e) {}
         }
 

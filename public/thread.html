@@ -2,207 +2,179 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>20Thousand Forums</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thread - 20Thousand Forums</title>
     <link rel="stylesheet" href="/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="https://i.imgur.com/oJCfWc8.png">
     <style>
-        .notification {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 12px 22px;
-            border-radius: 4px;
-            z-index: 20000;
-            color: #ffffff;
-            font-weight: bold;
-            border: 1px solid #2b4570;
+        .thread-top-meta {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #8c98b3;
+            font-size: 12.5px;
+            margin-top: 4px;
         }
-        .thread-top-bar {
+        .block-outer {
             display: flex;
             align-items: center;
             justify-content: space-between;
             flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 8px;
-            background: #0f1c2e;
-            border: 1px solid #2b4570;
-            border-radius: 4px;
-            padding: 14px 18px;
+            gap: 8px;
+            margin: 10px 0;
         }
-        .post {
-            padding: 0;
-            margin: 12px 0;
-            border-radius: 4px;
-            position: relative;
+        .block-outer-actions {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .message {
+            background: #202738;
+            border: 1px solid #2d364d;
+            border-radius: 3px;
+            margin-bottom: 12px;
             display: flex;
             align-items: stretch;
-            overflow: visible;
-            background: #1e2f4f;
-            color: #ffffff;
-            border: 1px solid #2b4570;
         }
-        .original-post {
-            background: #223556;
-            border-color: #3a5a8f;
-        }
-        .post-sidebar {
-            width: 172px;
+        .message-cell-user {
+            width: 155px;
             flex-shrink: 0;
-            padding: 16px 12px;
-            background: #15233b;
-            border-right: 1px solid #2b4570;
+            background: #1b2130;
+            border-right: 1px solid #2d364d;
+            padding: 14px 10px;
             display: flex;
             flex-direction: column;
             align-items: center;
             text-align: center;
         }
-        .original-post .post-sidebar {
-            background: #172742;
-            border-right-color: #3a5a8f;
-        }
-        .post-main {
-            flex: 1;
-            min-width: 0;
-            padding: 12px 18px 14px;
-            display: flex;
-            flex-direction: column;
+        .message-avatar-wrap {
             position: relative;
+            display: inline-flex;
+            margin-bottom: 8px;
         }
         .user-pfp {
-            width: 68px;
-            height: 68px;
-            border-radius: 50%;
+            width: 96px;
+            height: 96px;
+            border-radius: 2px;
             object-fit: cover;
-            border: 1px solid #3a5a8f;
-            background: #0f1b2e;
+            border: 1px solid #2d364d;
+            background: #141926;
+            display: block;
         }
-        .original-post .user-pfp {
-            border-color: #fffd01;
+        .message-avatar-wrap .online-dot {
+            bottom: -4px;
+            right: auto;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 10px;
+            height: 10px;
+            border: 2px solid #1b2130;
         }
-        .postbit-badges {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-            margin-top: 6px;
+        .username-link {
+            font-size: 13.5px;
+            font-weight: 700;
+            text-decoration: none;
+            word-break: break-word;
         }
-        .postbit-role {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 3px;
-            font-size: 0.74em;
-            font-weight: bold;
-            color: #ffffff;
-            background: #0165fc;
+        .username-link:hover {
+            text-decoration: underline;
         }
-        .op-badge {
-            display: inline-block;
-            padding: 2px 7px;
-            border-radius: 3px;
-            font-size: 0.72em;
-            font-weight: bold;
-            background: #fffd01;
-            color: #162437;
+        .user-title-line {
+            font-size: 11.5px;
+            color: #c5cedf;
+            margin-top: 2px;
+        }
+        .user-rank-stars {
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: #d97706;
+            margin-top: 3px;
+            user-select: none;
         }
         .postbit-stats {
             margin-top: 10px;
-            font-size: 0.8em;
-            color: #c5d4eb;
-            line-height: 1.55;
             width: 100%;
+            border-top: 1px solid #262f44;
+            padding-top: 6px;
         }
-        @media (max-width: 680px) {
-            .post { flex-direction: column; }
-            .post-sidebar {
-                width: auto;
-                flex-direction: row;
-                text-align: left;
-                gap: 12px;
-                padding: 10px 14px;
-                border-right: none;
-                border-bottom: 1px solid #2b4570;
-            }
-            .user-pfp { width: 42px; height: 42px; }
-            .postbit-badges { justify-content: flex-start; }
-            .postbit-stats { display: none; }
+        .postbit-stats .pairs-justified {
+            font-size: 11px;
+            padding: 1.5px 0;
         }
-        .post img.embed-media, .post video.embed-media {
-            max-width: min(100%, 440px);
-            max-height: 360px;
-            border-radius: 4px;
-            border: 1px solid #2b4570;
-            margin: 10px 0;
-            display: block;
-            object-fit: contain;
+        .message-cell-main {
+            flex: 1;
+            min-width: 0;
+            padding: 10px 16px 12px;
+            display: flex;
+            flex-direction: column;
         }
-        .post iframe.embed-iframe {
-            width: 100%;
-            max-width: 560px;
-            aspect-ratio: 16 / 9;
-            border: 1px solid #2b4570;
-            border-radius: 4px;
-            margin: 10px 0;
-            display: block;
-        }
-        .post a { color: #7cb8ff; word-break: break-all; }
-        .username-link {
-            color: #ffffff !important;
-            font-weight: bold;
-            text-decoration: none;
-            cursor: pointer;
-        }
-        .username-link:hover { text-decoration: underline; color: #fffd01 !important; }
-        .post-body {
-            color: #ffffff;
-            line-height: 1.55;
-        }
-        .post-body .mention {
-            color: #fffd01;
-            font-weight: bold;
-            text-decoration: none;
-        }
-        .post-meta-bar {
+        .message-attribution {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 0.82em;
-            color: #c5d4eb;
-            border-bottom: 1px solid #2b4570;
+            font-size: 12px;
+            color: #8c98b3;
+            border-bottom: 1px solid #293247;
             padding-bottom: 6px;
-            margin-bottom: 10px;
-            padding-right: 28px;
+            margin-bottom: 12px;
         }
-        .original-post .post-meta-bar {
-            border-bottom-color: #3a5a8f;
+        .message-attribution-right {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
         }
-        .post-meta-bar a.post-num {
-            color: #c5d4eb;
+        .message-attribution-right a {
+            color: #8c98b3;
             text-decoration: none;
-            font-weight: bold;
         }
-        .post-meta-bar a.post-num:hover {
-            color: #fffd01;
-            text-decoration: underline;
+        .message-attribution-right a:hover {
+            color: #eceff4;
+        }
+        .post-body {
+            color: #e5e9f0;
+            font-size: 14px;
+            line-height: 1.5;
+            word-break: break-word;
+        }
+        .post-body a {
+            color: #55a6f8;
+        }
+        .post-body .mention {
+            color: #55a6f8;
+            font-weight: 600;
+        }
+        .message img.embed-media, .message video.embed-media {
+            max-width: min(100%, 480px);
+            max-height: 380px;
+            border-radius: 2px;
+            border: 1px solid #2d364d;
+            margin: 8px 0;
+            display: block;
+            object-fit: contain;
+        }
+        .message iframe.embed-iframe {
+            width: 100%;
+            max-width: 560px;
+            aspect-ratio: 16 / 9;
+            border: 1px solid #2d364d;
+            border-radius: 2px;
+            margin: 8px 0;
+            display: block;
         }
         .xf-quote {
-            background: #142236;
-            border: 1px solid #2b4570;
-            border-left: 2px solid #0165fc;
-            border-radius: 4px;
-            margin: 8px 0 12px 0;
+            background: #181e2c;
+            border: 1px solid #293247;
+            border-left: 3px solid #4caf50;
+            border-radius: 2px;
+            margin: 0 0 12px 0;
             overflow: hidden;
-            color: #ffffff;
         }
         .xf-quote-header {
-            background: #1b2d47;
-            border-bottom: 1px solid #2b4570;
+            background: #1c2334;
+            border-bottom: 1px solid #293247;
             padding: 6px 12px;
-            font-size: 0.88em;
-            color: #c5d4eb;
+            font-size: 12.5px;
+            color: #7cb8ff;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -212,43 +184,36 @@
             text-decoration: none;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
             cursor: pointer;
-            font-weight: bold;
         }
         .xf-quote-link:hover {
-            color: #fffd01 !important;
             text-decoration: underline;
         }
         .xf-quote-arrow {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 15px;
-            height: 15px;
-            border-radius: 3px;
-            background: #2b4570;
-            color: #ffffff;
-            font-size: 10px;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #7cb8ff;
+            color: #181e2c;
+            font-size: 9px;
             font-weight: bold;
             line-height: 1;
-            text-decoration: none;
-        }
-        .xf-quote-link:hover .xf-quote-arrow {
-            background: #fffd01;
-            color: #162437;
         }
         .xf-quote-content {
             padding: 10px 12px;
-            font-size: 0.95em;
-            color: #e8eef7;
-            line-height: 1.5;
+            font-size: 13.5px;
+            color: #dce2ec;
+            line-height: 1.48;
             position: relative;
         }
         .xf-quote-content.collapsed {
             max-height: 150px;
             overflow: hidden;
-            padding-bottom: 32px;
+            padding-bottom: 28px;
         }
         .xf-quote-expand {
             display: none;
@@ -256,153 +221,184 @@
             bottom: 0;
             left: 0;
             right: 0;
-            padding: 6px 0;
+            padding: 5px 0;
             text-align: center;
-            background: #1b2d47;
-            border-top: 1px solid #2b4570;
-            color: #fffd01;
-            font-size: 0.82em;
-            font-weight: bold;
+            background: #1c2334;
+            border-top: 1px solid #293247;
+            color: #8c98b3;
+            font-size: 12px;
             cursor: pointer;
+        }
+        .xf-quote-expand:hover {
+            color: #eceff4;
         }
         .xf-quote-content.collapsed .xf-quote-expand {
             display: block;
+        }
+        .xf-quote-content img.embed-media,
+        .xf-quote-content video.embed-media {
+            max-width: 220px;
+            max-height: 150px;
+        }
+        .xf-quote-content iframe.embed-iframe {
+            max-width: 320px;
         }
         .xf-spoiler {
             margin: 8px 0;
         }
         .xf-spoiler-btn {
-            background: #142238;
-            color: #fffd01;
-            border: 1px solid #2b4570;
-            border-radius: 4px;
-            padding: 5px 12px;
+            background: #252d40;
+            color: #dce2ec;
+            border: 1px solid #36415c;
+            border-radius: 3px;
+            padding: 4px 11px;
             cursor: pointer;
-            font-weight: bold;
+            font-weight: 600;
             font-family: inherit;
-            font-size: 0.88em;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
+            font-size: 12.5px;
         }
-        .xf-spoiler-btn:hover { background: #263c63; }
+        .xf-spoiler-btn:hover { background: #2f3952; }
         .xf-spoiler-body {
             display: none;
             margin-top: 6px;
             padding: 10px 12px;
-            background: #142236;
-            border: 1px solid #2b4570;
-            border-radius: 4px;
-            color: #ffffff;
+            background: #181e2c;
+            border: 1px solid #293247;
+            border-radius: 2px;
+            color: #dce2ec;
         }
         .xf-code {
-            background: #0d1726;
-            color: #d6e4f7;
+            background: #141926;
+            color: #cbd5e1;
             padding: 10px 12px;
-            border-radius: 4px;
-            border: 1px solid #2b4570;
-            font-family: monospace;
+            border-radius: 2px;
+            border: 1px solid #293247;
+            font-family: Consolas, Monaco, monospace;
             white-space: pre-wrap;
             margin: 8px 0;
             display: block;
-            font-size: 0.9em;
+            font-size: 12.5px;
         }
         .post-edited {
             margin-top: 8px;
             text-align: right;
-            font-size: 0.78em;
-            color: #c5d4eb;
+            font-size: 11.5px;
+            color: #8c98b3;
         }
         .post-signature {
-            margin-top: 12px;
+            margin-top: 14px;
             padding-top: 8px;
-            border-top: 1px solid #2b4570;
-            font-size: 0.84em;
-            color: #c5d4eb;
-        }
-        .post-footer {
-            margin-top: auto;
-            padding-top: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 8px;
+            border-top: 1px solid #293247;
+            font-size: 12px;
+            color: #8c98b3;
+            text-align: center;
         }
         .reaction-summary {
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            background: #142238;
-            border: 1px solid #2b4570;
-            padding: 3px 10px;
-            border-radius: 4px;
-            font-size: 0.82em;
-            color: #d6e4f7;
+            background: #181e2c;
+            border: 1px solid #293247;
+            padding: 3px 9px;
+            border-radius: 2px;
+            font-size: 11.5px;
+            color: #94a1bd;
+            margin-top: 10px;
+            align-self: flex-start;
         }
         .rx-icon-group {
             display: inline-flex;
             align-items: center;
             gap: 4px;
-            color: #fffd01;
+            color: #55a6f8;
         }
-        .post-actions {
+        .message-action-bar {
+            margin-top: auto;
+            padding-top: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            font-size: 12.5px;
+        }
+        .action-bar-set {
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            margin-left: auto;
+            gap: 12px;
             position: relative;
         }
-        .action-btn {
-            padding: 4px 10px;
-            font-size: 12px;
-            background: #142238;
-            border: 1px solid #2b4570;
-            color: #ffffff;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
+        .action-link {
+            background: none;
+            border: none;
+            padding: 0;
+            color: #cbd5e1;
             font-family: inherit;
+            font-size: 12.5px;
+            font-weight: 600;
+            cursor: pointer;
             display: inline-flex;
             align-items: center;
-            gap: 5px;
+            gap: 4px;
+            text-decoration: none;
         }
-        .action-btn:hover, .action-btn.active {
-            background: #0165fc;
-            border-color: #0165fc;
-            color: #ffffff;
+        .action-link:hover, .action-link.active {
+            color: #55a6f8;
+            text-decoration: underline;
         }
         .reaction-picker {
             display: none;
             position: absolute;
             bottom: 100%;
-            right: 56px;
-            margin-bottom: 5px;
-            background: #0f1b2e;
-            border: 1px solid #2b4570;
-            border-radius: 4px;
+            right: 45px;
+            margin-bottom: 6px;
+            background: #181f30;
+            border: 1px solid #2d364d;
+            border-radius: 3px;
             padding: 4px;
             gap: 4px;
             z-index: 80;
         }
         .reaction-picker.open { display: inline-flex; }
         .reaction-picker button {
-            background: #15233b;
-            border: 1px solid #2b4570;
-            color: #ffffff;
-            font-size: 12px;
+            background: #202738;
+            border: 1px solid #2d364d;
+            color: #dce2ec;
+            font-size: 11.5px;
             font-family: inherit;
-            font-weight: bold;
+            font-weight: 600;
             cursor: pointer;
             padding: 4px 8px;
-            border-radius: 3px;
+            border-radius: 2px;
             display: inline-flex;
             align-items: center;
             gap: 4px;
         }
         .reaction-picker button:hover {
-            background: #0165fc;
-            border-color: #0165fc;
+            background: #2563eb;
+            border-color: #3b82f6;
+            color: #ffffff;
+        }
+        @keyframes xfHighlight {
+            0% { outline: 2px solid #55a6f8; }
+            100% { outline: 2px solid transparent; }
+        }
+        .post-highlight {
+            animation: xfHighlight 1.6s ease-out;
+        }
+        /* Reply Composer Block */
+        .reply-box {
+            background: #202738;
+            border: 1px solid #2d364d;
+            border-radius: 3px;
+            margin-top: 14px;
+            display: flex;
+            align-items: stretch;
+        }
+        .reply-box-main {
+            flex: 1;
+            padding: 12px 16px;
+            min-width: 0;
         }
         .bb-toolbar {
             display: flex;
@@ -411,124 +407,21 @@
             margin-bottom: 8px;
         }
         .bb-btn {
-            background: #162437;
-            color: #d6e4f7;
-            border: 1px solid #2b4570;
-            border-radius: 4px;
-            padding: 4px 10px;
+            background: #181f30;
+            color: #cbd5e1;
+            border: 1px solid #2d364d;
+            border-radius: 2px;
+            padding: 3px 9px;
             font-size: 12px;
             cursor: pointer;
             font-family: inherit;
-            font-weight: bold;
+            font-weight: 600;
         }
-        .bb-btn:hover { background: #263c63; color: #ffffff; }
-        .pagination-bar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin: 10px 0;
-        }
-        .page-buttons { display: flex; gap: 4px; flex-wrap: wrap; }
-        .page-btn {
-            background: #1e2f4f;
-            color: #ffffff;
-            border: 1px solid #2b4570;
-            border-radius: 4px;
-            padding: 5px 11px;
-            cursor: pointer;
-            font-weight: bold;
-            font-family: inherit;
-        }
-        .page-btn.active { background: #0165fc; border-color: #fffd01; color: #fffd01; }
-        .page-btn:hover:not(:disabled) { background: #263c63; }
-        .page-btn:disabled { opacity: 0.45; cursor: default; }
-        .xf-quote-content img.embed-media,
-        .xf-quote-content video.embed-media {
-            max-width: 200px;
-            max-height: 140px;
-        }
-        .xf-quote-content iframe.embed-iframe {
-            max-width: 320px;
-        }
-        @keyframes xfHighlight {
-            0% { outline: 2px solid #fffd01; }
-            100% { outline: 2px solid transparent; }
-        }
-        .post-highlight {
-            animation: xfHighlight 1.6s ease-out;
-        }
-        .menu-btn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: none;
-            border: none;
-            font-size: 18px;
-            cursor: pointer;
-            color: #c5d4eb;
-        }
-        .dropdown-menu {
-            display: none;
-            position: absolute;
-            top: 34px;
-            right: 10px;
-            background: #0f1b2e;
-            border: 1px solid #2b4570;
-            border-radius: 4px;
-            z-index: 50;
-            min-width: 130px;
-        }
-        .dropdown-menu button {
-            display: block;
-            width: 100%;
-            text-align: left;
-            background: none;
-            border: none;
-            color: #ffffff;
-            padding: 9px 12px;
-            cursor: pointer;
-            font-family: inherit;
-        }
-        .dropdown-menu button:hover { background: #1e2f4f; }
-        .reply-box {
-            background: #1e2f4f;
-            border: 1px solid #2b4570;
-            border-radius: 4px;
-            margin-top: 18px;
-            overflow: hidden;
-        }
-        .reply-box-title {
-            background: #0f1c2e;
-            border-bottom: 1px solid #2b4570;
-            color: #ffffff;
-            font-weight: bold;
-            font-size: 0.95em;
-            padding: 10px 16px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .reply-box-body {
-            padding: 14px 16px;
-        }
+        .bb-btn:hover { background: #283147; color: #ffffff; }
         .reply-box textarea {
             width: 100%;
-            min-height: 100px;
-            box-sizing: border-box;
-            background: #0f1b2e;
-            color: #ffffff;
-            border: 1px solid #355387;
-            border-radius: 4px;
-            padding: 10px 12px;
-            font-family: inherit;
-            font-size: 1em;
+            min-height: 105px;
             resize: vertical;
-            outline: none;
-        }
-        .reply-box textarea:focus {
-            border-color: #fffd01;
         }
         .reply-actions-row {
             display: flex;
@@ -538,100 +431,70 @@
             gap: 10px;
             margin-top: 10px;
         }
-        .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.85);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 10000;
+        .upload-status { font-size: 12px; color: #8c98b3; margin: 4px 0; }
+        @media (max-width: 680px) {
+            .message { flex-direction: column; }
+            .message-cell-user {
+                width: auto;
+                flex-direction: row;
+                text-align: left;
+                gap: 12px;
+                padding: 10px 14px;
+                border-right: none;
+                border-bottom: 1px solid #2d364d;
+            }
+            .message-avatar-wrap { margin-bottom: 0; }
+            .user-pfp { width: 44px; height: 44px; }
+            .postbit-stats, .user-rank-stars { display: none; }
         }
-        .modal-content {
-            background: #1e2f4f;
-            padding: 22px;
-            border-radius: 4px;
-            border: 1px solid #2b4570;
-            width: 90%;
-            max-width: 450px;
-            color: #ffffff;
-        }
-        .button {
-            padding: 9px 16px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-            color: #ffffff;
-            background: #0165fc;
-            margin: 4px;
-        }
-        .prefix-badge {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 3px;
-            font-size: 0.75em;
-            font-weight: bold;
-            margin-right: 6px;
-            color: #ffffff;
-        }
-        .upload-status { font-size: 12px; color: #c5d4eb; margin: 4px 0; }
-
+        /* Profile Hover Card */
         #profile-hover {
             display: none;
             position: fixed;
             z-index: 30000;
             width: 260px;
-            background: #0f1b2e;
-            border: 1px solid #2b4570;
-            border-radius: 4px;
-            color: #ffffff;
+            background: #181f30;
+            border: 1px solid #2d364d;
+            border-radius: 3px;
+            color: #e5e9f0;
             overflow: hidden;
             pointer-events: none;
         }
         #profile-hover .ph-banner {
-            height: 54px;
-            background: #1e2f4f;
+            height: 52px;
+            background: #202738;
             background-size: cover;
             background-position: center;
-            border-bottom: 1px solid #2b4570;
+            border-bottom: 1px solid #2d364d;
         }
-        #profile-hover .ph-body { padding: 10px 12px 14px; }
+        #profile-hover .ph-body { padding: 10px 12px 12px; }
         #profile-hover .ph-pfp-wrap {
             position: relative;
             display: inline-flex;
             margin-top: -28px;
         }
         #profile-hover .ph-pfp {
-            width: 52px;
-            height: 52px;
-            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            border-radius: 2px;
             object-fit: cover;
-            border: 2px solid #0165fc;
-            background: #1e2f4f;
+            border: 2px solid #181f30;
+            background: #141926;
         }
-        #profile-hover .ph-name { font-weight: bold; font-size: 1.05em; margin-top: 6px; color: #fffd01; }
+        #profile-hover .ph-name { font-weight: 700; font-size: 14px; margin-top: 6px; color: #eceff4; }
         #profile-hover .ph-title {
-            display: inline-block;
-            margin-top: 4px;
-            padding: 2px 8px;
-            border-radius: 3px;
-            background: #0165fc;
-            font-size: 0.75em;
-            font-weight: bold;
+            font-size: 11.5px;
+            color: #8c98b3;
         }
-        #profile-hover .ph-stats { margin-top: 10px; font-size: 0.85em; color: #c5d4eb; line-height: 1.5; }
-        #profile-hover .ph-bio { margin-top: 8px; font-size: 0.8em; color: #c5d4eb; max-height: 48px; overflow: hidden; }
-
+        #profile-hover .ph-stats { margin-top: 8px; font-size: 11.5px; color: #94a1bd; line-height: 1.45; }
+        #profile-hover .ph-bio { margin-top: 6px; font-size: 11.5px; color: #8c98b3; max-height: 44px; overflow: hidden; }
+        /* @mention Dropdown */
         .mention-dropdown {
             position: absolute;
             z-index: 15000;
-            background: #0f1b2e;
-            border: 1px solid #2b4570;
-            border-radius: 4px;
+            background: #181f30;
+            border: 1px solid #2d364d;
+            border-radius: 3px;
             max-height: 220px;
             overflow-y: auto;
             min-width: 200px;
@@ -641,30 +504,36 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            padding: 8px 12px;
+            padding: 7px 12px;
             cursor: pointer;
-            color: #ffffff;
+            color: #e5e9f0;
         }
-        .mention-item:hover, .mention-item.active { background: #1e2f4f; }
-        .mention-item img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; }
-        .mention-item .mi-name { font-weight: bold; }
-        .mention-item .mi-title { font-size: 0.75em; color: #c5d4eb; }
+        .mention-item:hover, .mention-item.active { background: #252d40; }
+        .mention-item img { width: 26px; height: 26px; border-radius: 2px; object-fit: cover; }
+        .mention-item .mi-name { font-weight: 600; font-size: 12.5px; }
+        .mention-item .mi-title { font-size: 11px; color: #8c98b3; }
     </style>
 </head>
 <body>
     <header>
-        <img src="https://i.imgur.com/oJCfWc8.png" class="logo" alt="Logo" onclick="window.location.href='/'">
-        <h1>20Thousand Forums</h1>
+        <div class="header-inner">
+            <img src="https://i.imgur.com/oJCfWc8.png" class="logo" alt="Logo" onclick="window.location.href='/'">
+            <h1 onclick="window.location.href='/'">20Thousand Forums</h1>
+        </div>
     </header>
 
     <nav>
         <a href="/">Home</a>
         <a href="/forums" class="active">Boards</a>
+        <a href="/members.html">Members</a>
+        <a href="/watched.html">Watched</a>
+        <a href="/bookmarks.html">Bookmarks</a>
+        <a href="/inbox.html">Inbox <span id="inbox-badge" class="nav-badge">0</span></a>
+        <a href="/alerts.html">Alerts <span id="alert-badge" class="nav-badge">0</span></a>
         <a href="/search.html">Search</a>
-        <a href="/alerts.html">Alerts <span id="alert-badge" style="display:none; background:#ff4444; color:white; border-radius:4px; padding:1px 6px; font-size:12px; margin-left:4px;">0</span></a>
         <span id="user-nav"></span>
         <form action="/search.html" method="get" class="nav-search">
-            <input name="q" placeholder="Search users or d1scs...">
+            <input name="q" placeholder="Search...">
             <button type="submit">Search</button>
         </form>
     </nav>
@@ -680,30 +549,53 @@
             <span class="bc-current" id="bcThreadTitle">d1sc</span>
         </div>
 
-        <div class="thread-top-bar">
-            <div>
-                <h2 id="thread-title" style="margin:0;">Loading...</h2>
-                <p style="margin:4px 0 0 0;color:#c5d4eb;"><small>Created by <strong id="thread-creator" style="color:#fffd01;">...</strong> · <span id="thread-views"></span></small></p>
+        <div style="margin-bottom: 12px;">
+            <h1 class="p-title-value" id="thread-title">Loading...</h1>
+            <div class="thread-top-meta">
+                <svg class="svg-icon" viewBox="0 0 16 16"><path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H3zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>
+                <a id="thread-creator" href="#" class="role-member">...</a>
+                <span>·</span>
+                <span id="thread-created-date"></span>
+                <span>·</span>
+                <span id="thread-views"></span>
             </div>
-            <div id="staffControls" style="display:none;"></div>
         </div>
 
-        <div id="lockBanner" style="display:none;background:#471818;border:1px solid #8c2d2d;color:#ffffff;padding:8px 12px;border-radius:4px;margin:10px 0;font-weight:bold;">
+        <div id="lockBanner" style="display:none;background:#2b1d24;border:1px solid #5c2833;color:#f87171;padding:8px 12px;border-radius:3px;margin:10px 0;font-size:12.5px;font-weight:600;">
             <svg class="svg-icon" viewBox="0 0 16 16"><path d="M8 1a4 4 0 0 0-4 4v2H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-1V5a4 4 0 0 0-4-4zm-2 4a2 2 0 1 1 4 0v2H6V5z"/></svg>
-            This thread is locked.
+            Not open for further replies.
         </div>
 
-        <div id="paginationTop" class="pagination-bar" style="display:none;"></div>
-        <div id="postsList">Loading posts...</div>
-        <div id="paginationBottom" class="pagination-bar" style="display:none;"></div>
+        <div class="block-outer">
+            <div id="paginationTop" class="page-buttons"></div>
+            <div class="block-outer-actions">
+                <button type="button" class="page-btn" onclick="jumpToLatestPost()">Jump to new</button>
+                <button type="button" class="page-btn" id="watchThreadBtn" style="display:none;" onclick="toggleWatchThread()">Watch</button>
+                <span id="staffControls" style="display:none;"></span>
+            </div>
+        </div>
+
+        <div id="pollContainer" style="display:none;"></div>
+
+        <div id="postsList">
+            <div style="padding:18px;color:#8c98b3;">Loading posts...</div>
+        </div>
+
+        <div class="block-outer">
+            <div id="paginationBottom" class="page-buttons"></div>
+        </div>
 
         <div class="reply-box" id="replyBox">
-            <div class="reply-box-title">
-                <span>Post a Reply</span>
-                <button type="button" class="action-btn" style="background:#3a4b66;display:none;" id="cancelReplyBtn" onclick="cancelReply()">Cancel quote</button>
-            </div>
-            <div class="reply-box-body">
-                <div id="replyTarget" style="display:none;font-size:12px;color:#ffffff;margin-bottom:8px;"></div>
+            <div class="reply-box-main">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                    <span style="font-weight:600;color:#dce2ec;font-size:13px;">Write a reply</span>
+                    <div style="display:flex;gap:6px;align-items:center;">
+                        <button type="button" class="button-secondary" style="display:none;padding:3px 9px;font-size:11.5px;" id="insertQuotesBtn" onclick="insertQueuedQuotes()">Insert Quotes</button>
+                        <button type="button" class="button-secondary" style="display:none;padding:2px 8px;font-size:11.5px;" id="cancelReplyBtn" onclick="cancelReply()">Cancel quote</button>
+                    </div>
+                </div>
+                <div id="multiQuoteQueueBox" style="display:none;margin-bottom:8px;background:#181e2c;border:1px solid #2d364d;border-radius:2px;padding:8px 12px;font-size:12px;color:#94a1bd;"></div>
+                <div id="replyTarget" style="display:none;margin-bottom:8px;"></div>
                 <form id="replyForm">
                     <div class="bb-toolbar">
                         <button type="button" class="bb-btn" onclick="insertTag('postContent','[b]','[/b]')" title="Bold"><b>B</b></button>
@@ -721,46 +613,100 @@
                         <div>
                             <label for="mediaFile" class="attach-btn">
                                 <svg class="svg-icon" viewBox="0 0 16 16"><path d="M4.5 3a2.5 2.5 0 0 1 5 0v9a1.5 1.5 0 0 1-3 0V5a.5.5 0 0 1 1 0v7a.5.5 0 0 0 1 0V3a1.5 1.5 0 1 0-3 0v9a2.5 2.5 0 0 0 5 0V5a.5.5 0 0 1 1 0v7a3.5 3.5 0 1 1-7 0V3z"/></svg>
-                                Attach image / video
+                                Attach files
                             </label>
                             <input type="file" id="mediaFile" multiple accept="image/*,video/*" style="display:none;">
                         </div>
-                        <button type="submit" class="button" style="margin:0;">Post reply</button>
+                        <button type="submit" class="button">Post reply</button>
                     </div>
                 </form>
             </div>
+        </div>
+
+        <div class="viewers-block" id="threadViewersBlock">
+            <div class="viewers-block-header">
+                <span>Users Viewing This Thread</span>
+                <span id="threadViewersTotal" style="font-size:12px;color:#8c98b3;font-weight:400;"></span>
+            </div>
+            <div class="viewers-block-body" id="threadViewersList">Loading active viewers...</div>
         </div>
     </div>
 
     <div id="mentionDropdown" class="mention-dropdown"></div>
 
+    <div id="warnModal" class="modal">
+        <div class="modal-content" style="max-width:480px;">
+            <h3>Issue Warning: <span id="warnTargetLabel" style="color:#f59e0b;"></span></h3>
+            <div style="margin-bottom:10px;">
+                <label style="display:block;font-size:12px;color:#94a1bd;margin-bottom:4px;">Applicable Law (20Thousand Commandments):</label>
+                <select id="warnLawSelect" style="width:100%;">
+                    <option value="Law 01: Use Common Sense">Law 01: Use Common Sense</option>
+                    <option value="Law 02: Freedom of Speech Abuse">Law 02: Freedom of Speech Abuse</option>
+                    <option value="Law 03: Targeted Harassment">Law 03: Targeted Harassment</option>
+                    <option value="Law 04: Illegal Content">Law 04: Illegal Content</option>
+                    <option value="Law 05: Doxxing or Personal Info Leaks">Law 05: Doxxing or Personal Info Leaks</option>
+                    <option value="Law 06: Exploitation of Minors">Law 06: Exploitation of Minors</option>
+                    <option value="Law 07: Real Threats or Criminal Coordination">Law 07: Real Threats or Criminal Coordination</option>
+                    <option value="Law 08: Hardcore Pornography">Law 08: Hardcore Pornography</option>
+                    <option value="Law 09: Extreme Gore">Law 09: Extreme Gore</option>
+                    <option value="Law 10: Spam or Flooding">Law 10: Spam or Flooding</option>
+                    <option value="Law 11: Platform Abuse">Law 11: Platform Abuse</option>
+                    <option value="Law 12: False Reports">Law 12: False Reports</option>
+                    <option value="Law 13: Moderator Discretion">Law 13: Moderator Discretion</option>
+                    <option value="Law 19: Disrupting Forum Discussions">Law 19: Disrupting Forum Discussions</option>
+                    <option value="Law 20: Reckless Conduct">Law 20: Reckless Conduct</option>
+                </select>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+                <div>
+                    <label style="display:block;font-size:12px;color:#94a1bd;margin-bottom:4px;">Warning Points:</label>
+                    <input type="number" id="warnPointsInput" value="2" min="1" max="50" style="width:100%;background:#161b29;color:#e5e9f0;border:1px solid #2d364d;border-radius:3px;padding:7px 10px;">
+                </div>
+                <div>
+                    <label style="display:block;font-size:12px;color:#94a1bd;margin-bottom:4px;">Expires On (optional):</label>
+                    <input type="date" id="warnExpiresInput" style="width:100%;background:#161b29;color:#e5e9f0;border:1px solid #2d364d;border-radius:3px;padding:7px 10px;">
+                </div>
+            </div>
+            <div style="margin-bottom:12px;">
+                <label style="display:block;font-size:12px;color:#94a1bd;margin-bottom:4px;">Explanation / Notes:</label>
+                <textarea id="warnReasonInput" style="width:100%;min-height:70px;" placeholder="Explain why this warning is being issued..."></textarea>
+            </div>
+            <div style="display:flex;gap:6px;justify-content:flex-end;">
+                <button class="button" style="background:#dc2626;border-color:#dc2626;" onclick="submitWarning()">Issue Warning</button>
+                <button class="button-secondary" onclick="closeWarnModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <div id="editModal" class="modal">
         <div class="modal-content">
-            <h3>Edit post</h3>
-            <textarea id="editContent" style="width:100%;min-height:110px;background:#0f1b2e;color:#ffffff;border:1px solid #355387;border-radius:4px;padding:10px;box-sizing:border-box;font-family:inherit;"></textarea>
-            <div style="margin-top:10px;">
+            <h3>Edit message</h3>
+            <textarea id="editContent" style="width:100%;min-height:110px;"></textarea>
+            <div style="margin-top:12px;display:flex;gap:6px;justify-content:flex-end;">
                 <button class="button" onclick="saveEdit()">Save</button>
-                <button class="button" style="background:#3a4b66;" onclick="closeEditModal()">Cancel</button>
+                <button class="button-secondary" onclick="closeEditModal()">Cancel</button>
             </div>
         </div>
     </div>
 
     <div id="reportModal" class="modal">
         <div class="modal-content">
-            <h3>Report</h3>
-            <textarea id="reportReason" style="width:100%;min-height:80px;background:#0f1b2e;color:#ffffff;border:1px solid #355387;border-radius:4px;padding:10px;box-sizing:border-box;font-family:inherit;" placeholder="Reason for report..."></textarea>
-            <div style="margin-top:10px;">
-                <button class="button" onclick="submitReport()">Submit</button>
-                <button class="button" style="background:#3a4b66;" onclick="closeReportModal()">Cancel</button>
+            <h3>Report content</h3>
+            <textarea id="reportReason" style="width:100%;min-height:80px;" placeholder="Reason for report..."></textarea>
+            <div style="margin-top:12px;display:flex;gap:6px;justify-content:flex-end;">
+                <button class="button" onclick="submitReport()">Report</button>
+                <button class="button-secondary" onclick="closeReportModal()">Cancel</button>
             </div>
         </div>
     </div>
 
     <div id="deleteModal" class="modal">
         <div class="modal-content" style="text-align:center;">
-            <h3>Delete this reply?</h3>
-            <button class="button" style="background:#ff4444;" onclick="confirmDeletePost()">Yes, Delete</button>
-            <button class="button" style="background:#3a4b66;" onclick="closeDeleteModal()">Cancel</button>
+            <h3>Delete this message?</h3>
+            <div style="margin-top:12px;display:flex;gap:6px;justify-content:center;">
+                <button class="button" style="background:#dc2626;border-color:#dc2626;" onclick="confirmDeletePost()">Delete</button>
+                <button class="button-secondary" onclick="closeDeleteModal()">Cancel</button>
+            </div>
         </div>
     </div>
 
@@ -778,9 +724,21 @@
         </div>
     </div>
 
+    <footer class="site-footer">
+        <div class="site-footer-inner">
+            <span>20Thousand Forums</span>
+            <div>
+                <a href="/">Home</a>
+                <a href="/forums">Boards</a>
+                <a href="/tos">Terms &amp; Rules</a>
+            </div>
+        </div>
+    </footer>
+
     <script>
         const params = new URLSearchParams(window.location.search);
         const threadId = params.get('id');
+        const initialPageParam = parseInt(params.get('page') || '1', 10);
         const username = localStorage.getItem('username');
         let replyParentId = null;
         let currentEditId = null;
@@ -795,11 +753,27 @@
         let mentionState = { active: false, start: -1, query: '', index: 0, list: [] };
 
         const PREFIX_COLORS = {
-            "News": "#2ecc71", "Serious": "#3498db", "Discussion": "#9b59b6",
-            "Question": "#1abc9c", "Vent": "#8e44ad", "Media": "#e67e22",
-            "Art": "#e91e63", "Tech": "#00bcd4", "Brainrot": "#ff5722",
-            "NSFW": "#e74c3c", "Story": "#16a085", "Help": "#f39c12",
-            "Announcement": "#fffd01"
+            "News": "#16a34a", "Serious": "#2563eb", "Discussion": "#7c3aed",
+            "Question": "#0d9488", "Vent": "#6d28d9", "Media": "#d97706",
+            "Art": "#db2777", "Tech": "#0284c7", "Brainrot": "#ea580c",
+            "NSFW": "#dc2626", "Story": "#059669", "Help": "#ca8a04",
+            "Announcement": "#e11d48"
+        };
+
+        const BOARD_NAMES = {
+            "news": "News & Announcements",
+            "rules": "Rules & Site Info",
+            "b": "General / Random",
+            "serious": "Serious Discussion",
+            "vent": "Venting / Off My Chest",
+            "int": "International",
+            "brainrot": "Brainrot / Memes",
+            "art": "Art & OCs",
+            "media": "Music, Vidya & Media",
+            "tech": "Tech & Coding",
+            "nsfw": "18+ / NSFW",
+            "stories": "Greentexts & Stories",
+            "qna": "Questions & Advice"
         };
 
         const REACTION_SVGS = {
@@ -811,15 +785,40 @@
         };
         const REACTION_NAMES = { like: 'Like', love: 'Love', haha: 'Haha', fire: 'Fire', skull: 'Skull' };
 
+        const SVG_REPORT = '<svg class="svg-icon" viewBox="0 0 16 16"><path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057zm1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/></svg>';
+        const SVG_REPLY = '<svg class="svg-icon" viewBox="0 0 16 16"><path d="M6.598 5.013a.144.144 0 0 1 .202.134V6.3a.5.5 0 0 0 .5.5c.667 0 2.013.005 3.3.822.984.624 1.99 1.76 2.595 3.876-1.02-.983-2.185-1.516-3.205-1.799a8.74 8.74 0 0 0-1.921-.306 7.404 7.404 0 0 0-.798.008h-.013l-.005.001h-.001L7.3 9.9l-.05-.498a.5.5 0 0 0-.45.498v1.153c0 .108-.11.176-.202.134L2.614 8.254a.503.503 0 0 0-.042-.028.147.147 0 0 1 0-.252.499.499 0 0 0 .042-.028l3.984-2.933z"/></svg>';
+        const SVG_SHARE = '<svg class="svg-icon" viewBox="0 0 16 16"><path d="M13.5 1a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zM11 2.5a2.5 2.5 0 1 1 .603 1.628l-6.718 3.12a2.499 2.499 0 0 1 0 1.504l6.718 3.12a2.5 2.5 0 1 1-.488.876l-6.718-3.12a2.5 2.5 0 1 1 0-3.256l6.718-3.12A2.5 2.5 0 0 1 11 2.5zm-8.5 4a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm11 5.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z"/></svg>';
+        const SVG_BOOKMARK = '<svg class="svg-icon" viewBox="0 0 16 16"><path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v13.5a.5.5 0 0 1-.777.416L8 13.101l-5.223 2.815A.5.5 0 0 1 2 15.5V2z"/></svg>';
+        const SVG_ENVELOPE = '<svg class="svg-icon" style="width:12px;height:12px;" viewBox="0 0 16 16"><path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1H2zm13 2.383-4.708 2.825L15 11.105V5.383zm-.034 6.876-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741zM1 11.105l4.708-2.897L1 5.383v5.722z"/></svg>';
+        const SVG_POLL = '<svg class="svg-icon" viewBox="0 0 16 16"><path d="M4 11H2v3h2v-3zm5-4H7v7h2V7zm5-5v12h-2V2h2zm-2-1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1h-2zM6 7a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm-5 4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3z"/></svg>';
+        const SVG_STAR = '<svg class="svg-icon" style="width:10px;height:10px;" viewBox="0 0 16 16"><path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/></svg>';
+
+        function escapeHtml(s) {
+            return String(s || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function roleClass(title) {
+            const t = String(title || 'member').toLowerCase();
+            if (t === 'owner') return 'role-owner';
+            if (t === 'moderator' || t === 'mod') return 'role-moderator';
+            if (t === 'janitor') return 'role-janitor';
+            if (t === 'trusted') return 'role-trusted';
+            return 'role-member';
+        }
+
         document.getElementById('user-nav').innerHTML = username
-            ? '<span class="nav-user-bar">Signed in as <a href="/profile.html?user=' + encodeURIComponent(username) + '"><strong>' + escapeHtml(username) + '</strong></a> · <a href="#" onclick="showLogoutModal();return false;">Logout</a></span>'
+            ? '<span class="nav-user-bar">Signed in as <a href="/profile.html?user=' + encodeURIComponent(username) + '"><strong>' + escapeHtml(username) + '</strong></a>' + (username === '20k' ? ' · <a href="/admin.html">Admin</a>' : '') + ' · <a href="#" onclick="showLogoutModal();return false;">Logout</a></span>'
             : '<a href="/login">Login</a> <a href="/register">Register</a>';
 
         function showLogoutModal() {
             const modal = document.createElement('div');
             modal.className = 'modal';
             modal.style.display = 'flex';
-            modal.innerHTML = '<div class="modal-content" style="text-align:center;"><h3>Logout?</h3><p>Are you sure you want to logout?</p><button class="button" style="background:#ff4444;" onclick="localStorage.removeItem(\'username\');location.href=\'/\'">Yes, Logout</button><button class="button" style="background:#3a4b66;" onclick="this.parentElement.parentElement.remove()">Cancel</button></div>';
+            modal.innerHTML = '<div class="modal-content" style="text-align:center;"><h3>Logout?</h3><p>Are you sure you want to logout?</p><button class="button" style="background:#dc2626;border-color:#dc2626;" onclick="localStorage.removeItem(\'username\');location.href=\'/\'">Yes, Logout</button> <button class="button-secondary" onclick="this.parentElement.parentElement.remove()">Cancel</button></div>';
             document.body.appendChild(modal);
         }
 
@@ -832,17 +831,9 @@
             setTimeout(function () { n.remove(); }, 2800);
         }
 
-        function escapeHtml(s) {
-            return String(s || '')
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;');
-        }
-
         function formatDate(d) {
             if (!d) return 'N/A';
-            try { return new Date(d).toLocaleDateString(); } catch (e) { return 'N/A'; }
+            try { return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); } catch (e) { return 'N/A'; }
         }
 
         async function fetchProfile(user) {
@@ -874,10 +865,10 @@
                     banner.style.backgroundImage = 'url(' + data.banner + ')';
                 } else {
                     banner.style.backgroundImage = 'none';
-                    banner.style.background = '#1e2f4f';
+                    banner.style.background = '#202738';
                 }
                 document.getElementById('ph-stats').innerHTML =
-                    'Posts: <strong>' + (data.postCount || 0) + '</strong> · Reactions: <strong>' + (data.reactionScore || 0) + '</strong><br>Joined: <strong>' + formatDate(data.created_at) + '</strong>';
+                    'Messages: <strong>' + (data.postCount || 0) + '</strong> · Reactions: <strong>' + (data.reactionScore || 0) + '</strong><br>Joined: <strong>' + formatDate(data.created_at) + '</strong>';
                 document.getElementById('ph-bio').textContent = (data.bio || '').slice(0, 120);
                 const pad = 12;
                 let x = event.clientX + 14;
@@ -1045,14 +1036,25 @@
                 return '<a href="' + clean + '" target="_blank" rel="noopener noreferrer">' + clean + '</a>' + trailing;
             });
 
-            // BBCode formatting
             escaped = escaped
                 .replace(/\[b\]([\s\S]*?)\[\/b\]/gi, '<strong>$1</strong>')
                 .replace(/\[i\]([\s\S]*?)\[\/i\]/gi, '<em>$1</em>')
                 .replace(/\[u\]([\s\S]*?)\[\/u\]/gi, '<u>$1</u>')
                 .replace(/\[s\]([\s\S]*?)\[\/s\]/gi, '<s>$1</s>')
-                .replace(/\[quote(?:=([^\]]+))?\]([\s\S]*?)\[\/quote\]/gi, function (full, author, body) {
-                    const hdr = author ? '<div class="xf-quote-header"><span>' + author + ' said:</span></div>' : '';
+                .replace(/\[quote(?:=([^\]]+))?\]([\s\S]*?)\[\/quote\]/gi, function (full, authorMeta, body) {
+                    let hdr = '';
+                    if (authorMeta) {
+                        const cleanedMeta = authorMeta.replace(/^&quot;|&quot;$/g, '').trim();
+                        const postMatch = cleanedMeta.match(/^(.*?),\s*post:\s*([a-zA-Z0-9_-]+)$/i);
+                        if (postMatch) {
+                            const qUser = postMatch[1].trim();
+                            const qPostId = postMatch[2].trim();
+                            const jsPid = qPostId.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                            hdr = '<div class="xf-quote-header"><a class="xf-quote-link" href="#post-' + qPostId + '" onclick="jumpToPost(\'' + jsPid + '\'); return false;">' + qUser + ' said: <span class="xf-quote-arrow" title="Go to quoted post">↑</span></a></div>';
+                        } else {
+                            hdr = '<div class="xf-quote-header"><span>' + cleanedMeta + ' said:</span></div>';
+                        }
+                    }
                     return '<div class="xf-quote">' + hdr + '<div class="xf-quote-content">' + body + '<div class="xf-quote-expand" onclick="expandQuote(this)">Click to expand...</div></div></div>';
                 })
                 .replace(/\[spoiler(?:=([^\]]+))?\]([\s\S]*?)\[\/spoiler\]/gi, function (full, title, body) {
@@ -1063,7 +1065,15 @@
             escaped = escaped.replace(/@([a-zA-Z0-9_]{1,32})/g, function (full, name) {
                 return '<a class="mention" href="/profile.html?user=' + encodeURIComponent(name) + '">@' + name + '</a>';
             });
-            escaped = escaped.replace(/\n/g, '<br>');
+
+            // Greentext formatting: only lines starting with literal '>' (&gt;) outside code blocks
+            escaped = escaped.split('\n').map(function (line) {
+                if (/^\s*&gt;(?!&gt;)/.test(line) || /^\s*&gt;\s*\S/.test(line)) {
+                    return '<span class="greentext">' + line + '</span>';
+                }
+                return line;
+            }).join('<br>');
+
             escaped = escaped.replace(/\u0000EMBED_(\d+)\u0000/g, function (full, idx) {
                 return embeds[Number(idx)] || '';
             });
@@ -1089,12 +1099,10 @@
 
         function prefixBadge(prefix) {
             if (!prefix) return '';
-            const color = PREFIX_COLORS[prefix] || '#0165fc';
-            const textColor = prefix === 'Announcement' ? '#162437' : '#fff';
-            return '<span class="prefix-badge" style="background:' + color + ';color:' + textColor + '">' + prefix + '</span> ';
+            const color = PREFIX_COLORS[prefix] || '#2563eb';
+            return '<span class="prefix-badge" style="background:' + color + ';">' + escapeHtml(prefix) + '</span> ';
         }
 
-        // @mention autocomplete
         function hideMentionDropdown() {
             mentionState.active = false;
             document.getElementById('mentionDropdown').style.display = 'none';
@@ -1182,25 +1190,142 @@
         });
 
         let threadPinned = false;
+        let threadWatching = false;
+        let threadPoll = null;
+        let pollChangeMode = false;
         let threadTitleRaw = '';
         let threadPrefixRaw = '';
         let allFlatPosts = [];
-        let currentPage = 1;
+        let isModUser = username === '20k';
+        let quoteQueue = [];
+        let ignoredUsersSet = new Set();
+        let revealedPostsSet = new Set();
+        let currentWarnPostId = null;
+        let currentWarnTargetUser = null;
+        let currentPage = !isNaN(initialPageParam) && initialPageParam > 0 ? initialPageParam : 1;
         const POSTS_PER_PAGE = 20;
-        const ROLE_COLORS = {
-            owner: '#d4a017',
-            moderator: '#2ecc71',
-            mod: '#2ecc71',
-            janitor: '#1abc9c',
-            trusted: '#9b59b6',
-            member: '#0165fc'
-        };
 
         function renderThreadHeader() {
-            const pinBadge = threadPinned ? ' <span class="prefix-badge" style="background:#2b4570;color:#fffd01;">Pinned</span>' : '';
+            const pinBadge = threadPinned ? ' <span class="status-tag">Pinned</span>' : '';
             document.getElementById('thread-title').innerHTML = prefixBadge(threadPrefixRaw) + escapeHtml(threadTitleRaw || 'Untitled') + pinBadge;
             document.getElementById('bcThreadTitle').textContent = threadTitleRaw || 'd1sc';
             document.getElementById('lockBanner').style.display = threadLocked ? 'block' : 'none';
+            document.title = (threadTitleRaw || 'Thread') + ' - 20Thousand Forums';
+            const watchBtn = document.getElementById('watchThreadBtn');
+            if (watchBtn) {
+                if (username) {
+                    watchBtn.style.display = 'inline-block';
+                    watchBtn.textContent = threadWatching ? 'Unwatch' : 'Watch';
+                    watchBtn.classList.toggle('active', threadWatching);
+                } else {
+                    watchBtn.style.display = 'none';
+                }
+            }
+        }
+
+        async function toggleWatchThread() {
+            if (!username) return showNotification('Login required to watch threads', '#dc2626');
+            try {
+                const res = await fetch('/api/threads/' + encodeURIComponent(threadId) + '/watch', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: username })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    threadWatching = !!data.watching;
+                    renderThreadHeader();
+                    showNotification(data.message, '#16a34a');
+                }
+            } catch (e) {}
+        }
+
+        function renderPoll() {
+            const container = document.getElementById('pollContainer');
+            if (!container) return;
+            if (!threadPoll) {
+                container.style.display = 'none';
+                container.innerHTML = '';
+                return;
+            }
+            container.style.display = 'block';
+            const p = threadPoll;
+            const hasVoted = Array.isArray(p.userVotes) && p.userVotes.length > 0;
+            const canVoteNow = username && !p.isClosed && (!hasVoted || (p.allow_change && pollChangeMode));
+            const inputType = p.multiple_choice ? 'checkbox' : 'radio';
+
+            let rowsHtml = '';
+            (p.options || []).forEach(function (opt) {
+                const isUserChoice = (p.userVotes || []).indexOf(String(opt.id)) !== -1;
+                const inputEl = canVoteNow
+                    ? '<input type="' + inputType + '" name="pollChoice" value="' + escapeHtml(opt.id) + '" ' + (isUserChoice ? 'checked' : '') + '>'
+                    : (isUserChoice ? '<span class="status-tag" style="color:#55a6f8;border-color:#2563eb;">Voted</span>' : '');
+                rowsHtml +=
+                    '<div class="xf-poll-row ' + (isUserChoice ? 'voted' : '') + '">' +
+                        '<label class="xf-poll-choice-label">' +
+                            inputEl +
+                            '<span>' + escapeHtml(opt.text) + '</span>' +
+                        '</label>' +
+                        '<div class="xf-poll-bar-wrap">' +
+                            '<div class="xf-poll-bar" style="width:' + Math.min(100, Math.max(0, opt.percentage || 0)) + '%;"></div>' +
+                        '</div>' +
+                        '<div class="xf-poll-stats">' +
+                            'Votes: <strong>' + (opt.votes || 0) + '</strong> (' + (opt.percentage || 0).toFixed(1) + '%)' +
+                        '</div>' +
+                    '</div>';
+            });
+
+            let closeText = '';
+            if (p.closes_at) {
+                closeText = (p.isClosed ? 'Poll closed ' : 'Closes ') + formatPostDate(p.closes_at);
+            } else {
+                closeText = p.multiple_choice ? 'Multiple choice allowed' : 'Single choice poll';
+            }
+
+            let actionBtns = '';
+            if (canVoteNow) {
+                actionBtns += '<button type="button" class="button" style="padding:4px 11px;font-size:12px;" onclick="submitPollVote()">Cast Vote</button>';
+                if (hasVoted && pollChangeMode) {
+                    actionBtns += ' <button type="button" class="button-secondary" style="padding:4px 9px;font-size:12px;" onclick="pollChangeMode=false;renderPoll();">Cancel</button>';
+                }
+            } else if (username && hasVoted && p.allow_change && !p.isClosed) {
+                actionBtns += '<button type="button" class="button-secondary" style="padding:4px 10px;font-size:12px;" onclick="pollChangeMode=true;renderPoll();">Change Vote</button>';
+            }
+
+            container.innerHTML =
+                '<div class="xf-poll">' +
+                    '<div class="xf-poll-header">' +
+                        '<span>' + SVG_POLL + ' ' + escapeHtml(p.question) + '</span>' +
+                        '<span style="font-size:11.5px;color:#8c98b3;font-weight:400;">' + escapeHtml(closeText) + '</span>' +
+                    '</div>' +
+                    rowsHtml +
+                    '<div class="xf-poll-footer">' +
+                        '<span>Total voters: <strong>' + (p.totalVoters || 0) + '</strong></span>' +
+                        '<div>' + actionBtns + '</div>' +
+                    '</div>' +
+                '</div>';
+        }
+
+        async function submitPollVote() {
+            if (!username) return showNotification('Login required to vote', '#dc2626');
+            const checked = Array.from(document.querySelectorAll('input[name="pollChoice"]:checked')).map(function (el) { return el.value; });
+            if (!checked.length) return showNotification('Select an option to vote', '#dc2626');
+            try {
+                const res = await fetch('/api/threads/' + encodeURIComponent(threadId) + '/poll/vote', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: username, optionIds: checked })
+                });
+                const data = await res.json();
+                if (data.success && data.poll) {
+                    threadPoll = data.poll;
+                    pollChangeMode = false;
+                    renderPoll();
+                    showNotification('Vote recorded', '#16a34a');
+                } else {
+                    showNotification(data.message || 'Vote failed', '#dc2626');
+                }
+            } catch (e) {}
         }
 
         async function checkStaffControls() {
@@ -1209,14 +1334,19 @@
             if (!isMod) {
                 const me = await fetchProfile(username);
                 const t = ((me && me.title) || '').toLowerCase();
-                isMod = t === 'owner' || t === 'moderator' || t === 'mod';
+                isMod = t === 'owner' || t === 'administrator' || t === 'admin' || t === 'moderator' || t === 'mod';
+            }
+            if (isMod && !isModUser) {
+                isModUser = true;
+                if (allFlatPosts.length) renderCurrentPage();
             }
             const ctrl = document.getElementById('staffControls');
             if (!isMod || !ctrl) return;
-            ctrl.style.display = 'block';
+            ctrl.style.display = 'inline-flex';
+            ctrl.style.gap = '4px';
             ctrl.innerHTML =
-                '<button class="action-btn" onclick="toggleLockThread()">' + (threadLocked ? 'Unlock Thread' : 'Lock Thread') + '</button> ' +
-                '<button class="action-btn" onclick="togglePinThread()">' + (threadPinned ? 'Unpin Thread' : 'Pin Thread') + '</button>';
+                '<button class="page-btn" onclick="toggleLockThread()">' + (threadLocked ? 'Unlock' : 'Lock') + '</button>' +
+                '<button class="page-btn" onclick="togglePinThread()">' + (threadPinned ? 'Unpin' : 'Pin') + '</button>';
         }
 
         async function toggleLockThread() {
@@ -1231,9 +1361,9 @@
                     threadLocked = !!data.locked;
                     renderThreadHeader();
                     checkStaffControls();
-                    showNotification(data.message, '#00cc66');
+                    showNotification(data.message, '#16a34a');
                 } else {
-                    showNotification(data.message || 'Failed', '#ff4444');
+                    showNotification(data.message || 'Failed', '#dc2626');
                 }
             } catch (e) {}
         }
@@ -1250,9 +1380,9 @@
                     threadPinned = data.pinned !== undefined ? !!data.pinned : !threadPinned;
                     renderThreadHeader();
                     checkStaffControls();
-                    showNotification(data.message, '#00cc66');
+                    showNotification(data.message, '#16a34a');
                 } else {
-                    showNotification(data.message || 'Failed', '#ff4444');
+                    showNotification(data.message || 'Failed', '#dc2626');
                 }
             } catch (e) {}
         }
@@ -1268,15 +1398,21 @@
                 threadPrefixRaw = data.prefix || '';
                 threadLocked = !!data.locked;
                 threadPinned = !!data.pinned;
+                threadWatching = !!data.watching;
+                threadPoll = data.poll || null;
                 threadCreator = data.creator || '';
                 renderThreadHeader();
-                document.getElementById('thread-creator').textContent = data.creator || 'Unknown';
+                renderPoll();
+                const creatorEl = document.getElementById('thread-creator');
+                creatorEl.textContent = data.creator || 'Unknown';
+                creatorEl.href = '/profile.html?user=' + encodeURIComponent(data.creator || '');
+                document.getElementById('thread-created-date').textContent = formatPostDate(data.created_at);
                 document.getElementById('thread-views').textContent = (data.views || 0) + ' views';
                 if (data.forum_id) {
                     const backEl = document.getElementById('backToBoardLink');
                     if (backEl) {
                         backEl.href = '/thread-list.html?id=' + encodeURIComponent(data.forum_id);
-                        backEl.textContent = 's1k/' + data.forum_id + '/';
+                        backEl.textContent = BOARD_NAMES[data.forum_id] || ('s1k/' + data.forum_id + '/');
                     }
                 }
                 if (allFlatPosts.length) renderCurrentPage();
@@ -1304,7 +1440,7 @@
         function formatShortJoin(d) {
             if (!d) return 'N/A';
             try {
-                return new Date(d).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
             } catch (e) {
                 return 'N/A';
             }
@@ -1390,7 +1526,7 @@
                     '</a>' +
                 '</div>' +
                 '<div class="xf-quote-content">' +
-                    (qBody || '<span>(media attachment)</span>') +
+                    (qBody || '<span>(attachment)</span>') +
                     '<div class="xf-quote-expand" onclick="expandQuote(this)">Click to expand...</div>' +
                 '</div>' +
             '</div>';
@@ -1413,9 +1549,26 @@
             el.classList.add('post-highlight');
         }
 
+        function jumpToLatestPost() {
+            if (!allFlatPosts.length) return;
+            const last = allFlatPosts[allFlatPosts.length - 1];
+            if (last) jumpToPost(last.id);
+        }
+
+        function copyPostLink(postId) {
+            const url = window.location.origin + window.location.pathname + '?id=' + encodeURIComponent(threadId) + '#post-' + encodeURIComponent(postId);
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(url).then(function () {
+                    showNotification('Post link copied to clipboard', '#16a34a');
+                }).catch(function () {});
+            } else {
+                window.location.hash = 'post-' + postId;
+            }
+        }
+
         function renderReactionsBar(postId, reactions) {
             const list = Array.isArray(reactions) ? reactions : [];
-            if (!list.length) return '<span id="rx-summary-' + escapeHtml(postId) + '"></span>';
+            if (!list.length) return '<span id="rx-summary-' + escapeHtml(postId) + '" style="display:none;"></span>';
             const keys = [];
             list.forEach(function (r) {
                 const k = REACTION_SVGS[r.reaction] ? r.reaction : 'like';
@@ -1424,10 +1577,10 @@
             const iconsHtml = keys.map(function (k) { return REACTION_SVGS[k]; }).join('');
             const names = list.slice(0, 3).map(function (r) { return escapeHtml(r.user_id); });
             const extra = list.length > 3 ? ' and ' + (list.length - 3) + ' others' : '';
-            return '<span id="rx-summary-' + escapeHtml(postId) + '" class="reaction-summary">' +
+            return '<div id="rx-summary-' + escapeHtml(postId) + '" class="reaction-summary">' +
                 '<span class="rx-icon-group">' + iconsHtml + '</span> ' +
                 '<span>' + names.join(', ') + extra + '</span>' +
-            '</span>';
+            '</div>';
         }
 
         function toggleReactionPicker(postId, ev) {
@@ -1440,7 +1593,7 @@
         }
 
         async function reactToPost(postId, reaction) {
-            if (!username) return showNotification('Login required to react', '#ff4444');
+            if (!username) return showNotification('Login required to react', '#dc2626');
             const picker = document.getElementById('rx-picker-' + postId);
             if (picker) picker.classList.remove('open');
             try {
@@ -1461,20 +1614,22 @@
             const topEl = document.getElementById('paginationTop');
             const botEl = document.getElementById('paginationBottom');
             if (totalPages <= 1) {
-                topEl.style.display = 'none';
-                botEl.style.display = 'none';
+                topEl.innerHTML = '';
+                botEl.innerHTML = '';
                 return;
             }
-            let btns = '<button class="page-btn" ' + (currentPage <= 1 ? 'disabled' : 'onclick="goToPage(' + (currentPage - 1) + ')"') + '>‹ Prev</button>';
+            let btns = '';
+            if (currentPage > 1) {
+                btns += '<button class="page-btn" onclick="goToPage(' + (currentPage - 1) + ')">‹ Prev</button>';
+            }
             for (let p = 1; p <= totalPages; p++) {
                 btns += '<button class="page-btn ' + (p === currentPage ? 'active' : '') + '" onclick="goToPage(' + p + ')">' + p + '</button>';
             }
-            btns += '<button class="page-btn" ' + (currentPage >= totalPages ? 'disabled' : 'onclick="goToPage(' + (currentPage + 1) + ')"') + '>Next ›</button>';
-            const barHtml = '<div style="font-size:0.88em;color:#c5d4eb;">Page <strong>' + currentPage + '</strong> of <strong>' + totalPages + '</strong></div><div class="page-buttons">' + btns + '</div>';
-            topEl.innerHTML = barHtml;
-            botEl.innerHTML = barHtml;
-            topEl.style.display = 'flex';
-            botEl.style.display = 'flex';
+            if (currentPage < totalPages) {
+                btns += '<button class="page-btn" onclick="goToPage(' + (currentPage + 1) + ')">Next ›</button>';
+            }
+            topEl.innerHTML = btns;
+            botEl.innerHTML = btns;
         }
 
         function goToPage(page) {
@@ -1484,9 +1639,117 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
+        function revealIgnoredPost(postId) {
+            revealedPostsSet.add(String(postId));
+            renderCurrentPage();
+        }
+
+        function isInQuoteQueue(postId) {
+            return quoteQueue.some(function (q) { return String(q.id) === String(postId); });
+        }
+
+        function toggleMultiQuote(postId) {
+            const p = postsMap[postId];
+            if (!p) return;
+            const idx = quoteQueue.findIndex(function (q) { return String(q.id) === String(postId); });
+            if (idx !== -1) {
+                quoteQueue.splice(idx, 1);
+                showNotification('Removed post from multi-quote queue', '#2563eb');
+            } else {
+                quoteQueue.push({
+                    id: p.id,
+                    user_id: p.user_id,
+                    content: p.content || ''
+                });
+                showNotification('Added post to multi-quote queue (' + quoteQueue.length + ')', '#16a34a');
+            }
+            renderMultiQuoteQueue();
+            renderCurrentPage();
+        }
+
+        function removeQueuedQuote(postId) {
+            quoteQueue = quoteQueue.filter(function (q) { return String(q.id) !== String(postId); });
+            renderMultiQuoteQueue();
+            renderCurrentPage();
+        }
+
+        function clearQuoteQueue() {
+            quoteQueue = [];
+            renderMultiQuoteQueue();
+            renderCurrentPage();
+        }
+
+        function renderMultiQuoteQueue() {
+            const box = document.getElementById('multiQuoteQueueBox');
+            const btn = document.getElementById('insertQuotesBtn');
+            const countSpan = document.getElementById('quoteQueueCount');
+            if (countSpan) countSpan.textContent = String(quoteQueue.length);
+            if (!quoteQueue.length) {
+                if (box) {
+                    box.style.display = 'none';
+                    box.innerHTML = '';
+                }
+                if (btn) btn.style.display = 'none';
+                return;
+            }
+            if (btn) btn.style.display = 'inline-block';
+            if (box) {
+                box.style.display = 'block';
+                const pills = quoteQueue.map(function (q) {
+                    const jsId = String(q.id).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                    return '<span style="display:inline-flex;align-items:center;gap:5px;background:#202738;border:1px solid #2d364d;border-radius:2px;padding:2px 7px;margin:2px 4px 2px 0;font-size:11.5px;color:#d6deeb;">' +
+                        '<span>' + escapeHtml(q.user_id) + '</span>' +
+                        '<a href="#" onclick="removeQueuedQuote(\'' + jsId + '\');return false;" style="color:#f87171;font-weight:700;" title="Remove quote">x</a>' +
+                    '</span>';
+                }).join('');
+                box.innerHTML =
+                    '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;">' +
+                        '<div><strong style="color:#edf2f7;">Queued Quotes (' + quoteQueue.length + '):</strong> ' + pills + '</div>' +
+                        '<div style="display:flex;gap:6px;">' +
+                            '<button type="button" class="button" style="padding:3px 9px;font-size:11.5px;" onclick="insertQueuedQuotes()">Insert Quotes</button>' +
+                            '<button type="button" class="button-secondary" style="padding:3px 8px;font-size:11.5px;" onclick="clearQuoteQueue()">Clear</button>' +
+                        '</div>' +
+                    '</div>';
+            }
+        }
+
+        function insertQueuedQuotes() {
+            if (!quoteQueue.length) return;
+            const box = document.getElementById('postContent');
+            if (!box) return;
+            const blocks = quoteQueue.map(function (q) {
+                return '[quote="' + q.user_id + ', post: ' + q.id + '"]' + (q.content || '').trim() + '[/quote]';
+            }).join('\n\n');
+            box.value = (box.value ? box.value.trim() + '\n\n' : '') + blocks + '\n\n';
+            quoteQueue = [];
+            renderMultiQuoteQueue();
+            renderCurrentPage();
+            box.focus();
+            box.setSelectionRange(box.value.length, box.value.length);
+        }
+
+        async function toggleBookmarkPost(postId) {
+            if (!username) return showNotification('Login required to bookmark posts', '#dc2626');
+            try {
+                const res = await fetch('/api/bookmarks/toggle', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: username, postId: postId })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    if (postsMap[postId]) {
+                        postsMap[postId].bookmarked = !!data.bookmarked;
+                    }
+                    renderCurrentPage();
+                    showNotification(data.message, '#16a34a');
+                }
+            } catch (e) {}
+        }
+
         function renderCurrentPage() {
             if (!allFlatPosts.length) {
-                document.getElementById('postsList').innerHTML = '<p>No posts yet.</p>';
+                document.getElementById('postsList').innerHTML = '<div style="padding:18px;color:#8c98b3;">No posts yet.</div>';
                 renderPaginationControls(1);
                 return;
             }
@@ -1500,49 +1763,78 @@
 
             pagePosts.forEach(function (p, idx) {
                 const globalIdx = startIdx + idx;
-                const isFirstPost = globalIdx === 0;
-                const isOpAuthor = (threadCreator && p.user_id === threadCreator) || isFirstPost;
-                const cls = isFirstPost ? 'original-post post' : 'reply-post post';
-                const canEdit = username && (username === p.user_id || username === '20k');
+                const isOpAuthor = (threadCreator && p.user_id === threadCreator) || globalIdx === 0;
+                const canEdit = username && (username === p.user_id || username === '20k' || isModUser);
                 const files = p.fileUrls && p.fileUrls.length ? p.fileUrls : (p.fileUrl ? [p.fileUrl] : []);
                 const safeUser = escapeHtml(p.user_id);
                 const jsUser = String(p.user_id || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
                 const jsPostId = String(p.id || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
                 const postNum = globalIdx + 1;
+
+                if (ignoredUsersSet.has(p.user_id) && !revealedPostsSet.has(String(p.id))) {
+                    html += '<article class="message" id="post-' + escapeHtml(p.id) + '" style="margin-bottom:8px;">' +
+                        '<div class="ignored-notice" style="width:100%;border:none;margin:0;">' +
+                            '<span>You are ignoring content by this member (' + safeUser + ').</span>' +
+                            '<a href="#post-' + escapeHtml(p.id) + '" onclick="revealIgnoredPost(\'' + jsPostId + '\'); return false;">Show content</a>' +
+                        '</div>' +
+                    '</article>';
+                    return;
+                }
+
                 const quoteHtml = p.parent_id ? renderQuoteBlock(p.replyTo, p.parent_id) : '';
                 const roleTitle = p.userTitle || (p.user_id === '20k' ? 'Owner' : 'Member');
-                const roleColor = ROLE_COLORS[roleTitle.toLowerCase()] || '#0165fc';
+                const rClass = roleClass(p.userRoleTitle || roleTitle);
+                const starCount = Math.min(5, Math.max(1, Number(p.userStars) || 1));
                 const myReaction = (p.reactions || []).find(function (r) { return r.user_id === username; });
                 const myRxKey = myReaction && REACTION_SVGS[myReaction.reaction] ? myReaction.reaction : 'like';
                 const reactBtnLabel = myReaction
                     ? REACTION_SVGS[myRxKey] + ' ' + (REACTION_NAMES[myRxKey] || 'Liked')
                     : REACTION_SVGS.like + ' Like';
+                const isQuoted = isInQuoteQueue(p.id);
+                const pmIconHtml = (username && username !== p.user_id)
+                    ? ' <a href="/inbox.html?to=' + encodeURIComponent(p.user_id) + '" title="Start conversation with ' + safeUser + '" style="color:#8c98b3;vertical-align:middle;">' + SVG_ENVELOPE + '</a>'
+                    : '';
+                const customTitleHtml = p.userCustomTitle
+                    ? '<div class="user-title-line" style="color:#d6deeb;font-weight:500;">' + escapeHtml(p.userCustomTitle) + '</div>'
+                    : '';
 
-                html += '<div class="' + cls + '" id="post-' + p.id + '">';
-                html += '<div class="post-sidebar">' +
-                    '<div class="avatar-wrap" style="margin-bottom:8px;">' +
-                        '<img class="user-pfp" src="' + escapeHtml(p.pfp || 'https://i.imgur.com/oJCfWc8.png') + '" alt="">' +
+                html += '<article class="message" id="post-' + escapeHtml(p.id) + '">';
+                html += '<div class="message-cell-user">' +
+                    '<div class="message-avatar-wrap">' +
+                        '<a href="/profile.html?user=' + encodeURIComponent(p.user_id) + '">' +
+                            '<img class="user-pfp" src="' + escapeHtml(p.pfp || 'https://i.imgur.com/oJCfWc8.png') + '" alt="">' +
+                        '</a>' +
                         (p.userOnline ? '<span class="online-dot" title="Online now"></span>' : '') +
                     '</div>' +
                     '<div>' +
-                        '<a class="username-link" href="/profile.html?user=' + encodeURIComponent(p.user_id) + '" ' +
+                        '<a class="username-link ' + rClass + '" href="/profile.html?user=' + encodeURIComponent(p.user_id) + '" ' +
                         'onmouseenter="showProfileHover(\'' + jsUser + '\', event)" onmouseleave="hideProfileHover()">' + safeUser + '</a>' +
-                        '<div class="postbit-badges">' +
-                            '<span class="postbit-role" style="background:' + roleColor + ';">' + escapeHtml(roleTitle) + '</span>' +
-                            (isOpAuthor ? '<span class="op-badge" title="Thread Starter">OP</span>' : '') +
+                        pmIconHtml +
+                        customTitleHtml +
+                        '<div class="user-title-line">' + escapeHtml(roleTitle) + (isOpAuthor ? ' · OP' : '') + '</div>' +
+                        '<div class="user-rank-stars">' +
+                            SVG_STAR.repeat(starCount) +
                         '</div>' +
                     '</div>' +
                     '<div class="postbit-stats">' +
-                        '<div>Posts: <strong>' + (p.userPostCount || 1) + '</strong></div>' +
-                        '<div>Reactions: <strong>' + (p.userReactions || 0) + '</strong></div>' +
-                        '<div>Joined: <strong>' + escapeHtml(formatShortJoin(p.userJoined || p.created_at)) + '</strong></div>' +
+                        '<dl class="pairs-justified"><dt>Joined:</dt><dd>' + escapeHtml(formatShortJoin(p.userJoined || p.created_at)) + '</dd></dl>' +
+                        '<dl class="pairs-justified"><dt>Posts:</dt><dd>' + (p.userPostCount || 1) + '</dd></dl>' +
+                        '<dl class="pairs-justified"><dt>Reactions:</dt><dd>' + (p.userReactions || 0) + '</dd></dl>' +
                     '</div>' +
                 '</div>';
 
-                html += '<div class="post-main">';
-                html += '<div class="post-meta-bar">' +
-                    '<span>' + escapeHtml(formatPostDate(p.created_at)) + (isFirstPost ? ' · <strong style="color:#fffd01;">Original Post</strong>' : '') + '</span>' +
-                    '<a class="post-num" href="#post-' + escapeHtml(p.id) + '" onclick="jumpToPost(\'' + jsPostId + '\'); return false;">#' + postNum + '</a>' +
+                const bookmarkHtml = username
+                    ? '<a href="#post-' + escapeHtml(p.id) + '" onclick="toggleBookmarkPost(\'' + jsPostId + '\'); return false;" title="' + (p.bookmarked ? 'Remove bookmark' : 'Bookmark post') + '" style="color:' + (p.bookmarked ? '#3b82f6' : '#8c98b3') + ';">' + SVG_BOOKMARK + '</a>'
+                    : '';
+
+                html += '<div class="message-cell-main">';
+                html += '<div class="message-attribution">' +
+                    '<span>' + escapeHtml(formatPostDate(p.created_at)) + '</span>' +
+                    '<div class="message-attribution-right">' +
+                        '<a href="#post-' + escapeHtml(p.id) + '" onclick="copyPostLink(\'' + jsPostId + '\'); return false;" title="Copy link to post">' + SVG_SHARE + '</a>' +
+                        bookmarkHtml +
+                        '<a href="#post-' + escapeHtml(p.id) + '" onclick="jumpToPost(\'' + jsPostId + '\'); return false;">#' + postNum + '</a>' +
+                    '</div>' +
                 '</div>';
                 html += '<div class="post-body">' + quoteHtml + formatContent(p.content) + renderMediaFiles(files, p.content) + '</div>';
 
@@ -1553,41 +1845,60 @@
                     html += '<div class="post-signature">' + formatContent(p.userSignature) + '</div>';
                 }
 
-                html += '<div class="post-footer">' +
-                    renderReactionsBar(p.id, p.reactions) +
-                    '<div class="post-actions">';
+                html += renderReactionsBar(p.id, p.reactions);
+
+                html += '<div class="message-action-bar">';
+                html += '<div class="action-bar-set">';
                 if (username) {
-                    html += '<div class="reaction-picker" id="rx-picker-' + p.id + '" onclick="event.stopPropagation();">' +
+                    html += '<button type="button" class="action-link" onclick="openReportModal(\'' + jsPostId + '\')">' + SVG_REPORT + ' Report</button>';
+                }
+                if (isModUser && p.user_id !== '20k') {
+                    html += '<button type="button" class="action-link" onclick="openWarnModal(\'' + jsPostId + '\',\'' + jsUser + '\')" style="color:#f59e0b;">Warn</button>';
+                }
+                if (canEdit) {
+                    html += '<button type="button" class="action-link" onclick="editPost(\'' + jsPostId + '\')">Edit</button>';
+                    html += '<button type="button" class="action-link" onclick="openDeleteModal(\'' + jsPostId + '\')">Delete</button>';
+                }
+                html += '</div>';
+
+                html += '<div class="action-bar-set">';
+                if (username) {
+                    html += '<div class="reaction-picker" id="rx-picker-' + escapeHtml(p.id) + '" onclick="event.stopPropagation();">' +
                         '<button type="button" onclick="reactToPost(\'' + jsPostId + '\',\'like\')" title="Like">' + REACTION_SVGS.like + ' Like</button>' +
                         '<button type="button" onclick="reactToPost(\'' + jsPostId + '\',\'love\')" title="Love">' + REACTION_SVGS.love + ' Love</button>' +
                         '<button type="button" onclick="reactToPost(\'' + jsPostId + '\',\'haha\')" title="Haha">' + REACTION_SVGS.haha + ' Haha</button>' +
                         '<button type="button" onclick="reactToPost(\'' + jsPostId + '\',\'fire\')" title="Fire">' + REACTION_SVGS.fire + ' Fire</button>' +
                         '<button type="button" onclick="reactToPost(\'' + jsPostId + '\',\'skull\')" title="Skull">' + REACTION_SVGS.skull + ' Skull</button>' +
                     '</div>';
-                    html += '<button type="button" class="action-btn ' + (myReaction ? 'active' : '') + '" onclick="toggleReactionPicker(\'' + jsPostId + '\', event)">' + reactBtnLabel + '</button>';
-                    html += '<button type="button" class="action-btn" onclick="setReply(\'' + jsPostId + '\',\'' + jsUser + '\')">Reply</button>';
+                    html += '<button type="button" class="action-link ' + (myReaction ? 'active' : '') + '" onclick="toggleReactionPicker(\'' + jsPostId + '\', event)">' + reactBtnLabel + '</button>';
+                    html += '<button type="button" class="action-link ' + (isQuoted ? 'active' : '') + '" onclick="toggleMultiQuote(\'' + jsPostId + '\')">' + (isQuoted ? '-Quote' : '+Quote') + '</button>';
+                    html += '<button type="button" class="action-link" onclick="setReply(\'' + jsPostId + '\',\'' + jsUser + '\')">' + SVG_REPLY + ' Reply</button>';
                 }
-                html += '</div></div>';
-
-                if (canEdit || username) {
-                    html += '<button class="menu-btn" onclick="event.stopPropagation();toggleMenu(\'' + jsPostId + '\')">⋮</button>';
-                    html += '<div class="dropdown-menu" id="menu-' + p.id + '">';
-                    if (canEdit) {
-                        html += '<button onclick="editPost(\'' + jsPostId + '\')">Edit</button>';
-                        html += '<button onclick="openDeleteModal(\'' + jsPostId + '\')">Delete</button>';
-                    }
-                    html += '<button onclick="openReportModal(\'' + jsPostId + '\')">Report</button></div>';
-                }
-                html += '</div></div>';
+                html += '</div>';
+                html += '</div>';
+                html += '</div></article>';
             });
 
             document.getElementById('postsList').innerHTML = html;
             initCollapsibleQuotes();
         }
 
+        async function loadIgnoredUsers() {
+            if (!username) return;
+            try {
+                const res = await fetch('/api/ignores?username=' + encodeURIComponent(username));
+                const list = await res.json();
+                if (Array.isArray(list)) {
+                    ignoredUsersSet = new Set(list.map(function (i) { return i.username; }));
+                }
+            } catch (e) {}
+        }
+
         async function loadPosts(jumpToLastPage) {
             try {
-                const res = await fetch('/api/threads/' + encodeURIComponent(threadId) + '/posts');
+                await loadIgnoredUsers();
+                const url = '/api/threads/' + encodeURIComponent(threadId) + '/posts' + (username ? '?username=' + encodeURIComponent(username) : '');
+                const res = await fetch(url);
                 const posts = await res.json();
                 allFlatPosts = flattenPosts(posts);
                 if (jumpToLastPage) {
@@ -1599,19 +1910,11 @@
                     setTimeout(function () { jumpToPost(targetId); }, 100);
                 }
             } catch (e) {
-                document.getElementById('postsList').innerHTML = '<p>Failed to load posts.</p>';
+                document.getElementById('postsList').innerHTML = '<div style="padding:18px;color:#8c98b3;">Failed to load posts.</div>';
             }
         }
 
-        function toggleMenu(id) {
-            document.querySelectorAll('.dropdown-menu').forEach(function (m) {
-                if (m.id !== 'menu-' + id) m.style.display = 'none';
-            });
-            const el = document.getElementById('menu-' + id);
-            if (el) el.style.display = el.style.display === 'block' ? 'none' : 'block';
-        }
         document.addEventListener('click', function () {
-            document.querySelectorAll('.dropdown-menu').forEach(function (m) { m.style.display = 'none'; });
             document.querySelectorAll('.reaction-picker').forEach(function (p) { p.classList.remove('open'); });
         });
 
@@ -1621,20 +1924,30 @@
             const quoted = postsMap[parentId];
             const previewText = quoted && quoted.content
                 ? escapeHtml(quoted.content.length > 180 ? quoted.content.slice(0, 180) + '...' : quoted.content)
-                : '(media attachment)';
+                : '(attachment)';
             t.style.display = 'block';
             t.innerHTML =
-                '<div class="xf-quote" style="margin:0 0 8px 0;">' +
+                '<div class="xf-quote" style="margin:0;">' +
                     '<div class="xf-quote-header">' +
                         '<span>' + escapeHtml(user) + ' said: <span class="xf-quote-arrow">↑</span></span>' +
-                        '<span style="color:#ff8080;cursor:pointer;font-weight:bold;" onclick="cancelReply()">[cancel]</span>' +
+                        '<span style="color:#f87171;cursor:pointer;font-weight:600;" onclick="cancelReply()">[Remove]</span>' +
                     '</div>' +
-                    '<div class="xf-quote-content" style="padding:6px 12px;font-size:0.88em;">' + previewText + '</div>' +
+                    '<div class="xf-quote-content" style="padding:6px 12px;font-size:12.5px;">' + previewText + '</div>' +
                 '</div>';
             document.getElementById('cancelReplyBtn').style.display = 'inline-block';
+            const box = document.getElementById('postContent');
+            if (box && quoted && quoted.content) {
+                const quoteTag = '[quote="' + user + ', post: ' + parentId + '"]' + quoted.content.trim() + '[/quote]';
+                if (box.value.indexOf('post: ' + parentId + '"]') === -1) {
+                    box.value = (box.value ? box.value.trim() + '\n\n' : '') + quoteTag + '\n\n';
+                }
+            }
             const replyBox = document.getElementById('replyBox');
             if (replyBox) replyBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            document.getElementById('postContent').focus();
+            if (box) {
+                box.focus();
+                box.setSelectionRange(box.value.length, box.value.length);
+            }
         }
         function cancelReply() {
             replyParentId = null;
@@ -1694,15 +2007,15 @@
             renderMediaPreviews();
             status.textContent = uploadedUrls.length
                 ? uploadedUrls.length + ' attachment(s) ready'
-                : 'Upload failed (check Cloudinary keys)';
+                : 'Upload failed';
         });
 
         document.getElementById('replyForm').addEventListener('submit', async function (e) {
             e.preventDefault();
-            if (!username) return showNotification('Login required', '#ff4444');
+            if (!username) return showNotification('Login required', '#dc2626');
             const content = document.getElementById('postContent').value.trim();
             if (!content && !uploadedUrls.length) {
-                return showNotification('Add some words to post the reply!', '#ff4444');
+                return showNotification('Enter a message before posting', '#dc2626');
             }
             try {
                 const res = await fetch('/api/posts', {
@@ -1718,7 +2031,7 @@
                 });
                 const data = await res.json();
                 if (!data.success) {
-                    showNotification(data.message || 'Failed', '#ff4444');
+                    showNotification(data.message || 'Failed', '#dc2626');
                     return;
                 }
                 document.getElementById('postContent').value = '';
@@ -1729,7 +2042,7 @@
                 cancelReply();
                 loadPosts(true);
             } catch (err) {
-                showNotification('Server error', '#ff4444');
+                showNotification('Server error', '#dc2626');
             }
         });
 
@@ -1782,14 +2095,113 @@
         }
         async function submitReport() {
             const reason = document.getElementById('reportReason').value.trim();
-            if (!reason) return showNotification('Enter a reason', '#ff4444');
+            if (!reason) return showNotification('Enter a reason', '#dc2626');
             await fetch('/api/report', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ post_id: currentReportId, reported_by: username, reason: reason })
             });
             closeReportModal();
-            showNotification('Report submitted', '#00cc66');
+            showNotification('Report submitted', '#16a34a');
+        }
+
+        function onWarnRuleChange() {
+            const sel = document.getElementById('warnRuleSelect');
+            const pts = document.getElementById('warnPointsInput');
+            if (!sel || !pts) return;
+            const opt = sel.options[sel.selectedIndex];
+            const defaultPts = opt && opt.getAttribute('data-pts');
+            if (defaultPts) pts.value = defaultPts;
+        }
+
+        function openWarnModal(postId, targetUser) {
+            currentWarnPostId = postId;
+            currentWarnTargetUser = targetUser;
+            const label = document.getElementById('warnTargetLabel');
+            if (label) label.textContent = 'Target member: ' + targetUser + ' (Post #' + postId.slice(0, 8) + ')';
+            document.getElementById('warnReasonInput').value = '';
+            document.getElementById('warnExpiresInput').value = '';
+            document.getElementById('warnModal').style.display = 'flex';
+        }
+
+        function closeWarnModal() {
+            currentWarnPostId = null;
+            currentWarnTargetUser = null;
+            document.getElementById('warnModal').style.display = 'none';
+        }
+
+        async function submitWarning() {
+            if (!currentWarnTargetUser) return;
+            const rule = document.getElementById('warnRuleSelect').value;
+            const points = Number(document.getElementById('warnPointsInput').value) || 1;
+            const reason = document.getElementById('warnReasonInput').value.trim();
+            const expires_at = document.getElementById('warnExpiresInput').value || null;
+            try {
+                const res = await fetch('/api/warnings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        moderator: username,
+                        user_id: currentWarnTargetUser,
+                        post_id: currentWarnPostId,
+                        rule: rule,
+                        points: points,
+                        reason: reason,
+                        expires_at: expires_at
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    closeWarnModal();
+                    showNotification('Warning issued (' + data.activePoints + ' active pts)', '#16a34a');
+                } else {
+                    showNotification(data.message || 'Failed to issue warning', '#dc2626');
+                }
+            } catch (e) {
+                showNotification('Server error', '#dc2626');
+            }
+        }
+
+        function getGuestSessionKey() {
+            let key = localStorage.getItem('xf_guest_sid');
+            if (!key) {
+                key = 'guest_' + Math.random().toString(36).slice(2, 10) + '_' + Date.now().toString(36);
+                localStorage.setItem('xf_guest_sid', key);
+            }
+            return key;
+        }
+
+        async function sendHeartbeatAndLoadViewers() {
+            if (!threadId) return;
+            try {
+                const res = await fetch('/api/heartbeat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: username || null,
+                        sessionKey: getGuestSessionKey(),
+                        locationType: 'thread',
+                        locationId: threadId
+                    })
+                });
+                const data = await res.json();
+                if (data && data.success) {
+                    const countEl = document.getElementById('threadViewersCount');
+                    const listEl = document.getElementById('threadViewersList');
+                    if (countEl) {
+                        countEl.textContent = '(Members: ' + (data.memberCount || 0) + ', Guests: ' + (data.guests || 0) + ')';
+                    }
+                    if (listEl) {
+                        if (data.members && data.members.length) {
+                            listEl.innerHTML = data.members.map(function (u) {
+                                return '<a href="/profile.html?user=' + encodeURIComponent(u) + '">' + escapeHtml(u) + '</a>';
+                            }).join(', ');
+                        } else {
+                            listEl.textContent = data.guests > 0 ? 'No registered members (Guests browsing)' : 'None';
+                        }
+                    }
+                }
+            } catch (e) {}
         }
 
         async function checkBan() {
@@ -1811,11 +2223,19 @@
                 if (!res.ok) return;
                 const data = await res.json();
                 const badge = document.getElementById('alert-badge');
-                if (!badge) return;
-                if (data.unread > 0) {
-                    badge.style.display = 'inline';
-                    badge.textContent = data.unread > 99 ? '99+' : data.unread;
-                } else badge.style.display = 'none';
+                if (badge) {
+                    if (data.unread > 0) {
+                        badge.style.display = 'inline';
+                        badge.textContent = data.unread > 99 ? '99+' : data.unread;
+                    } else badge.style.display = 'none';
+                }
+                const inboxBadge = document.getElementById('inbox-badge');
+                if (inboxBadge) {
+                    if (data.unreadInbox > 0) {
+                        inboxBadge.style.display = 'inline';
+                        inboxBadge.textContent = data.unreadInbox > 99 ? '99+' : data.unreadInbox;
+                    } else inboxBadge.style.display = 'none';
+                }
             } catch (e) {}
         }
 
@@ -1823,8 +2243,10 @@
         loadPosts();
         checkBan();
         loadAlertBadge();
+        sendHeartbeatAndLoadViewers();
         setInterval(checkBan, 8000);
         setInterval(loadAlertBadge, 15000);
+        setInterval(sendHeartbeatAndLoadViewers, 25000);
     </script>
 </body>
 </html>

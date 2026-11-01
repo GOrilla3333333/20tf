@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversations - 20Thousand Forums</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="icon" type="image/png" href="https://i.imgur.com/oJCfWc8.png">
+    <style>
+        .convo-item {
+            display: grid;
+            grid-template-columns: 44px minmax(0, 1fr) 110px 180px;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            border-bottom: 1px solid #293247;
+            background: #202738;
+        }
+        .convo-item:last-child {
+            border-bottom: none;
+        }
+        .convo-item:hover {
+            background: #242c3f;
+        }
+        .convo-item.unread {
+            background: #252e44;
+        }
+        .convo-title {
+            color: #eceff4;
+            font-weight: 700;
+            font-size: 14px;
+            text-decoration: none;
+        }
+        .convo-title:hover {
+            color: #55a6f8;
+            text-decoration: underline;
+        }
+        .convo-minor {
+            font-size: 12px;
+            color: #8c98b3;
+            margin-top: 2px;
+        }
+        .convo-composer {
+            display: none;
+            background: #202738;
+            border: 1px solid #2d364d;
+            border-radius: 3px;
+            margin-bottom: 16px;
+            overflow: hidden;
+        }
+        .convo-composer.open {
+            display: block;
+        }
+        .convo-msg {
+            display: grid;
+            grid-template-columns: 160px minmax(0, 1fr);
+            background: #202738;
+            border: 1px solid #2d364d;
+            border-radius: 2px;
+            margin-bottom: 10px;
+        }
+        .convo-msg-user {
+            background: #1b2232;
+            border-right: 1px solid #293247;
+            padding: 12px 10px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+        .convo-msg-user img {
+            width: 68px;
+            height: 68px;
+            border-radius: 2px;
+            border: 1px solid #2d364d;
+            object-fit: cover;
+        }
+        .convo-msg-main {
+            padding: 10px 14px;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+        .convo-msg-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11.5px;
+            color: #77839e;
+            padding-bottom: 6px;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #293247;
+        }
+        .convo-msg-body {
+            color: #e5e9f0;
+            font-size: 13.5px;
+            line-height: 1.52;
+            word-break: break-word;
+        }
+        @media (max-width: 720px) {
+            .convo-item {
+                grid-template-columns: 40px minmax(0, 1fr);
+            }
+            .convo-msg {
+                grid-template-columns: 1fr;
+            }
+            .convo-msg-user {
+                flex-direction: row;
+                border-right: none;
+                border-bottom: 1px solid #293247;
+                text-align: left;
+            }
+            .convo-msg-user img {
+                width: 40px;
+                height: 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-inner">
+            <img src="https://i.imgur.com/oJCfWc8.png" class="logo" alt="Logo" onclick="window.location.href='/'">
+            <h1 onclick="window.location.href='/'">20Thousand Forums</h1>
+        </div>
+    </header>
+
+    <nav>
+        <a href="/">Home</a>
+        <a href="/forums">Boards</a>
+        <a href="/members.html">Members</a>
+        <a href="/watched.html">Watched</a>
+        <a href="/bookmarks.html">Bookmarks</a>
+        <a href="/search.html">Search</a>
+        <a href="/inbox.html" class="active">Inbox <span id="inbox-badge" class="nav-badge" style="display:none;">0</span></a>
+        <a href="/alerts.html">Alerts <span id="alert-badge" class="nav-badge" style="display:none;">0</span></a>
+        <span id="user-nav"></span>
+        <form action="/search.html" method="get" class="nav-search">
+            <input name="q" placeholder="Search...">
+            <button type="submit">Search</button>
+        </form>
+    </nav>
+
+    <div class="container">
+        <div class="breadcrumbs">
+            <a href="/">Home</a>
+            <span class="bc-sep">›</span>
+            <a href="/inbox.html">Conversations</a>
+            <span class="bc-sep" id="bcConvoSep" style="display:none;">›</span>
+            <span class="bc-current" id="bcConvoTitle" style="display:none;"></span>
+        </div>
+
+        <div id="inboxListView">
+            <div class="p-body-header">
+                <div>
+                    <h2 class="p-title-value">Private Conversations</h2>
+                    <p class="p-description">Direct 1-on-1 conversations with other community members.</p>
+                </div>
+                <div>
+                    <button type="button" class="button" onclick="toggleConvoComposer()">Start Conversation</button>
+                </div>
+            </div>
+
+            <div class="convo-composer" id="convoComposerBox">
+                <div class="xf-block-header">
+                    <span>Start a New Conversation</span>
+                    <button type="button" class="button-secondary" onclick="toggleConvoComposer()">Close</button>
+                </div>
+                <div class="xf-block-body">
+                    <form id="startConvoForm">
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+                            <input type="text" id="convoRecipient" placeholder="Recipient username..." style="width:220px;" required>
+                            <input type="text" id="convoTitleInput" placeholder="Conversation title..." style="flex:1;min-width:220px;" required>
+                        </div>
+                        <textarea id="convoBodyInput" rows="4" style="width:100%;margin-bottom:8px;" placeholder="Write your message..." required></textarea>
+                        <div style="text-align:right;">
+                            <button type="submit" class="button">Start Conversation</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="xf-block" id="conversationsList">
+                <div style="padding:18px;color:#8c98b3;">Loading conversations...</div>
+            </div>
+        </div>
+
+        <div id="convoDetailView" style="display:none;">
+            <div class="p-body-header">
+                <div>
+                    <h2 class="p-title-value" id="detailConvoTitle">Conversation</h2>
+                    <p class="p-description" id="detailConvoParticipants"></p>
+                </div>
+                <div style="display:flex;gap:6px;">
+                    <a href="/inbox.html" class="button-secondary" style="text-decoration:none;">‹ Back to Inbox</a>
+                    <button type="button" class="button-secondary" style="color:#f87171;border-color:#5c2833;" onclick="leaveCurrentConversation()">Leave Conversation</button>
+                </div>
+            </div>
+
+            <div id="convoMessagesList"></div>
+
+            <div class="xf-block" style="margin-top:12px;">
+                <div class="xf-block-header">Write a Reply</div>
+                <div class="xf-block-body">
+                    <form id="convoReplyForm">
+                        <textarea id="convoReplyInput" rows="4" style="width:100%;margin-bottom:8px;" placeholder="Write your reply..." required></textarea>
+                        <div style="text-align:right;">
+                            <button type="submit" class="button">Send Message</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="site-footer">
+        <div class="site-footer-inner">
+            <span>20Thousand Forums</span>
+            <div>
+                <a href="/">Home</a>
+                <a href="/forums">Boards</a>
+                <a href="/tos">Terms &amp; Rules</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const username = localStorage.getItem('username');
+        if (!username) {
+            window.location.href = '/login';
+        }
+        const params = new URLSearchParams(window.location.search);
+        const convoIdParam = params.get('id');
+        const prefillTo = params.get('to');
+        let activeConvoId = convoIdParam || null;
+
+        const SVG_STAR = '<svg class="svg-icon" style="width:10px;height:10px;" viewBox="0 0 16 16"><path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/></svg>';
+
+        function escapeHtml(s) {
+            return String(s || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function roleClass(title) {
+            const t = String(title || 'member').toLowerCase();
+            if (t === 'owner') return 'role-owner';
+            if (t === 'moderator' || t === 'mod') return 'role-moderator';
+            if (t === 'janitor') return 'role-janitor';
+            if (t === 'trusted') return 'role-trusted';
+            return 'role-member';
+        }
+
+        document.getElementById('user-nav').innerHTML = username
+            ? `<span class="nav-user-bar">Signed in as <a href="/profile.html?user=${encodeURIComponent(username)}"><strong>${escapeHtml(username)}</strong></a>${username === '20k' ? ' · <a href="/admin.html">Admin</a>' : ''} · <a href="#" onclick="showLogoutModal();return false;">Logout</a></span>`
+            : '<a href="/login">Login</a> <a href="/register">Register</a>';
+
+        function showLogoutModal() {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.display = 'flex';
+            modal.innerHTML = `<div class="modal-content" style="text-align:center;"><h3>Logout?</h3><p>Are you sure you want to logout?</p><button class="button" style="background:#dc2626;border-color:#dc2626;" onclick="localStorage.removeItem('username');location.href='/'">Yes, Logout</button> <button class="button-secondary" onclick="this.parentElement.parentElement.remove()">Cancel</button></div>`;
+            document.body.appendChild(modal);
+        }
+
+        function showNotification(text, color) {
+            const notif = document.createElement('div');
+            notif.className = 'notification';
+            notif.style.background = color;
+            notif.textContent = text;
+            document.body.appendChild(notif);
+            setTimeout(() => notif.remove(), 2800);
+        }
+
+        function formatMessageBody(text) {
+            let escaped = escapeHtml(text || '');
+            escaped = escaped.split('\n').map(line => {
+                if (/^\s*&gt;(?!&gt;)/.test(line)) {
+                    return '<span class="greentext">' + line + '</span>';
+                }
+                return line;
+            }).join('<br>');
+            return escaped;
+        }
+
+        function toggleConvoComposer() {
+            const box = document.getElementById('convoComposerBox');
+            box.classList.toggle('open');
+            if (box.classList.contains('open')) {
+                document.getElementById('convoRecipient').focus();
+            }
+        }
+
+        async function loadConversationsList() {
+            const listEl = document.getElementById('conversationsList');
+            try {
+                const res = await fetch(`/api/conversations?username=${encodeURIComponent(username)}`);
+                const data = await res.json();
+                const items = Array.isArray(data) ? data : (data.conversations || []);
+                if (!items.length) {
+                    listEl.innerHTML = '<div style="padding:18px;color:#8c98b3;">You have no active conversations. Click "Start Conversation" to message a member.</div>';
+                    return;
+                }
+                listEl.innerHTML = items.map(c => {
+                    const other = (c.participants || []).find(p => p.username !== username) || (c.participants && c.participants[0]) || { username: 'Unknown', pfp: 'https://i.imgur.com/oJCfWc8.png' };
+                    const participantNames = (c.participants || []).map(p => escapeHtml(p.username)).join(', ');
+                    return `
+                        <div class="convo-item ${c.unread ? 'unread' : ''}">
+                            <div class="avatar-wrap">
+                                <img class="avatar-sq" src="${escapeHtml(other.pfp || 'https://i.imgur.com/oJCfWc8.png')}" alt="">
+                                ${other.online ? '<span class="online-dot"></span>' : ''}
+                            </div>
+                            <div>
+                                <a class="convo-title" href="/inbox.html?id=${encodeURIComponent(c.id)}">${escapeHtml(c.title)}</a>
+                                ${c.unread ? ' <span class="status-tag" style="color:#55a6f8;border-color:#2563eb;">Unread</span>' : ''}
+                                <div class="convo-minor">
+                                    Participants: ${participantNames} · Started by ${escapeHtml(c.creator)}
+                                </div>
+                            </div>
+                            <div style="font-size:12px;color:#8c98b3;">
+                                <dl class="pairs-justified"><dt>Replies:</dt><dd>${Math.max(0, (c.messageCount || 1) - 1)}</dd></dl>
+                            </div>
+                            <div style="text-align:right;font-size:12px;color:#8c98b3;">
+                                <div style="color:#dce2ec;">${new Date(c.last_message_at).toLocaleString()}</div>
+                                <div>Last by <strong>${escapeHtml(c.last_message_by || c.creator)}</strong></div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (e) {
+                listEl.innerHTML = '<div style="padding:18px;color:#8c98b3;">Failed to load conversations.</div>';
+            }
+        }
+
+        async function loadConversationDetail(id) {
+            activeConvoId = id;
+            document.getElementById('inboxListView').style.display = 'none';
+            document.getElementById('convoDetailView').style.display = 'block';
+            try {
+                const res = await fetch(`/api/conversations/${encodeURIComponent(id)}?username=${encodeURIComponent(username)}`);
+                const data = await res.json();
+                if (!data.success) {
+                    document.getElementById('convoMessagesList').innerHTML =
+                        `<div class="xf-block"><div class="xf-block-body" style="color:#f87171;">${escapeHtml(data.message || 'Conversation not found')}</div></div>`;
+                    return;
+                }
+                const c = data.conversation;
+                document.getElementById('detailConvoTitle').textContent = c.title;
+                document.getElementById('bcConvoSep').style.display = 'inline';
+                document.getElementById('bcConvoTitle').style.display = 'inline';
+                document.getElementById('bcConvoTitle').textContent = c.title;
+                document.getElementById('detailConvoParticipants').innerHTML =
+                    'Participants: ' + (c.participants || []).map(p => `<a href="/profile.html?user=${encodeURIComponent(p.username)}"><strong>${escapeHtml(p.username)}</strong></a>`).join(', ');
+
+                const msgContainer = document.getElementById('convoMessagesList');
+                msgContainer.innerHTML = (data.messages || []).map((m, i) => {
+                    const stars = Math.min(5, Math.max(1, Number(m.stars) || 1));
+                    return `
+                        <article class="convo-msg">
+                            <div class="convo-msg-user">
+                                <a href="/profile.html?user=${encodeURIComponent(m.user_id)}">
+                                    <img src="${escapeHtml(m.pfp || 'https://i.imgur.com/oJCfWc8.png')}" alt="">
+                                </a>
+                                <div>
+                                    <a href="/profile.html?user=${encodeURIComponent(m.user_id)}" class="${roleClass(m.title)}" style="font-weight:700;font-size:13px;">${escapeHtml(m.user_id)}</a>
+                                    ${m.customTitle ? `<div style="font-size:11px;color:#d6deeb;">${escapeHtml(m.customTitle)}</div>` : ''}
+                                    <div style="font-size:11px;color:#8c98b3;">${escapeHtml(m.title || 'Member')}</div>
+                                    <div style="color:#f59e0b;margin-top:2px;">${SVG_STAR.repeat(stars)}</div>
+                                </div>
+                            </div>
+                            <div class="convo-msg-main">
+                                <div class="convo-msg-header">
+                                    <span>${new Date(m.created_at).toLocaleString()}</span>
+                                    <span>#${i + 1}</span>
+                                </div>
+                                <div class="convo-msg-body">${formatMessageBody(m.content)}</div>
+                            </div>
+                        </article>
+                    `;
+                }).join('');
+                loadAlertBadge();
+            } catch (e) {
+                document.getElementById('convoMessagesList').innerHTML =
+                    '<div class="xf-block"><div class="xf-block-body" style="color:#f87171;">Failed to load conversation.</div></div>';
+            }
+        }
+
+        document.getElementById('startConvoForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const recipient = document.getElementById('convoRecipient').value.trim();
+            const title = document.getElementById('convoTitleInput').value.trim();
+            const content = document.getElementById('convoBodyInput').value.trim();
+            try {
+                const res = await fetch('/api/conversations', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sender: username, recipient, title, content })
+                });
+                const data = await res.json();
+                if (data.success && data.conversationId) {
+                    window.location.href = `/inbox.html?id=${encodeURIComponent(data.conversationId)}`;
+                } else {
+                    showNotification(data.message || 'Failed to start conversation', '#dc2626');
+                }
+            } catch (err) {
+                showNotification('Server error', '#dc2626');
+            }
+        });
+
+        document.getElementById('convoReplyForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!activeConvoId) return;
+            const content = document.getElementById('convoReplyInput').value.trim();
+            if (!content) return;
+            try {
+                const res = await fetch(`/api/conversations/${encodeURIComponent(activeConvoId)}/messages`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, content })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('convoReplyInput').value = '';
+                    loadConversationDetail(activeConvoId);
+                } else {
+                    showNotification(data.message || 'Failed to send reply', '#dc2626');
+                }
+            } catch (err) {
+                showNotification('Server error', '#dc2626');
+            }
+        });
+
+        async function leaveCurrentConversation() {
+            if (!activeConvoId) return;
+            if (!confirm('Leave this conversation? It will be removed from your inbox.')) return;
+            try {
+                const res = await fetch(`/api/conversations/${encodeURIComponent(activeConvoId)}/leave`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    window.location.href = '/inbox.html';
+                }
+            } catch (e) {}
+        }
+
+        async function loadAlertBadge() {
+            if (!username) return;
+            try {
+                const res = await fetch(`/api/alerts/${encodeURIComponent(username)}`);
+                if (!res.ok) return;
+                const data = await res.json();
+                const badge = document.getElementById('alert-badge');
+                if (badge) {
+                    if (data.unread > 0) {
+                        badge.style.display = 'inline';
+                        badge.textContent = data.unread > 99 ? '99+' : data.unread;
+                    } else badge.style.display = 'none';
+                }
+                const inboxBadge = document.getElementById('inbox-badge');
+                if (inboxBadge) {
+                    if (data.unreadInbox > 0) {
+                        inboxBadge.style.display = 'inline';
+                        inboxBadge.textContent = data.unreadInbox > 99 ? '99+' : data.unreadInbox;
+                    } else inboxBadge.style.display = 'none';
+                }
+            } catch (e) {}
+        }
+
+        if (prefillTo && !convoIdParam) {
+            document.getElementById('convoComposerBox').classList.add('open');
+            document.getElementById('convoRecipient').value = prefillTo;
+            document.getElementById('convoTitleInput').focus();
+        }
+
+        if (convoIdParam) {
+            loadConversationDetail(convoIdParam);
+        } else {
+            loadConversationsList();
+        }
+        loadAlertBadge();
+        setInterval(loadAlertBadge, 15000);
+    </script>
+</body>
+</html>
+

@@ -3,386 +3,367 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Boards - 20Thousand Forums</title>
+    <title>Forums - 20Thousand Forums</title>
     <link rel="stylesheet" href="/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="https://i.imgur.com/oJCfWc8.png">
     <style>
-        .category {
-            margin-bottom: 20px;
-            border: 1px solid #2b4570;
-            border-radius: 4px;
+        .category-block {
+            margin-bottom: 16px;
+            background: #202738;
+            border: 1px solid #2d364d;
+            border-radius: 3px;
             overflow: hidden;
-            background: #1e2f4f;
         }
-        .category-title {
-            background: #0f1c2e;
-            color: #fffd01;
-            font-size: 1.05em;
-            font-weight: bold;
-            padding: 10px 16px;
-            border-bottom: 2px solid #0165fc;
-            margin: 0;
-        }
-        .board {
-            background: #1e2f4f;
-            border: none;
-            border-bottom: 1px solid #283e64;
-            border-radius: 0;
-            padding: 12px 16px;
-            margin-bottom: 0;
+        .category-header {
+            background: #252d40;
+            border-bottom: 1px solid #2f384f;
+            color: #dce2ec;
+            padding: 9px 14px;
+            font-weight: 500;
+            font-size: 15px;
             display: flex;
             align-items: center;
+            justify-content: space-between;
             cursor: pointer;
-            gap: 14px;
+            user-select: none;
         }
-        .board:last-child { border-bottom: none; }
-        .board:hover { background: #24385c; }
+        .category-header:hover {
+            background: #293247;
+        }
+        .category-chevron {
+            color: #8c98b3;
+            font-size: 12px;
+            transition: none;
+        }
+        .category-block.collapsed .node-list {
+            display: none;
+        }
+        .category-block.collapsed .category-header {
+            border-bottom: none;
+        }
+        .node-row {
+            display: grid;
+            grid-template-columns: 44px minmax(0, 1fr) 115px 250px;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            background: #202738;
+            border-bottom: 1px solid #293247;
+        }
+        .node-row:last-child {
+            border-bottom: none;
+        }
+        .node-row:hover {
+            background: #242c3f;
+        }
         .node-icon {
-            width: 36px; height: 36px; border-radius: 4px;
-            background: #132238; border: 1px solid #2b4570;
-            display: flex; align-items: center; justify-content: center;
-            color: #6b84a6; flex-shrink: 0;
+            width: 34px;
+            height: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #d97706;
         }
-        .node-icon.has-posts {
-            color: #0165fc;
-            border-color: #0165fc;
+        .node-main {
+            min-width: 0;
         }
-        .node-main { flex: 1.6; min-width: 160px; }
-        .board-name { font-size: 1.08em; font-weight: bold; color: #ffffff; }
-        .board-subname { color: #7eb3ff; font-weight: normal; font-size: 0.92em; margin-left: 6px; }
-        .board:hover .board-name { color: #fffd01; }
-        .board-desc { color: #c5d4eb; font-size: 0.86em; margin-top: 2px; }
-        .board-stats {
-            display: flex; gap: 18px; text-align: center;
-            color: #c5d4eb; font-size: 0.82em; min-width: 115px; justify-content: center;
+        .node-title-row {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            flex-wrap: wrap;
         }
-        .board-stats .stat-col strong {
-            display: block; color: #ffffff; font-size: 1.12em;
-        }
-        .board-last {
-            flex: 1.3; display: flex; align-items: center; gap: 10px;
-            color: #c5d4eb; font-size: 0.84em; min-width: 195px; max-width: 260px;
-        }
-        .board-last-avatar {
-            width: 30px; height: 30px; border-radius: 50%; object-fit: cover;
-            border: 1px solid #2b4570; flex-shrink: 0; background: #0f1c2e;
-        }
-        .board-last-info {
-            min-width: 0; flex: 1; overflow: hidden;
-        }
-        .board-last-title {
-            display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-            color: #7eb3ff; text-decoration: none; font-weight: bold;
-        }
-        .board-last-title:hover { color: #fffd01; text-decoration: underline; }
-        .staff-tag { color: #fffd01; font-size: 0.82em; font-weight: bold; }
-
-        /* Sidebar widgets */
-        .recent-item {
-            display: flex; align-items: flex-start; gap: 10px;
-            padding: 8px 0; border-bottom: 1px solid #283e64;
-        }
-        .recent-item:last-child { border-bottom: none; padding-bottom: 0; }
-        .recent-item:first-child { padding-top: 0; }
-        .recent-pfp {
-            width: 30px; height: 30px; border-radius: 50%; object-fit: cover;
-            border: 1px solid #2b4570; background: #0f1c2e;
-        }
-        .recent-info { flex: 1; min-width: 0; }
-        .recent-title {
-            display: block; color: #7eb3ff; font-weight: bold; text-decoration: none;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
-        .recent-title:hover { color: #fffd01; text-decoration: underline; }
-        .recent-meta { font-size: 0.82em; color: #c5d4eb; }
-        .recent-meta a { color: #c5d4eb; text-decoration: none; font-weight: bold; }
-        .recent-meta a:hover { color: #fffd01; text-decoration: underline; }
-
-        .online-user-link {
-            display: inline-block;
-            color: #7eb3ff;
+        .node-title-link {
+            margin: 0;
+            color: #eceff4;
+            font-size: 14.5px;
+            font-weight: 700;
             text-decoration: none;
-            font-weight: bold;
-            margin-right: 6px;
         }
-        .online-user-link:hover { color: #fffd01; text-decoration: underline; }
-        .stat-kv {
-            display: flex; justify-content: space-between; padding: 5px 0;
-            border-bottom: 1px solid #283e64; color: #c5d4eb;
+        .node-title-link:hover {
+            color: #55a6f8;
+            text-decoration: underline;
         }
-        .stat-kv:last-child { border-bottom: none; }
-        .stat-kv strong { color: #ffffff; }
-
-        .modal {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); display: none; align-items: center;
-            justify-content: center; z-index: 10000;
+        .node-code {
+            color: #77839e;
+            font-size: 11.5px;
         }
-        .modal-content {
-            background: #1e2f4f; padding: 22px; border-radius: 4px;
-            border: 1px solid #2b4570; width: 90%; max-width: 380px; color: white; text-align: center;
+        .node-desc {
+            margin: 2px 0 0 0;
+            color: #c77d3b;
+            font-size: 12px;
+            line-height: 1.35;
         }
-        @media (max-width: 700px) {
-            .board { flex-wrap: wrap; }
-            .board-stats { justify-content: flex-start; }
-            .board-last { max-width: 100%; width: 100%; padding-top: 6px; border-top: 1px solid #283e64; }
+        .node-stats {
+            display: flex;
+            justify-content: flex-end;
+            gap: 14px;
+            text-align: right;
+            padding-right: 8px;
+        }
+        .node-stat-col .num {
+            display: block;
+            font-weight: 600;
+            font-size: 13px;
+            color: #dce2ec;
+        }
+        .node-stat-col .lbl {
+            font-size: 11px;
+            color: #8c98b3;
+        }
+        .node-last {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+        }
+        .node-last-info {
+            min-width: 0;
+            flex: 1;
+            font-size: 12px;
+            color: #8c98b3;
+        }
+        .node-last-title {
+            display: block;
+            color: #eceff4;
+            font-weight: 500;
+            font-size: 12.5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-decoration: none;
+        }
+        .node-last-title:hover {
+            color: #55a6f8;
+            text-decoration: underline;
+        }
+        .node-last-meta {
+            margin-top: 2px;
+            font-size: 11.5px;
+            color: #8c98b3;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .node-last-meta a {
+            color: #8c98b3;
+        }
+        .node-last-meta a:hover {
+            color: #55a6f8;
+        }
+        @media (max-width: 780px) {
+            .node-row {
+                grid-template-columns: 38px minmax(0, 1fr);
+            }
+            .node-stats, .node-last {
+                grid-column: 2;
+                justify-content: flex-start;
+                text-align: left;
+            }
+        }
+        .recent-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid #293247;
+        }
+        .recent-item:first-child { padding-top: 2px; }
+        .recent-item:last-child { border-bottom: none; padding-bottom: 2px; }
+        .recent-info {
+            min-width: 0;
+            flex: 1;
+            line-height: 1.35;
+        }
+        .recent-title {
+            color: #eceff4;
+            font-weight: 600;
+            font-size: 12.5px;
+            text-decoration: none;
+            word-break: break-word;
+        }
+        .recent-title:hover {
+            color: #55a6f8;
+            text-decoration: underline;
+        }
+        .recent-meta {
+            color: #8c98b3;
+            font-size: 11.5px;
+            margin-top: 2px;
+        }
+        .recent-meta a {
+            color: #8c98b3;
+        }
+        .online-user-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        .online-user-chip {
+            font-size: 12.5px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .online-user-chip:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
 <body>
     <header>
-        <img src="https://i.imgur.com/oJCfWc8.png" alt="Logo" class="logo" onclick="window.location.href='/'">
-        <h1>20Thousand Forums</h1>
+        <div class="header-inner">
+            <img src="https://i.imgur.com/oJCfWc8.png" class="logo" alt="Logo" onclick="window.location.href='/'">
+            <h1 onclick="window.location.href='/'">20Thousand Forums</h1>
+        </div>
     </header>
 
     <nav>
         <a href="/">Home</a>
         <a href="/forums" class="active">Boards</a>
+        <a href="/members.html">Members</a>
+        <a href="/watched.html">Watched</a>
+        <a href="/bookmarks.html">Bookmarks</a>
         <a href="/search.html">Search</a>
-        <a href="/alerts.html">Alerts <span id="alert-badge" style="display:none; background:#d93838; color:white; border-radius:3px; padding:1px 6px; font-size:11px; margin-left:4px;">0</span></a>
+        <a href="/inbox.html">Inbox <span id="inbox-badge" class="nav-badge" style="display:none;">0</span></a>
+        <a href="/alerts.html">Alerts <span id="alert-badge" class="nav-badge" style="display:none;">0</span></a>
         <span id="user-nav"></span>
         <form action="/search.html" method="get" class="nav-search">
-            <input name="q" placeholder="Search users or d1scs...">
+            <input name="q" placeholder="Search...">
             <button type="submit">Search</button>
         </form>
     </nav>
 
-    <div id="global-banner" style="display:none; background:#fffd01; color:#162437; padding:10px 16px; text-align:center; font-weight:bold;"></div>
+    <div id="global-banner" style="display:none; background:#252d40; border-bottom:1px solid #2d364d; color:#eceff4; padding:10px 16px; text-align:center; font-weight:600;"></div>
 
     <div class="container">
         <div class="breadcrumbs">
             <a href="/">Home</a>
             <span class="bc-sep">›</span>
-            <span class="bc-current">Boards (s1k/)</span>
+            <span class="bc-current">Boards</span>
         </div>
 
-        <div class="xf-layout">
-            <div class="xf-main">
-                <div class="category">
-                    <div class="category-title">Site Information</div>
-                    <div class="board" onclick="goBoard('news','News & Announcements')">
-                        <div class="node-icon" id="news-icon">
-                            <svg class="svg-icon-lg" viewBox="0 0 24 24"><path d="M18 11v2h4v-2h-4zm-2 6.61c.96.71 2.21 1.65 3.2 2.39.4-.53.8-1.07 1.2-1.6-.99-.74-2.24-1.68-3.2-2.4-.4.54-.8 1.08-1.2 1.61zM20.4 5.6c-.4-.53-.8-1.07-1.2-1.6-.99.74-2.24 1.68-3.2 2.4.4.53.8 1.07 1.2 1.6.96-.72 2.21-1.65 3.2-2.4zM4 9c-1.1 0-2 .9-2 2v2c0 1.1.9 2 2 2h1v4h2v-4h1l5 3V6L8 9H4zm11.5 3c0-1.33-.58-2.53-1.5-3.35v6.69c.92-.81 1.5-2.01 1.5-3.34z"/></svg>
-                        </div>
-                        <div class="node-main">
-                            <div class="board-name">s1k/news/ <span class="board-subname">News &amp; Announcements</span></div>
-                            <div class="board-desc">Official news &amp; announcements · <span class="staff-tag">Staff only</span></div>
-                        </div>
-                        <div class="board-stats">
-                            <div class="stat-col"><strong id="news-threads">0</strong>d1scs</div>
-                            <div class="stat-col"><strong id="news-posts">0</strong>Posts</div>
-                        </div>
-                        <div class="board-last" id="news-last"><span>No posts yet</span></div>
+        <div class="forum-layout">
+            <div id="boardsContainer"></div>
+
+            <aside>
+                <div class="sidebar-widget">
+                    <div class="sidebar-widget-header">
+                        <svg class="svg-icon" viewBox="0 0 16 16"><path d="M11.251.068a.5.5 0 0 1 .227.58L9.677 6.5H13a.5.5 0 0 1 .364.843l-8 8.5a.5.5 0 0 1-.842-.49L6.323 9.5H3a.5.5 0 0 1-.364-.843l8-8.5a.5.5 0 0 1 .615-.09z"/></svg>
+                        <span>New Threads</span>
                     </div>
-                    <div class="board" onclick="window.location.href='/commandments.html'">
-                        <div class="node-icon has-posts">
-                            <svg class="svg-icon-lg" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
-                        </div>
-                        <div class="node-main">
-                            <div class="board-name">s1k/laws/ <span class="board-subname">The 20Thousand Commandments</span></div>
-                            <div class="board-desc">Official site rules and conduct guidelines</div>
-                        </div>
-                        <div class="board-stats">
-                            <div class="stat-col"><strong>20</strong>Laws</div>
-                        </div>
-                        <div class="board-last"><span style="color:#7eb3ff;font-weight:bold;">Read Rules</span></div>
+                    <div class="sidebar-widget-body" id="recentPostsBox">
+                        <div style="color:#8c98b3;">Loading...</div>
                     </div>
                 </div>
 
-                <div class="category">
-                    <div class="category-title">General</div>
-                    <div class="board" onclick="goBoard('pit','The Pit')">
-                        <div class="node-icon" id="pit-icon">
-                            <svg class="svg-icon-lg" viewBox="0 0 24 24"><path d="M21 6h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zm-4 6V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z"/></svg>
-                        </div>
-                        <div class="node-main">
-                            <div class="board-name">s1k/pit/ <span class="board-subname">The Pit</span></div>
-                            <div class="board-desc">Main board · Everything goes</div>
-                        </div>
-                        <div class="board-stats">
-                            <div class="stat-col"><strong id="pit-threads">0</strong>d1scs</div>
-                            <div class="stat-col"><strong id="pit-posts">0</strong>Posts</div>
-                        </div>
-                        <div class="board-last" id="pit-last"><span>No posts yet</span></div>
-                    </div>
-                    <div class="board" onclick="goBoard('srs','Serious')">
-                        <div class="node-icon" id="srs-icon">
-                            <svg class="svg-icon-lg" viewBox="0 0 24 24"><path d="M21 6h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zm-4 6V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z"/></svg>
-                        </div>
-                        <div class="node-main">
-                            <div class="board-name">s1k/srs/ <span class="board-subname">Serious</span></div>
-                            <div class="board-desc">Real talk, debates &amp; long posts</div>
-                        </div>
-                        <div class="board-stats">
-                            <div class="stat-col"><strong id="srs-threads">0</strong>d1scs</div>
-                            <div class="stat-col"><strong id="srs-posts">0</strong>Posts</div>
-                        </div>
-                        <div class="board-last" id="srs-last"><span>No posts yet</span></div>
-                    </div>
-                    <div class="board" onclick="goBoard('pol','Politics')">
-                        <div class="node-icon" id="pol-icon">
-                            <svg class="svg-icon-lg" viewBox="0 0 24 24"><path d="M21 6h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zm-4 6V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z"/></svg>
-                        </div>
-                        <div class="node-main">
-                            <div class="board-name">s1k/pol/ <span class="board-subname">Politics</span></div>
-                            <div class="board-desc">Politics, news &amp; current events</div>
-                        </div>
-                        <div class="board-stats">
-                            <div class="stat-col"><strong id="pol-threads">0</strong>d1scs</div>
-                            <div class="stat-col"><strong id="pol-posts">0</strong>Posts</div>
-                        </div>
-                        <div class="board-last" id="pol-last"><span>No posts yet</span></div>
-                    </div>
-                    <div class="board" onclick="goBoard('br','Brainrot')">
-                        <div class="node-icon" id="br-icon">
-                            <svg class="svg-icon-lg" viewBox="0 0 24 24"><path d="M21 6h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zm-4 6V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z"/></svg>
-                        </div>
-                        <div class="node-main">
-                            <div class="board-name">s1k/br/ <span class="board-subname">Brainrot</span></div>
-                            <div class="board-desc">Memes, crapposting &amp; degeneracy</div>
-                        </div>
-                        <div class="board-stats">
-                            <div class="stat-col"><strong id="br-threads">0</strong>d1scs</div>
-                            <div class="stat-col"><strong id="br-posts">0</strong>Posts</div>
-                        </div>
-                        <div class="board-last" id="br-last"><span>No posts yet</span></div>
-                    </div>
-                </div>
-
-                <div class="category">
-                    <div class="category-title">Creative</div>
-                    <div class="board" onclick="goBoard('crt','Creativity')">
-                        <div class="node-icon" id="crt-icon">
-                            <svg class="svg-icon-lg" viewBox="0 0 24 24"><path d="M21 6h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zm-4 6V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z"/></svg>
-                        </div>
-                        <div class="node-main">
-                            <div class="board-name">s1k/crt/ <span class="board-subname">Creativity</span></div>
-                            <div class="board-desc">Art, edits, music &amp; OC</div>
-                        </div>
-                        <div class="board-stats">
-                            <div class="stat-col"><strong id="crt-threads">0</strong>d1scs</div>
-                            <div class="stat-col"><strong id="crt-posts">0</strong>Posts</div>
-                        </div>
-                        <div class="board-last" id="crt-last"><span>No posts yet</span></div>
-                    </div>
-                    <div class="board" onclick="goBoard('media','Media')">
-                        <div class="node-icon" id="media-icon">
-                            <svg class="svg-icon-lg" viewBox="0 0 24 24"><path d="M21 6h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zm-4 6V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z"/></svg>
-                        </div>
-                        <div class="node-main">
-                            <div class="board-name">s1k/media/ <span class="board-subname">Media</span></div>
-                            <div class="board-desc">Movies, TV, games &amp; streams</div>
-                        </div>
-                        <div class="board-stats">
-                            <div class="stat-col"><strong id="media-threads">0</strong>d1scs</div>
-                            <div class="stat-col"><strong id="media-posts">0</strong>Posts</div>
-                        </div>
-                        <div class="board-last" id="media-last"><span>No posts yet</span></div>
-                    </div>
-                    <div class="board" onclick="goBoard('tech','Tech')">
-                        <div class="node-icon" id="tech-icon">
-                            <svg class="svg-icon-lg" viewBox="0 0 24 24"><path d="M21 6h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zm-4 6V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z"/></svg>
-                        </div>
-                        <div class="node-main">
-                            <div class="board-name">s1k/tech/ <span class="board-subname">Tech</span></div>
-                            <div class="board-desc">Computers, software &amp; gadgets</div>
-                        </div>
-                        <div class="board-stats">
-                            <div class="stat-col"><strong id="tech-threads">0</strong>d1scs</div>
-                            <div class="stat-col"><strong id="tech-posts">0</strong>Posts</div>
-                        </div>
-                        <div class="board-last" id="tech-last"><span>No posts yet</span></div>
-                    </div>
-                </div>
-
-                <div class="category">
-                    <div class="category-title">Meta</div>
-                    <div class="board" onclick="goBoard('cnfs','Confessions')">
-                        <div class="node-icon" id="cnfs-icon">
-                            <svg class="svg-icon-lg" viewBox="0 0 24 24"><path d="M21 6h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zm-4 6V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z"/></svg>
-                        </div>
-                        <div class="node-main">
-                            <div class="board-name">s1k/cnfs/ <span class="board-subname">Confessions</span></div>
-                            <div class="board-desc">Vents, stories &amp; thoughts</div>
-                        </div>
-                        <div class="board-stats">
-                            <div class="stat-col"><strong id="cnfs-threads">0</strong>d1scs</div>
-                            <div class="stat-col"><strong id="cnfs-posts">0</strong>Posts</div>
-                        </div>
-                        <div class="board-last" id="cnfs-last"><span>No posts yet</span></div>
-                    </div>
-                    <div class="board" onclick="goBoard('ot','Off-Topic')">
-                        <div class="node-icon" id="ot-icon">
-                            <svg class="svg-icon-lg" viewBox="0 0 24 24"><path d="M21 6h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zm-4 6V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z"/></svg>
-                        </div>
-                        <div class="node-main">
-                            <div class="board-name">s1k/ot/ <span class="board-subname">Off-Topic</span></div>
-                            <div class="board-desc">Random nonsense &amp; tangents</div>
-                        </div>
-                        <div class="board-stats">
-                            <div class="stat-col"><strong id="ot-threads">0</strong>d1scs</div>
-                            <div class="stat-col"><strong id="ot-posts">0</strong>Posts</div>
-                        </div>
-                        <div class="board-last" id="ot-last"><span>No posts yet</span></div>
-                    </div>
-                    <div class="board" onclick="goBoard('qna','Questions')">
-                        <div class="node-icon" id="qna-icon">
-                            <svg class="svg-icon-lg" viewBox="0 0 24 24"><path d="M21 6h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zm-4 6V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z"/></svg>
-                        </div>
-                        <div class="node-main">
-                            <div class="board-name">s1k/qna/ <span class="board-subname">Questions</span></div>
-                            <div class="board-desc">Questions, help &amp; site talk</div>
-                        </div>
-                        <div class="board-stats">
-                            <div class="stat-col"><strong id="qna-threads">0</strong>d1scs</div>
-                            <div class="stat-col"><strong id="qna-posts">0</strong>Posts</div>
-                        </div>
-                        <div class="board-last" id="qna-last"><span>No posts yet</span></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Right-Hand XenForo Sidebar -->
-            <aside class="xf-sidebar">
-                <div class="xf-widget">
-                    <div class="xf-widget-header">
-                        <span>Latest Posts</span>
-                    </div>
-                    <div class="xf-widget-body" id="recent-posts-list">
-                        Loading recent activity...
-                    </div>
-                </div>
-
-                <div class="xf-widget">
-                    <div class="xf-widget-header">
+                <div class="sidebar-widget">
+                    <div class="sidebar-widget-header">
+                        <svg class="svg-icon" viewBox="0 0 16 16"><path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1H7zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M5.216 14A2.238 2.238 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.325 6.325 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1h4.216zM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"/></svg>
                         <span>Members Online</span>
-                        <span id="stat-online-badge" style="background:#162437;border:1px solid #2b4570;color:#ffffff;padding:1px 7px;border-radius:3px;font-size:0.8em;">0</span>
                     </div>
-                    <div class="xf-widget-body" id="online-list">
-                        Loading...
+                    <div class="sidebar-widget-body">
+                        <div id="onlineUsersList" class="online-user-list">
+                            <span style="color:#8c98b3;">No registered users active right now.</span>
+                        </div>
+                        <div style="margin-top:8px;padding-top:6px;border-top:1px solid #293247;color:#8c98b3;font-size:11.5px;">
+                            Total: <strong id="onlineCountNum" style="color:#dce2ec;">0</strong>
+                        </div>
                     </div>
                 </div>
 
-                <div class="xf-widget">
-                    <div class="xf-widget-header">
+                <div class="sidebar-widget">
+                    <div class="sidebar-widget-header">
+                        <svg class="svg-icon" viewBox="0 0 16 16"><path d="M0 0h1v15h15v1H0V0zm10 3.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-1 0V4.9l-3.613 4.417a.5.5 0 0 1-.74.037L7.06 6.767l-3.656 5.027a.5.5 0 0 1-.808-.588l4-5.5a.5.5 0 0 1 .758-.06l2.609 2.61L13.445 4H10.5a.5.5 0 0 1-.5-.5z"/></svg>
                         <span>Forum Statistics</span>
                     </div>
-                    <div class="xf-widget-body">
-                        <div class="stat-kv"><span>d1scs:</span><strong id="stat-threads">0</strong></div>
-                        <div class="stat-kv"><span>Posts:</span><strong id="stat-posts">0</strong></div>
-                        <div class="stat-kv"><span>Members:</span><strong id="stat-members">0</strong></div>
-                        <div class="stat-kv"><span>Online now:</span><strong id="stat-online">0</strong></div>
-                        <div class="stat-kv"><span>Latest member:</span><strong id="stat-newest">None</strong></div>
+                    <div class="sidebar-widget-body">
+                        <dl class="pairs-justified"><dt>Threads:</dt><dd id="statThreads">0</dd></dl>
+                        <dl class="pairs-justified"><dt>Messages:</dt><dd id="statPosts">0</dd></dl>
+                        <dl class="pairs-justified"><dt>Members:</dt><dd id="statMembers">0</dd></dl>
+                        <dl class="pairs-justified"><dt>Latest member:</dt><dd id="statNewest">-</dd></dl>
                     </div>
                 </div>
             </aside>
         </div>
     </div>
 
+    <footer class="site-footer">
+        <div class="site-footer-inner">
+            <span>20Thousand Forums</span>
+            <div>
+                <a href="/">Home</a>
+                <a href="/forums">Boards</a>
+                <a href="/tos">Terms &amp; Rules</a>
+            </div>
+        </div>
+    </footer>
+
     <script>
         const username = localStorage.getItem('username');
-        const BOARD_IDS = ['news','pit','srs','pol','br','crt','media','tech','cnfs','ot','qna'];
+
+        const SVG_CHAT = '<svg class="svg-icon-lg" viewBox="0 0 16 16"><path d="M2 1a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h9.586a2 2 0 0 1 1.414.586l2 2V2a1 1 0 0 0-1-1H2zm12-1a2 2 0 0 1 2 2v12.793a.5.5 0 0 1-.854.353l-2.853-2.853a1 1 0 0 0-.707-.293H2a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h12z"/></svg>';
+        const SVG_BULLHORN = '<svg class="svg-icon-lg" viewBox="0 0 16 16"><path d="M13 2.5a1.5 1.5 0 0 1 3 0v11a1.5 1.5 0 0 1-3 0v-.214c-2.162-1.241-4.49-1.843-6.912-2.083l.405 2.712A1 1 0 0 1 5.51 15.1h-.548a1 1 0 0 1-.916-.599l-1.85-3.49-.202-.003A2.014 2.014 0 0 1 0 9V7a2.02 2.02 0 0 1 1.992-2.013 74.663 74.663 0 0 0 2.483-.075c3.043-.154 6.148-.849 8.525-2.199V2.5z"/></svg>';
+        const SVG_DOC = '<svg class="svg-icon-lg" viewBox="0 0 16 16"><path d="M4 0h5.293A1 1 0 0 1 10 .293L13.707 4a1 1 0 0 1 .293.707V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2zm5.5 1.5v2a1 1 0 0 0 1 1h2l-3-3z"/></svg>';
+
+        const BOARD_NAMES = {
+            "news": "News & Announcements",
+            "rules": "Rules & Site Info",
+            "b": "General / Random",
+            "serious": "Serious Discussion",
+            "vent": "Venting / Off My Chest",
+            "int": "International",
+            "brainrot": "Brainrot / Memes",
+            "art": "Art & OCs",
+            "media": "Music, Vidya & Media",
+            "tech": "Tech & Coding",
+            "nsfw": "18+ / NSFW",
+            "stories": "Greentexts & Stories",
+            "qna": "Questions & Advice"
+        };
+
+        const CATEGORIES = [
+            {
+                name: "Site Information",
+                boards: [
+                    { id: "news", code: "/announcements/", title: "News & Announcements", desc: "All you need to know about the forum and our community.", icon: SVG_BULLHORN },
+                    { id: "rules", code: "/rules/", title: "Rules & Site Info", desc: "Read the rules before posting. Feedback, bug reports & site suggestions.", icon: SVG_DOC }
+                ]
+            },
+            {
+                name: "General Discussion",
+                boards: [
+                    { id: "b", code: "/b/", title: "General / Random", desc: "Anything goes (within site rules). Casual chat, random thoughts, daily threads.", icon: SVG_CHAT },
+                    { id: "serious", code: "/serious/", title: "Serious Discussion", desc: "Debates, hot takes, philosophy, politics, and real talk.", icon: SVG_CHAT },
+                    { id: "vent", code: "/vent/", title: "Venting / Off My Chest", desc: "Rants, personal struggles, confessions, and getting things off your chest.", icon: SVG_CHAT },
+                    { id: "int", code: "/int/", title: "International", desc: "Languages, cultures, countries, and global discussion.", icon: SVG_CHAT }
+                ]
+            },
+            {
+                name: "Creative & Media",
+                boards: [
+                    { id: "brainrot", code: "/brainrot/", title: "Brainrot / Memes", desc: "Shitposts, memes, tier lists, copypastas, and pure chaos.", icon: SVG_CHAT },
+                    { id: "art", code: "/art/", title: "Art & OCs", desc: "Drawings, original characters, edits, design, and creative showcases.", icon: SVG_CHAT },
+                    { id: "media", code: "/media/", title: "Music, Vidya & Media", desc: "Video games, anime, movies, shows, music, and YouTube.", icon: SVG_CHAT },
+                    { id: "tech", code: "/tech/", title: "Tech & Coding", desc: "PC builds, programming, web dev, Linux, phones, and AI.", icon: SVG_CHAT }
+                ]
+            },
+            {
+                name: "Off-Topic & Misc",
+                boards: [
+                    { id: "nsfw", code: "/nsfw/", title: "18+ / NSFW", desc: "Mature topics and edgy content. Strictly no illegal content.", icon: SVG_CHAT },
+                    { id: "stories", code: "/stories/", title: "Greentexts & Stories", desc: "Storytimes, greentexts, lore, and creative writing.", icon: SVG_CHAT },
+                    { id: "qna", code: "/qna/", title: "Questions & Advice", desc: "Ask the community anything, get help, or share advice.", icon: SVG_CHAT }
+                ]
+            }
+        ];
+
+        const PREFIX_COLORS = {
+            "News": "#16a34a", "Serious": "#2563eb", "Discussion": "#7c3aed",
+            "Question": "#0d9488", "Vent": "#6d28d9", "Media": "#d97706",
+            "Art": "#db2777", "Tech": "#0284c7", "Brainrot": "#ea580c",
+            "NSFW": "#dc2626", "Story": "#059669", "Help": "#ca8a04",
+            "Announcement": "#e11d48"
+        };
 
         function escapeHtml(s) {
             return String(s || '')
@@ -392,116 +373,205 @@
                 .replace(/"/g, '&quot;');
         }
 
-        document.getElementById('user-nav').innerHTML = username
-            ? `<span class="nav-user-bar"><a href="/profile.html?user=${encodeURIComponent(username)}"><strong>${escapeHtml(username)}</strong></a>${username === '20k' ? ' · <a href="/admin.html">Admin</a>' : ''} · <a href="#" onclick="showLogoutModal(); return false;">Logout</a></span>`
-            : '<a href="/register">Register</a> <a href="/login">Login</a>';
+        function roleClass(title) {
+            const t = String(title || 'member').toLowerCase();
+            if (t === 'owner') return 'role-owner';
+            if (t === 'moderator' || t === 'mod') return 'role-moderator';
+            if (t === 'janitor') return 'role-janitor';
+            if (t === 'trusted') return 'role-trusted';
+            return 'role-member';
+        }
 
-        function goBoard(id, name) {
-            window.location.href = `/thread-list.html?id=${encodeURIComponent(id)}&name=${encodeURIComponent(name)}`;
+        document.getElementById('user-nav').innerHTML = username
+            ? `<span class="nav-user-bar">Signed in as <a href="/profile.html?user=${encodeURIComponent(username)}"><strong>${escapeHtml(username)}</strong></a>${username === '20k' ? ' · <a href="/admin.html">Admin</a>' : ''} · <a href="#" onclick="showLogoutModal();return false;">Logout</a></span>`
+            : `<a href="/login">Login</a> <a href="/register">Register</a>`;
+
+        function showLogoutModal() {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.display = 'flex';
+            modal.innerHTML = `<div class="modal-content" style="text-align:center;"><h3>Logout?</h3><p>Are you sure you want to logout?</p><button class="button" style="background:#dc2626;border-color:#dc2626;" onclick="localStorage.removeItem('username');location.href='/'">Yes, Logout</button> <button class="button-secondary" onclick="this.parentElement.parentElement.remove()">Cancel</button></div>`;
+            document.body.appendChild(modal);
         }
 
         function timeAgo(date) {
             if (!date) return "";
             const s = Math.floor((Date.now() - new Date(date)) / 1000);
-            if (s < 60) return "just now";
+            if (s < 60) return "A moment ago";
             const m = Math.floor(s / 60);
-            if (m < 60) return m + "m ago";
+            if (m < 60) return m + (m === 1 ? " minute ago" : " minutes ago");
             const h = Math.floor(m / 60);
-            if (h < 24) return h + "h ago";
+            if (h < 24) return h + (h === 1 ? " hour ago" : " hours ago");
             const d = Math.floor(h / 24);
-            return d + "d ago";
+            return d + (d === 1 ? " day ago" : " days ago");
+        }
+
+        function prefixBadge(prefix) {
+            if (!prefix) return "";
+            const color = PREFIX_COLORS[prefix] || "#2563eb";
+            return `<span class="prefix-badge" style="background:${color};">${escapeHtml(prefix)}</span>`;
+        }
+
+        function toggleCategory(headerEl) {
+            const block = headerEl.parentElement;
+            if (!block) return;
+            block.classList.toggle('collapsed');
+            const chev = headerEl.querySelector('.category-chevron');
+            if (chev) chev.textContent = block.classList.contains('collapsed') ? '▾' : '▴';
+        }
+
+        function renderBoards(stats) {
+            const container = document.getElementById('boardsContainer');
+            container.innerHTML = CATEGORIES.map(cat => `
+                <div class="category-block">
+                    <div class="category-header" onclick="toggleCategory(this)">
+                        <span>${escapeHtml(cat.name)}</span>
+                        <span class="category-chevron">▴</span>
+                    </div>
+                    <div class="node-list">
+                        ${cat.boards.map(b => {
+                            const st = (stats && stats[b.id]) || { threads: 0, posts: 0, last: null };
+                            let lastHtml = '<span style="color:#6d7891;">No posts yet</span>';
+                            if (st.last) {
+                                const threadUrl = '/thread.html?id=' + encodeURIComponent(st.last.threadId) +
+                                    '&title=' + encodeURIComponent(st.last.title || '') +
+                                    (st.last.postId ? '#post-' + encodeURIComponent(st.last.postId) : '');
+                                lastHtml = `
+                                    <img class="avatar-sq" src="${escapeHtml(st.last.pfp || 'https://i.imgur.com/oJCfWc8.png')}" alt="">
+                                    <div class="node-last-info">
+                                        <a class="node-last-title" href="${threadUrl}" title="${escapeHtml(st.last.title)}">${prefixBadge(st.last.prefix)}${escapeHtml(st.last.title)}</a>
+                                        <div class="node-last-meta">
+                                            ${timeAgo(st.last.at)} · <a href="/profile.html?user=${encodeURIComponent(st.last.user)}" class="role-member">${escapeHtml(st.last.user)}</a>
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                            return `
+                                <div class="node-row">
+                                    <div class="node-icon">${b.icon}</div>
+                                    <div class="node-main">
+                                        <div class="node-title-row">
+                                            <a class="node-title-link" href="/thread-list.html?id=${encodeURIComponent(b.id)}">${escapeHtml(b.title)}</a>
+                                            <span class="node-code">${escapeHtml(b.code)}</span>
+                                        </div>
+                                        <p class="node-desc">${escapeHtml(b.desc)}</p>
+                                    </div>
+                                    <div class="node-stats">
+                                        <div class="node-stat-col">
+                                            <span class="num">${st.threads || 0}</span>
+                                            <span class="lbl">Threads</span>
+                                        </div>
+                                        <div class="node-stat-col">
+                                            <span class="num">${st.posts || 0}</span>
+                                            <span class="lbl">Messages</span>
+                                        </div>
+                                    </div>
+                                    <div class="node-last">${lastHtml}</div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `).join('');
         }
 
         async function loadStats() {
             try {
                 const res = await fetch('/api/forum-stats');
                 const stats = await res.json();
-                BOARD_IDS.forEach(id => {
-                    const data = stats[id] || {};
-                    const el = document.getElementById(id + '-threads');
-                    if (el) el.textContent = data.threads || 0;
-                    const pEl = document.getElementById(id + '-posts');
-                    if (pEl) pEl.textContent = data.posts || 0;
-                    const iconEl = document.getElementById(id + '-icon');
-                    if (iconEl && (data.threads || 0) > 0) iconEl.classList.add('has-posts');
-
-                    const lastEl = document.getElementById(id + '-last');
-                    if (lastEl && data.last) {
-                        const threadUrl = `/thread.html?id=${encodeURIComponent(data.last.threadId)}&title=${encodeURIComponent(data.last.title || '')}${data.last.postId ? '#post-' + encodeURIComponent(data.last.postId) : ''}`;
-                        lastEl.innerHTML =
-                            `<img class="board-last-avatar" src="${escapeHtml(data.last.pfp || 'https://i.imgur.com/oJCfWc8.png')}" alt="" onclick="event.stopPropagation();window.location.href='/profile.html?user=${encodeURIComponent(data.last.user || '')}'">` +
-                            `<div class="board-last-info" onclick="event.stopPropagation();">` +
-                                `<a class="board-last-title" href="${threadUrl}">${escapeHtml(data.last.title || 'd1sc')}</a>` +
-                                `<div>by <a href="/profile.html?user=${encodeURIComponent(data.last.user || '')}" style="color:#c5d4eb;text-decoration:none;font-weight:bold;">${escapeHtml(data.last.user || 'Unknown')}</a> · ${escapeHtml(timeAgo(data.last.at))}</div>` +
-                            `</div>`;
-                    }
-                });
-            } catch (err) {}
+                renderBoards(stats);
+            } catch (e) {
+                renderBoards({});
+            }
         }
 
+        const SVG_POLL_SMALL = '<svg class="svg-icon" style="width:12px;height:12px;color:#8c98b3;" title="Poll" viewBox="0 0 16 16"><path d="M4 11H2v3h2v-3zm5-4H7v7h2V7zm5-5v12h-2V2h2zm-2-1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1h-2zM6 7a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm-5 4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3z"/></svg>';
+
         async function loadRecentPosts() {
-            const box = document.getElementById('recent-posts-list');
-            if (!box) return;
+            const box = document.getElementById('recentPostsBox');
             try {
                 const res = await fetch('/api/recent-posts');
                 const items = await res.json();
                 if (!Array.isArray(items) || !items.length) {
-                    box.innerHTML = '<span style="color:#c5d4eb;">No recent posts yet.</span>';
+                    box.innerHTML = '<div style="color:#8c98b3;">No posts yet.</div>';
                     return;
                 }
                 box.innerHTML = items.map(item => {
-                    const url = `/thread.html?id=${encodeURIComponent(item.threadId)}&title=${encodeURIComponent(item.title || '')}#post-${encodeURIComponent(item.postId)}`;
-                    return `<div class="recent-item">` +
-                        `<div class="avatar-wrap">` +
-                            `<img class="recent-pfp" src="${escapeHtml(item.pfp)}" alt="">` +
-                            (item.online ? '<span class="online-dot" style="width:9px;height:9px;"></span>' : '') +
-                        `</div>` +
-                        `<div class="recent-info">` +
-                            `<a class="recent-title" href="${url}">${escapeHtml(item.title)}</a>` +
-                            `<div class="recent-meta"><a href="/profile.html?user=${encodeURIComponent(item.user)}">${escapeHtml(item.user)}</a> · ${escapeHtml(timeAgo(item.at))} · <a href="/thread-list.html?id=${encodeURIComponent(item.forum_id)}">s1k/${escapeHtml(item.forum_id)}/</a></div>` +
-                        `</div>` +
-                    `</div>`;
+                    const url = '/thread.html?id=' + encodeURIComponent(item.threadId) +
+                        '&title=' + encodeURIComponent(item.title || '') +
+                        (item.postId ? '#post-' + encodeURIComponent(item.postId) : '');
+                    const boardLabel = BOARD_NAMES[item.forum_id] || ('s1k/' + item.forum_id + '/');
+                    const viewerText = item.viewers > 0
+                        ? ` <span class="viewer-count-inline">(${item.viewers} Viewers)</span>`
+                        : '';
+                    const pollIcon = item.hasPoll ? (' ' + SVG_POLL_SMALL) : '';
+                    return `
+                        <div class="recent-item">
+                            <div class="avatar-wrap">
+                                <img class="avatar-sq-sm" src="${escapeHtml(item.pfp || 'https://i.imgur.com/oJCfWc8.png')}" alt="">
+                                ${item.online ? '<span class="online-dot"></span>' : ''}
+                            </div>
+                            <div class="recent-info">
+                                <div>
+                                    ${prefixBadge(item.prefix)}<a class="recent-title" href="${url}">${escapeHtml(item.title)}</a>${pollIcon}${viewerText}
+                                </div>
+                                <div class="recent-meta">
+                                    Started by <a href="/profile.html?user=${encodeURIComponent(item.creator || item.user)}">${escapeHtml(item.creator || item.user)}</a> · ${timeAgo(item.at)} · Replies: ${item.replies || 0}
+                                </div>
+                                <div class="recent-meta">
+                                    <a href="/thread-list.html?id=${encodeURIComponent(item.forum_id)}">${escapeHtml(boardLabel)}</a>
+                                </div>
+                            </div>
+                        </div>
+                    `;
                 }).join('');
             } catch (e) {
-                box.innerHTML = '<span style="color:#c5d4eb;">Failed to load recent posts.</span>';
+                box.innerHTML = '<div style="color:#8c98b3;">Could not load recent threads.</div>';
             }
         }
 
-        async function loadOnlineStats() {
-            try {
-                const res = await fetch('/api/online-stats');
-                const data = await res.json();
-                document.getElementById('stat-members').textContent = data.members || 0;
-                document.getElementById('stat-threads').textContent = data.threads || 0;
-                document.getElementById('stat-posts').textContent = data.posts || 0;
-                document.getElementById('stat-online').textContent = data.onlineCount || 0;
-                const badgeEl = document.getElementById('stat-online-badge');
-                if (badgeEl) badgeEl.textContent = data.onlineCount || 0;
-                const newestEl = document.getElementById('stat-newest');
-                if (newestEl) {
-                    newestEl.innerHTML = data.newestMember
-                        ? `<a href="/profile.html?user=${encodeURIComponent(data.newestMember)}" style="color:#7eb3ff;text-decoration:none;">${escapeHtml(data.newestMember)}</a>`
-                        : 'None';
-                }
-                const list = document.getElementById('online-list');
-                if (!data.online || !data.online.length) {
-                    list.innerHTML = '<span style="color:#c5d4eb;">Nobody online right now.</span>';
-                    return;
-                }
-                list.innerHTML = data.online.map(u =>
-                    `<a class="online-user-link" href="/profile.html?user=${encodeURIComponent(u.username)}">${escapeHtml(u.username)}</a>`
-                ).join(', ');
-            } catch (e) {}
+        function getGuestSessionKey() {
+            let key = localStorage.getItem('xf_guest_sid');
+            if (!key) {
+                key = 'guest_' + Math.random().toString(36).slice(2, 10) + '_' + Date.now().toString(36);
+                localStorage.setItem('xf_guest_sid', key);
+            }
+            return key;
         }
 
-        async function heartbeat() {
-            if (!username) return;
+        async function loadOnlineAndTotals() {
             try {
-                await fetch('/api/heartbeat', {
+                fetch('/api/heartbeat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username })
-                });
+                    body: JSON.stringify({
+                        username: username || null,
+                        sessionKey: getGuestSessionKey(),
+                        locationType: 'home',
+                        locationId: 'forums'
+                    })
+                }).catch(() => {});
+                const res = await fetch('/api/online-stats');
+                const data = await res.json();
+                document.getElementById('onlineCountNum').textContent = data.onlineCount || 0;
+                document.getElementById('statThreads').textContent = data.threads || 0;
+                document.getElementById('statPosts').textContent = data.posts || 0;
+                document.getElementById('statMembers').textContent = data.members || 0;
+                const newestEl = document.getElementById('statNewest');
+                if (newestEl && data.newestMember) {
+                    newestEl.innerHTML = `<a href="/profile.html?user=${encodeURIComponent(data.newestMember)}">${escapeHtml(data.newestMember)}</a>`;
+                }
+
+                const listEl = document.getElementById('onlineUsersList');
+                if (!data.online || !data.online.length) {
+                    listEl.innerHTML = '<span style="color:#8c98b3;">No registered users active right now.</span>';
+                } else {
+                    listEl.innerHTML = data.online.map((u, idx) => {
+                        const cls = roleClass(u.title);
+                        const comma = idx < data.online.length - 1 ? '<span style="color:#8c98b3;">,</span>' : '';
+                        return `<a class="online-user-chip ${cls}" href="/profile.html?user=${encodeURIComponent(u.username)}">${escapeHtml(u.username)}</a>${comma}`;
+                    }).join(' ');
+                }
             } catch (e) {}
         }
 
@@ -513,18 +583,22 @@
                 if (!el) return;
                 if (data && data.active && (data.text || data.imageUrl)) {
                     let content = escapeHtml(data.text || "");
-                    if (data.imageUrl) content += `<br><img src="${escapeHtml(data.imageUrl)}" style="max-width:100%; margin-top:8px;">`;
+                    if (data.imageUrl) {
+                        content += `<br><img src="${escapeHtml(data.imageUrl)}" style="max-width:100%; margin-top:8px;">`;
+                    }
                     el.innerHTML = content;
                     el.style.display = 'block';
-                } else el.style.display = 'none';
+                } else {
+                    el.style.display = 'none';
+                }
             } catch (e) {}
         }
 
         async function checkBan() {
-            const currentUser = localStorage.getItem('username');
-            if (!currentUser) return;
+            const u = localStorage.getItem('username');
+            if (!u) return;
             try {
-                const res = await fetch(`/api/check-ban/${encodeURIComponent(currentUser)}`);
+                const res = await fetch(`/api/check-ban/${encodeURIComponent(u)}`);
                 const data = await res.json();
                 if (data.banned) {
                     localStorage.clear();
@@ -534,52 +608,39 @@
         }
 
         async function loadAlertBadge() {
-            const u = localStorage.getItem('username');
-            if (!u) return;
+            if (!username) return;
             try {
-                const res = await fetch(`/api/alerts/${encodeURIComponent(u)}`);
+                const res = await fetch(`/api/alerts/${encodeURIComponent(username)}`);
                 if (!res.ok) return;
                 const data = await res.json();
                 const badge = document.getElementById('alert-badge');
-                if (!badge) return;
-                if (data.unread > 0) {
-                    badge.style.display = 'inline';
-                    badge.textContent = data.unread > 99 ? '99+' : data.unread;
-                } else badge.style.display = 'none';
+                if (badge) {
+                    if (data.unread > 0) {
+                        badge.style.display = 'inline';
+                        badge.textContent = data.unread > 99 ? '99+' : data.unread;
+                    } else badge.style.display = 'none';
+                }
+                const inboxBadge = document.getElementById('inbox-badge');
+                if (inboxBadge) {
+                    if (data.unreadInbox > 0) {
+                        inboxBadge.style.display = 'inline';
+                        inboxBadge.textContent = data.unreadInbox > 99 ? '99+' : data.unreadInbox;
+                    } else inboxBadge.style.display = 'none';
+                }
             } catch (e) {}
         }
 
-        function showLogoutModal() {
-            const modal = document.createElement('div');
-            modal.className = 'modal';
-            modal.style.display = 'flex';
-            modal.innerHTML = `
-                <div class="modal-content">
-                    <h3>Logout?</h3>
-                    <p>Are you sure you want to logout?</p>
-                    <button class="button" onclick="doLogout()" style="background:#d93838;border-color:#d93838;">Yes, Logout</button>
-                    <button class="button" onclick="this.parentElement.parentElement.remove()" style="background:#2b4570;border-color:#2b4570;">Cancel</button>
-                </div>`;
-            document.body.appendChild(modal);
-        }
-
-        function doLogout() {
-            localStorage.removeItem('username');
-            window.location.href = '/';
-        }
-
+        renderBoards({});
         loadStats();
         loadRecentPosts();
-        loadOnlineStats();
+        loadOnlineAndTotals();
         loadGlobalBanner();
         checkBan();
-        heartbeat();
         loadAlertBadge();
         setInterval(checkBan, 8000);
-        setInterval(heartbeat, 30000);
-        setInterval(loadOnlineStats, 20000);
-        setInterval(loadRecentPosts, 20000);
         setInterval(loadAlertBadge, 15000);
+        setInterval(loadOnlineAndTotals, 20000);
+        setInterval(loadRecentPosts, 20000);
     </script>
 </body>
 </html>

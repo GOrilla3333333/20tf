@@ -2,84 +2,129 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Reports - 20Thousand Forums</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moderation Reports - 20Thousand Forums</title>
     <link rel="stylesheet" href="/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="https://i.imgur.com/oJCfWc8.png">
     <style>
-        .notification {
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-            padding: 15px 25px; border-radius: 6px; z-index: 20000;
-            color: white; font-weight: bold;
+        .reports-table {
+            width: 100%;
+            border-collapse: collapse;
         }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #444; }
-        th { background: #0165fc; color: white; }
-        button { margin-right: 5px; padding: 6px 12px; }
+        .reports-table th,
+        .reports-table td {
+            padding: 10px 14px;
+            text-align: left;
+            border-bottom: 1px solid #293247;
+            font-size: 13px;
+        }
+        .reports-table th {
+            background: #1b2232;
+            color: #94a1bd;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
     </style>
 </head>
 <body>
     <header>
-        <img src="https://i.imgur.com/oJCfWc8.png" alt="Logo" class="logo">
-        <h1>20Thousand Forums - Reports</h1>
+        <div class="header-inner">
+            <img src="https://i.imgur.com/oJCfWc8.png" class="logo" alt="Logo" onclick="window.location.href='/'">
+            <h1 onclick="window.location.href='/'">20Thousand Forums</h1>
+        </div>
     </header>
 
     <nav>
-        <a href="/forums">← Back to Forums</a> | 
+        <a href="/">Home</a>
+        <a href="/forums">Boards</a>
         <a href="/admin.html">Admin Panel</a>
+        <a href="/reports.html" class="active">Reports</a>
     </nav>
 
     <div class="container">
-        <h2>All Reports</h2>
-        <button onclick="loadReports()">🔄 Refresh Reports</button>
-        
-        <table id="reportsTable">
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Reported By</th>
-                    <th>Target ID</th>
-                    <th>Reason</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
+        <div class="breadcrumbs">
+            <a href="/">Home</a>
+            <span class="bc-sep">›</span>
+            <a href="/admin.html">Admin Panel</a>
+            <span class="bc-sep">›</span>
+            <span class="bc-current">Reports</span>
+        </div>
+
+        <div class="p-body-header">
+            <div>
+                <h1 class="p-title-value">Moderation Reports</h1>
+                <p class="p-description">Review and resolve user-submitted reports.</p>
+            </div>
+            <button class="button-secondary" onclick="loadReports()">Refresh Reports</button>
+        </div>
+
+        <div class="xf-block">
+            <div class="xf-block-header">All Reports</div>
+            <div style="overflow-x:auto;">
+                <table class="reports-table" id="reportsTable">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Reported By</th>
+                            <th>Target ID</th>
+                            <th>Reason</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     <script>
+        const currentUser = localStorage.getItem('username') || '20k';
+
+        function showNotification(text, color) {
+            const notif = document.createElement('div');
+            notif.className = 'notification';
+            notif.style.background = color || '#2563eb';
+            notif.textContent = text;
+            document.body.appendChild(notif);
+            setTimeout(() => notif.remove(), 2800);
+        }
+
         async function loadReports() {
             try {
-                const res = await fetch('/api/reports?username=20k');
+                const res = await fetch(`/api/reports?username=${encodeURIComponent(currentUser)}`);
                 const reports = await res.json();
 
                 const tbody = document.querySelector('#reportsTable tbody');
                 tbody.innerHTML = '';
 
-                if (reports.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:30px;">No reports yet.</td></tr>`;
+                if (!Array.isArray(reports) || reports.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:24px; color:#8c98b3;">No reports found.</td></tr>`;
                     return;
                 }
 
                 reports.forEach(r => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
-                        <td>${new Date(r.created_at).toLocaleString()}</td>
+                        <td style="white-space:nowrap; font-size:12px; color:#8c98b3;">${new Date(r.created_at).toLocaleString()}</td>
                         <td><strong>${r.reported_by}</strong></td>
-                        <td>${r.post_id}</td>
+                        <td><code>${r.post_id}</code></td>
                         <td>${r.reason}</td>
                         <td>${r.status || 'pending'}</td>
                         <td>
-                            <button onclick="deleteThread('${r.post_id}')">Delete Thread</button>
-                            <button onclick="clearReport('${r.id}')" style="background:#ffaa00;">Clear Report</button>
+                            <div style="display:flex; gap:6px;">
+                                <button class="button" style="background:#dc2626;border-color:#dc2626;padding:4px 9px;font-size:12px;" onclick="deleteThread('${r.post_id}')">Delete Thread</button>
+                                <button class="button-secondary" style="padding:4px 9px;font-size:12px;" onclick="clearReport('${r.id}')">Mark Reviewed</button>
+                            </div>
                         </td>
                     `;
                     tbody.appendChild(row);
                 });
             } catch (err) {
                 console.error(err);
-                showNotification("Failed to load reports", "#ff4444");
+                showNotification("Failed to load reports", "#dc2626");
             }
         }
 
@@ -89,38 +134,26 @@
             const res = await fetch(`/api/threads/${threadId}`, {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: "20k" })
+                body: JSON.stringify({ username: currentUser })
             });
 
             const data = await res.json();
-            showNotification(data.message, data.success ? "#00cc66" : "#ff4444");
+            showNotification(data.message || "Thread deleted", data.success ? "#16a34a" : "#dc2626");
             if (data.success) loadReports();
         }
 
         async function clearReport(reportId) {
-            if (!confirm("Mark this report as cleared/resolved?")) return;
-
             const res = await fetch(`/api/reports/${reportId}/review`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: "20k" })
+                body: JSON.stringify({ username: currentUser })
             });
 
             const data = await res.json();
-            showNotification(data.message, data.success ? "#00cc66" : "#ff4444");
+            showNotification(data.message || "Report updated", data.success ? "#16a34a" : "#dc2626");
             loadReports();
         }
 
-        function showNotification(text, color) {
-            const notif = document.createElement('div');
-            notif.className = 'notification';
-            notif.style.background = color;
-            notif.textContent = text;
-            document.body.appendChild(notif);
-            setTimeout(() => notif.remove(), 2800);
-        }
-
-        // Load reports on page open
         loadReports();
     </script>
 </body>

@@ -5,145 +5,115 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Search - 20Thousand Forums</title>
     <link rel="stylesheet" href="/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="https://i.imgur.com/oJCfWc8.png">
     <style>
-        .search-box {
+        .search-form-row {
             display: flex;
             gap: 8px;
-            margin: 14px 0;
-            max-width: 720px;
+            margin-bottom: 10px;
         }
-        .search-box input {
+        .search-form-row input {
             flex: 1;
-            padding: 11px 14px;
-            border-radius: 4px;
-            border: 1px solid #355387;
-            background: #0f1b2e;
-            color: #ffffff;
-            font-size: 1em;
-            font-family: inherit;
-            outline: none;
-        }
-        .search-box input:focus {
-            border-color: #fffd01;
-        }
-        .search-box button {
-            padding: 11px 22px;
-            background: #0165fc;
-            color: #ffffff;
-            border: 1px solid #0165fc;
-            border-radius: 4px;
-            font-weight: bold;
-            font-family: inherit;
-            cursor: pointer;
-        }
-        .search-box button:hover {
-            background: #fffd01;
-            border-color: #fffd01;
-            color: #162437;
         }
         .hints {
-            color: #c5d4eb;
-            font-size: 0.9em;
-            margin-bottom: 18px;
-            background: #0f1c2e;
-            border: 1px solid #2b4570;
-            border-radius: 4px;
-            padding: 10px 14px;
-            max-width: 690px;
+            color: #8c98b3;
+            font-size: 12px;
         }
         .hints code {
-            background: #1e2f4f;
-            padding: 2px 6px;
-            border-radius: 3px;
-            color: #fffd01;
+            background: #141926;
+            border: 1px solid #2d364d;
+            padding: 1px 5px;
+            border-radius: 2px;
+            color: #dce2ec;
         }
-        .section-title {
-            color: #fffd01;
-            border-bottom: 1px solid #2b4570;
-            padding-bottom: 6px;
-            margin: 22px 0 10px 0;
-            font-weight: bold;
-        }
-        .result {
-            background: #1e2f4f;
-            border: 1px solid #2b4570;
-            border-radius: 4px;
-            padding: 12px 14px;
-            margin: 8px 0;
+        .result-row {
             display: flex;
             align-items: center;
             gap: 12px;
+            padding: 10px 14px;
+            border-bottom: 1px solid #293247;
+            background: #202738;
         }
-        .result:hover { background: #263c63; }
-        .result img {
-            width: 42px;
-            height: 42px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 1px solid #355387;
+        .result-row:last-child {
+            border-bottom: none;
         }
-        .result a {
-            color: #fffd01;
+        .result-row:hover {
+            background: #242c3f;
+        }
+        .result-title {
+            color: #eceff4;
+            font-weight: 600;
+            font-size: 13.5px;
             text-decoration: none;
-            font-weight: bold;
         }
-        .result a:hover { text-decoration: underline; }
-        .meta { color: #c5d4eb; font-size: 0.88em; margin-top: 2px; }
-        .status-tag {
-            display: inline-block;
-            padding: 1px 6px;
-            border-radius: 3px;
-            font-size: 0.72em;
-            font-weight: bold;
-            background: #2b4570;
-            color: #fffd01;
-            margin-right: 6px;
+        .result-title:hover {
+            color: #55a6f8;
+            text-decoration: underline;
+        }
+        .result-meta {
+            color: #8c98b3;
+            font-size: 12px;
+            margin-top: 2px;
         }
     </style>
 </head>
 <body>
     <header>
-        <img src="https://i.imgur.com/oJCfWc8.png" class="logo" alt="Logo" onclick="window.location.href='/'">
-        <h1>20Thousand Forums</h1>
+        <div class="header-inner">
+            <img src="https://i.imgur.com/oJCfWc8.png" class="logo" alt="Logo" onclick="window.location.href='/'">
+            <h1 onclick="window.location.href='/'">20Thousand Forums</h1>
+        </div>
     </header>
 
     <nav>
         <a href="/">Home</a>
         <a href="/forums">Boards</a>
+        <a href="/members.html">Members</a>
+        <a href="/watched.html">Watched</a>
+        <a href="/bookmarks.html">Bookmarks</a>
         <a href="/search.html" class="active">Search</a>
-        <a href="/alerts.html">Alerts <span id="alert-badge" style="display:none; background:#ff4444; color:white; border-radius:4px; padding:1px 6px; font-size:12px; margin-left:4px;">0</span></a>
+        <a href="/inbox.html">Inbox <span id="inbox-badge" class="nav-badge" style="display:none;">0</span></a>
+        <a href="/alerts.html">Alerts <span id="alert-badge" class="nav-badge" style="display:none;">0</span></a>
         <span id="user-nav"></span>
         <form action="/search.html" method="get" class="nav-search">
-            <input name="q" placeholder="Search users or d1scs...">
+            <input name="q" placeholder="Search...">
             <button type="submit">Search</button>
         </form>
     </nav>
 
-    <div class="container" style="max-width:860px;">
+    <div class="container" style="max-width:920px;">
         <div class="breadcrumbs">
             <a href="/">Home</a>
             <span class="bc-sep">›</span>
             <span class="bc-current">Search</span>
         </div>
 
-        <h2 style="color:#fffd01;margin-top:0;">Search Forum</h2>
-
-        <div class="search-box">
-            <input id="q" type="text" placeholder="Try user:20k or d1sc:hello" autofocus>
-            <button onclick="runSearch()">Search</button>
+        <div class="xf-block">
+            <div class="xf-block-header">Search Forums</div>
+            <div class="xf-block-body">
+                <div class="search-form-row">
+                    <input id="q" type="text" placeholder="Keywords, user:name, or d1sc:title..." autofocus>
+                    <button class="button" onclick="runSearch()">Search</button>
+                </div>
+                <div class="hints">
+                    Prefixes: <code>user:name</code> for members · <code>d1sc:title</code> for thread titles · Plain text searches both.
+                </div>
+            </div>
         </div>
 
-        <div class="hints">
-            <strong>Search prefixes:</strong>
-            <code>user:name</code> (exact or partial username) ·
-            <code>d1sc:title</code> (exact or partial d1sc title) ·
-            Plain text searches both.
-        </div>
-
-        <div id="results">Type a query and press Search.</div>
+        <div id="results"></div>
     </div>
+
+    <footer class="site-footer">
+        <div class="site-footer-inner">
+            <span>20Thousand Forums</span>
+            <div>
+                <a href="/">Home</a>
+                <a href="/forums">Boards</a>
+                <a href="/tos">Terms &amp; Rules</a>
+            </div>
+        </div>
+    </footer>
 
     <script>
         const username = localStorage.getItem('username');
@@ -174,11 +144,11 @@
             const q = document.getElementById('q').value.trim();
             const box = document.getElementById('results');
             if (!q) {
-                box.innerHTML = "Type a query and press Search.";
+                box.innerHTML = "";
                 return;
             }
 
-            box.innerHTML = "Searching...";
+            box.innerHTML = `<div class="xf-block"><div class="xf-block-body" style="color:#8c98b3;">Searching...</div></div>`;
             history.replaceState(null, "", `/search.html?q=${encodeURIComponent(q)}`);
 
             try {
@@ -187,34 +157,39 @@
                 let html = "";
 
                 if (data.users && data.users.length) {
-                    html += `<div class="section-title">Users (${data.users.length})</div>`;
+                    html += `<div class="xf-block"><div class="xf-block-header">Members (${data.users.length})</div>`;
                     html += data.users.map(u => `
-                        <div class="result">
-                            <img src="${escapeHtml(u.pfp)}" alt="">
+                        <div class="result-row">
+                            <img class="avatar-sq" src="${escapeHtml(u.pfp)}" alt="">
                             <div>
-                                <a href="/profile.html?user=${encodeURIComponent(u.username)}">${escapeHtml(u.username)}</a>
-                                <div class="meta">${escapeHtml(u.title)} · ${u.postCount || 0} posts</div>
+                                <a class="result-title" href="/profile.html?user=${encodeURIComponent(u.username)}">${escapeHtml(u.username)}</a>
+                                <div class="result-meta">${escapeHtml(u.title)} · ${u.postCount || 0} messages</div>
                             </div>
                         </div>
                     `).join("");
+                    html += `</div>`;
                 }
 
                 if (data.threads && data.threads.length) {
-                    html += `<div class="section-title">d1scs (${data.threads.length})</div>`;
+                    html += `<div class="xf-block"><div class="xf-block-header">Threads (${data.threads.length})</div>`;
                     html += data.threads.map(t => `
-                        <div class="result">
+                        <div class="result-row">
                             <div>
-                                <a href="/thread.html?id=${encodeURIComponent(t.id)}&title=${encodeURIComponent(t.title || '')}">${t.pinned ? '<span class="status-tag">Pinned</span>' : ''}${escapeHtml(t.title)}</a>
-                                <div class="meta">s1k/${escapeHtml(t.forum_id)}/ · by ${escapeHtml(t.user_id)} · ${t.created_at ? new Date(t.created_at).toLocaleDateString() : ""}</div>
+                                <a class="result-title" href="/thread.html?id=${encodeURIComponent(t.id)}&title=${encodeURIComponent(t.title || '')}">${escapeHtml(t.title)}</a>
+                                ${t.pinned ? '<span class="status-tag">Pinned</span>' : ''}
+                                <div class="result-meta">s1k/${escapeHtml(t.forum_id)}/ · Started by ${escapeHtml(t.user_id)} · ${t.created_at ? new Date(t.created_at).toLocaleDateString() : ""}</div>
                             </div>
                         </div>
                     `).join("");
+                    html += `</div>`;
                 }
 
-                if (!html) html = "<p style='color:#c5d4eb;'>No results found.</p>";
+                if (!html) {
+                    html = `<div class="xf-block"><div class="xf-block-body" style="color:#8c98b3;">No results found.</div></div>`;
+                }
                 box.innerHTML = html;
             } catch (e) {
-                box.innerHTML = "<p>Search failed.</p>";
+                box.innerHTML = `<div class="xf-block"><div class="xf-block-body" style="color:#8c98b3;">Search failed.</div></div>`;
             }
         }
     </script>

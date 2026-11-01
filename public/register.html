@@ -5,49 +5,53 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register - 20Thousand Forums</title>
     <link rel="stylesheet" href="/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="https://i.imgur.com/oJCfWc8.png">
     <style>
-        .form-container {
-            max-width: 400px;
-            margin: 60px auto;
-            background: #1e2f4f;
-            padding: 36px 32px;
-            border-radius: 12px;
-            border: 2px solid #0165fc;
-            box-shadow: 0 8px 26px rgba(0, 0, 0, 0.35);
-            text-align: center;
+        .auth-wrap {
+            max-width: 520px;
+            margin: 32px auto;
         }
-        .form-container input {
+        .form-row {
+            display: grid;
+            grid-template-columns: 140px 1fr;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-bottom: 1px solid #293247;
+        }
+        .form-row label {
+            color: #cbd5e1;
+            font-size: 13px;
+            text-align: right;
+            font-weight: 500;
+        }
+        .form-row input {
             width: 100%;
-            box-sizing: border-box;
-            padding: 12px 14px;
-            margin-bottom: 14px;
-            border-radius: 8px;
-            border: 2px solid #0165fc;
-            background: #0f1b2e;
-            color: #ffffff;
-            font-family: inherit;
-            font-size: 1em;
-            outline: none;
         }
-        .form-container input:focus {
-            border-color: #fffd01;
+        .form-submit-row {
+            padding: 12px 16px;
+            background: #1b2130;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
-        .form-container a {
-            color: #fffd01;
-            text-decoration: none;
-            font-weight: bold;
-        }
-        .form-container a:hover {
-            text-decoration: underline;
+        @media (max-width: 520px) {
+            .form-row {
+                grid-template-columns: 1fr;
+                gap: 6px;
+            }
+            .form-row label {
+                text-align: left;
+            }
         }
     </style>
 </head>
 <body>
     <header>
-        <img src="https://i.imgur.com/oJCfWc8.png" class="logo" alt="Logo" onclick="window.location.href='/'">
-        <h1>20Thousand Forums</h1>
+        <div class="header-inner">
+            <img src="https://i.imgur.com/oJCfWc8.png" class="logo" alt="Logo" onclick="window.location.href='/'">
+            <h1 onclick="window.location.href='/'">20Thousand Forums</h1>
+        </div>
     </header>
 
     <nav>
@@ -57,22 +61,52 @@
         <a href="/register" class="active">Register</a>
     </nav>
 
-    <div class="form-container">
-        <h1 style="margin-bottom:20px;">Register</h1>
-        <form id="registerForm">
-            <input type="text" id="username" placeholder="Username" required>
-            <input type="password" id="password" placeholder="Password" required>
-            <button type="submit" class="button" style="width:100%;padding:12px;">Create Account</button>
-        </form>
-        <p id="message" style="font-weight:bold;"></p>
-        <p style="margin-top:18px;color:#9fb3c8;">Already have an account? <a href="/login">Login</a></p>
+    <div class="container">
+        <div class="auth-wrap">
+            <div class="breadcrumbs">
+                <a href="/">Home</a>
+                <span class="bc-sep">›</span>
+                <span class="bc-current">Register</span>
+            </div>
+
+            <div class="xf-block">
+                <div class="xf-block-header">Register</div>
+                <form id="registerForm">
+                    <div class="form-row">
+                        <label for="username">Username:</label>
+                        <input type="text" id="username" required autofocus>
+                    </div>
+                    <div class="form-row">
+                        <label for="password">Password:</label>
+                        <input type="password" id="password" required>
+                    </div>
+                    <div id="message" style="padding:0 16px;font-weight:600;font-size:12.5px;"></div>
+                    <div class="form-submit-row">
+                        <span style="font-size:12.5px;color:#8c98b3;">Already have an account? <a href="/login">Log in</a></span>
+                        <button type="submit" class="button">Register</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
+
+    <footer class="site-footer">
+        <div class="site-footer-inner">
+            <span>20Thousand Forums</span>
+            <div>
+                <a href="/">Home</a>
+                <a href="/forums">Boards</a>
+                <a href="/tos">Terms &amp; Rules</a>
+            </div>
+        </div>
+    </footer>
 
     <script>
         function showMessage(text, success) {
             const msg = document.getElementById('message');
+            msg.style.padding = '10px 16px';
             msg.textContent = text;
-            msg.style.color = success ? '#00ff88' : '#ff6666';
+            msg.style.color = success ? '#34d399' : '#f87171';
         }
 
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
@@ -90,7 +124,7 @@
                 showMessage(data.message, data.success);
 
                 if (data.success) {
-                    setTimeout(() => window.location.href = '/login', 1500);
+                    setTimeout(() => window.location.href = '/login', 1200);
                 }
             } catch (err) {
                 showMessage("Cannot connect to server", false);

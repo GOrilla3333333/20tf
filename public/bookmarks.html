@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bookmarks - 20Thousand Forums</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="icon" type="image/png" href="https://i.imgur.com/oJCfWc8.png">
+    <style>
+        .bookmark-item {
+            padding: 12px 16px;
+            border-bottom: 1px solid #293247;
+            background: #202738;
+        }
+        .bookmark-item:last-child {
+            border-bottom: none;
+        }
+        .bookmark-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
+        .bookmark-thread-link {
+            color: #eceff4;
+            font-weight: 700;
+            font-size: 14px;
+            text-decoration: none;
+        }
+        .bookmark-thread-link:hover {
+            color: #55a6f8;
+            text-decoration: underline;
+        }
+        .bookmark-content {
+            background: #181f30;
+            border: 1px solid #2d364d;
+            border-left: 3px solid #3b82f6;
+            border-radius: 2px;
+            padding: 8px 12px;
+            color: #d6deeb;
+            font-size: 13px;
+            line-height: 1.48;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-inner">
+            <img src="https://i.imgur.com/oJCfWc8.png" class="logo" alt="Logo" onclick="window.location.href='/'">
+            <h1 onclick="window.location.href='/'">20Thousand Forums</h1>
+        </div>
+    </header>
+
+    <nav>
+        <a href="/">Home</a>
+        <a href="/forums">Boards</a>
+        <a href="/members.html">Members</a>
+        <a href="/watched.html">Watched</a>
+        <a href="/bookmarks.html" class="active">Bookmarks</a>
+        <a href="/search.html">Search</a>
+        <a href="/inbox.html">Inbox <span id="inbox-badge" class="nav-badge" style="display:none;">0</span></a>
+        <a href="/alerts.html">Alerts <span id="alert-badge" class="nav-badge" style="display:none;">0</span></a>
+        <span id="user-nav"></span>
+        <form action="/search.html" method="get" class="nav-search">
+            <input name="q" placeholder="Search...">
+            <button type="submit">Search</button>
+        </form>
+    </nav>
+
+    <div class="container">
+        <div class="breadcrumbs">
+            <a href="/">Home</a>
+            <span class="bc-sep">›</span>
+            <span class="bc-current">Bookmarks</span>
+        </div>
+
+        <div class="p-body-header">
+            <div>
+                <h2 class="p-title-value">Bookmarked Posts</h2>
+                <p class="p-description">Posts you have saved for quick reference across the forum.</p>
+            </div>
+        </div>
+
+        <div class="xf-block" id="bookmarksList">
+            <div style="padding:18px;color:#8c98b3;">Loading bookmarks...</div>
+        </div>
+    </div>
+
+    <footer class="site-footer">
+        <div class="site-footer-inner">
+            <span>20Thousand Forums</span>
+            <div>
+                <a href="/">Home</a>
+                <a href="/forums">Boards</a>
+                <a href="/tos">Terms &amp; Rules</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const username = localStorage.getItem('username');
+        if (!username) {
+            window.location.href = '/login';
+        }
+
+        const PREFIX_COLORS = {
+            "News": "#16a34a", "Serious": "#2563eb", "Discussion": "#7c3aed",
+            "Question": "#0d9488", "Vent": "#6d28d9", "Media": "#d97706",
+            "Art": "#db2777", "Tech": "#0284c7", "Brainrot": "#ea580c",
+            "NSFW": "#dc2626", "Story": "#059669", "Help": "#ca8a04",
+            "Announcement": "#e11d48"
+        };
+
+        function escapeHtml(s) {
+            return String(s || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function prefixBadge(prefix) {
+            if (!prefix) return '';
+            const color = PREFIX_COLORS[prefix] || '#2563eb';
+            return `<span class="prefix-badge" style="background:${color};">${escapeHtml(prefix)}</span>`;
+        }
+
+        document.getElementById('user-nav').innerHTML = username
+            ? `<span class="nav-user-bar">Signed in as <a href="/profile.html?user=${encodeURIComponent(username)}"><strong>${escapeHtml(username)}</strong></a>${username === '20k' ? ' · <a href="/admin.html">Admin</a>' : ''} · <a href="#" onclick="showLogoutModal();return false;">Logout</a></span>`
+            : '<a href="/login">Login</a> <a href="/register">Register</a>';
+
+        function showLogoutModal() {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.display = 'flex';
+            modal.innerHTML = `<div class="modal-content" style="text-align:center;"><h3>Logout?</h3><p>Are you sure you want to logout?</p><button class="button" style="background:#dc2626;border-color:#dc2626;" onclick="localStorage.removeItem('username');location.href='/'">Yes, Logout</button> <button class="button-secondary" onclick="this.parentElement.parentElement.remove()">Cancel</button></div>`;
+            document.body.appendChild(modal);
+        }
+
+        function showNotification(text, color) {
+            const notif = document.createElement('div');
+            notif.className = 'notification';
+            notif.style.background = color;
+            notif.textContent = text;
+            document.body.appendChild(notif);
+            setTimeout(() => notif.remove(), 2800);
+        }
+
+        async function loadBookmarks() {
+            const listEl = document.getElementById('bookmarksList');
+            try {
+                const res = await fetch(`/api/bookmarks?username=${encodeURIComponent(username)}`);
+                const items = await res.json();
+                if (!Array.isArray(items) || !items.length) {
+                    listEl.innerHTML = '<div style="padding:18px;color:#8c98b3;">You have no bookmarked posts yet. Click the bookmark icon in the top-right corner of any post to save it.</div>';
+                    return;
+                }
+                listEl.innerHTML = items.map(b => {
+                    const jsPostId = String(b.post_id || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                    const postLink = `/thread.html?id=${encodeURIComponent(b.thread_id)}#post-${encodeURIComponent(b.post_id)}`;
+                    return `
+                        <div class="bookmark-item">
+                            <div class="bookmark-top">
+                                <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+                                    <img class="avatar-sq-sm" src="${escapeHtml(b.authorPfp || 'https://i.imgur.com/oJCfWc8.png')}" alt="">
+                                    <div>
+                                        ${prefixBadge(b.threadPrefix)}<a class="bookmark-thread-link" href="${postLink}">${escapeHtml(b.threadTitle)}</a>
+                                        <div style="font-size:12px;color:#8c98b3;margin-top:2px;">
+                                            Post by <a href="/profile.html?user=${encodeURIComponent(b.author)}"><strong>${escapeHtml(b.author)}</strong></a> ·
+                                            Posted ${new Date(b.postCreatedAt).toLocaleDateString()} ·
+                                            Bookmarked ${new Date(b.bookmarkedAt).toLocaleDateString()}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="display:flex;gap:6px;">
+                                    <a href="${postLink}" class="button-secondary" style="padding:4px 9px;font-size:11.5px;text-decoration:none;">Go to post</a>
+                                    <button type="button" class="button-secondary" style="padding:4px 9px;font-size:11.5px;color:#f87171;border-color:#5c2833;" onclick="removeBookmark('${jsPostId}')">Remove</button>
+                                </div>
+                            </div>
+                            <div class="bookmark-content">${escapeHtml(b.content || '(attachment)')}</div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (e) {
+                listEl.innerHTML = '<div style="padding:18px;color:#8c98b3;">Failed to load bookmarks.</div>';
+            }
+        }
+
+        async function removeBookmark(postId) {
+            try {
+                const res = await fetch('/api/bookmarks/toggle', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, postId })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showNotification('Bookmark removed', '#16a34a');
+                    loadBookmarks();
+                }
+            } catch (e) {}
+        }
+
+        async function loadAlertBadge() {
+            if (!username) return;
+            try {
+                const res = await fetch(`/api/alerts/${encodeURIComponent(username)}`);
+                if (!res.ok) return;
+                const data = await res.json();
+                const badge = document.getElementById('alert-badge');
+                if (badge) {
+                    if (data.unread > 0) {
+                        badge.style.display = 'inline';
+                        badge.textContent = data.unread > 99 ? '99+' : data.unread;
+                    } else badge.style.display = 'none';
+                }
+                const inboxBadge = document.getElementById('inbox-badge');
+                if (inboxBadge) {
+                    if (data.unreadInbox > 0) {
+                        inboxBadge.style.display = 'inline';
+                        inboxBadge.textContent = data.unreadInbox > 99 ? '99+' : data.unreadInbox;
+                    } else inboxBadge.style.display = 'none';
+                }
+            } catch (e) {}
+        }
+
+        loadBookmarks();
+        loadAlertBadge();
+        setInterval(loadAlertBadge, 15000);
+    </script>
+</body>
+</html>
+
