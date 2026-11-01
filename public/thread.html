@@ -279,6 +279,22 @@
             display: block;
             font-size: 12.5px;
         }
+        .xf-list {
+            margin: 8px 0 8px 24px;
+            padding: 0;
+            line-height: 1.6;
+        }
+        .xf-list li {
+            margin: 3px 0;
+        }
+        .xf-list .xf-list {
+            margin: 4px 0 4px 20px;
+        }
+        hr.xf-hr {
+            border: 0;
+            border-top: 1px solid #293247;
+            margin: 14px 0;
+        }
         .post-edited {
             margin-top: 8px;
             text-align: right;
@@ -602,6 +618,10 @@
                         <button type="button" class="bb-btn" onclick="insertTag('postContent','[i]','[/i]')" title="Italic"><i>I</i></button>
                         <button type="button" class="bb-btn" onclick="insertTag('postContent','[u]','[/u]')" title="Underline"><u>U</u></button>
                         <button type="button" class="bb-btn" onclick="insertTag('postContent','[s]','[/s]')" title="Strikethrough"><s>S</s></button>
+                        <button type="button" class="bb-btn" onclick="insertTag('postContent','[size=4]','[/size]')" title="Font Size">Size</button>
+                        <button type="button" class="bb-btn" onclick="insertTag('postContent','[color=#e11d48]','[/color]')" title="Text Color">Color</button>
+                        <button type="button" class="bb-btn" onclick="insertTag('postContent','[list]\n[*]','\n[/list]')" title="Bullet List">List</button>
+                        <button type="button" class="bb-btn" onclick="insertTag('postContent','\n[hr]\n','')" title="Horizontal Rule">HR</button>
                         <button type="button" class="bb-btn" onclick="insertTag('postContent','[code]','[/code]')" title="Code block">Code</button>
                         <button type="button" class="bb-btn" onclick="insertTag('postContent','[quote]','[/quote]')" title="Quote">Quote</button>
                         <button type="button" class="bb-btn" onclick="insertTag('postContent','[spoiler=Spoiler]','[/spoiler]')" title="Spoiler">Spoiler</button>
@@ -1036,11 +1056,71 @@
                 return '<a href="' + clean + '" target="_blank" rel="noopener noreferrer">' + clean + '</a>' + trailing;
             });
 
+            // BBCode Horizontal Rule
+            escaped = escaped.replace(/\[hr\]/gi, '<hr class="xf-hr">');
+
+            // [url=...]...[/url] & [url]...[/url]
+            escaped = escaped.replace(/\[url=(https?:\/\/[^\s\]"]+)\]([\s\S]*?)\[\/url\]/gi, '<a href="$1" target="_blank" rel="noopener noreferrer">$2</a>');
+            escaped = escaped.replace(/\[url\](https?:\/\/[^\s\]"]+)\[\/url\]/gi, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
+
+            // [img]...[/img]
+            escaped = escaped.replace(/\[img\](https?:\/\/[^\s\]"]+)\[\/img\]/gi, '<img class="embed-media" src="$1" alt="image" loading="lazy">');
+
+            // [color=...] (repeat up to 5 levels)
+            for (let i = 0; i < 5; i++) {
+                if (!/\[color=[^\]]+\]/i.test(escaped)) break;
+                escaped = escaped.replace(/\[color=(#[0-9a-fA-F]{3,8}|[a-zA-Z]+)\]([\s\S]*?)\[\/color\]/gi, '<span style="color:$1;">$2</span>');
+            }
+
+            // [size=...] (1-7 or px, max 36px)
+            const sizeMap = { "1": "10.5px", "2": "12px", "3": "13.5px", "4": "15px", "5": "18px", "6": "22px", "7": "26px" };
+            for (let i = 0; i < 5; i++) {
+                if (!/\[size=[^\]]+\]/i.test(escaped)) break;
+                escaped = escaped.replace(/\[size=([0-9]+(?:px)?)\]([\s\S]*?)\[\/size\]/gi, function (m, sz, body) {
+                    const num = parseInt(sz, 10);
+                    const px = sizeMap[sz] || (num ? Math.min(36, Math.max(9, num)) + 'px' : '14px');
+                    return '<span style="font-size:' + px + ';line-height:1.35;">' + body + '</span>';
+                });
+            }
+
+            // [font=...]
+            escaped = escaped.replace(/\[font=([a-zA-Z0-9\s,-]+)\]([\s\S]*?)\[\/font\]/gi, '<span style="font-family:$1;">$2</span>');
+
+            // [b], [i], [u], [s], [sub], [sup]
             escaped = escaped
                 .replace(/\[b\]([\s\S]*?)\[\/b\]/gi, '<strong>$1</strong>')
                 .replace(/\[i\]([\s\S]*?)\[\/i\]/gi, '<em>$1</em>')
                 .replace(/\[u\]([\s\S]*?)\[\/u\]/gi, '<u>$1</u>')
                 .replace(/\[s\]([\s\S]*?)\[\/s\]/gi, '<s>$1</s>')
+                .replace(/\[sub\]([\s\S]*?)\[\/sub\]/gi, '<sub>$1</sub>')
+                .replace(/\[sup\]([\s\S]*?)\[\/sup\]/gi, '<sup>$1</sup>');
+
+            // [center] & [align=...]
+            escaped = escaped
+                .replace(/\[center\]([\s\S]*?)\[\/center\]/gi, '<div style="text-align:center;">$1</div>')
+                .replace(/\[align=(center|left|right|justify)\]([\s\S]*?)\[\/align\]/gi, '<div style="text-align:$1;">$2</div>');
+
+            // [list] & [list=1] (innermost list first)
+            const innerListRegex = /\[list(=1)?\]((?:(?!\[list[\s=\]])[\s\S])*?)\[\/list\]/i;
+            for (let iter = 0; iter < 8; iter++) {
+                if (!innerListRegex.test(escaped)) break;
+                escaped = escaped.replace(innerListRegex, function (m, isOrd, body) {
+                    const tag = isOrd ? 'ol' : 'ul';
+                    const parts = body.split(/\[\*\]/);
+                    let html = '<' + tag + ' class="xf-list">';
+                    for (let i = 1; i < parts.length; i++) {
+                        const item = parts[i].trim().replace(/^\n+|\n+$/g, '');
+                        if (item) html += '<li>' + item + '</li>';
+                    }
+                    if (parts.length <= 1 && body.trim()) {
+                        html += '<li>' + body.trim() + '</li>';
+                    }
+                    html += '</' + tag + '>';
+                    return html;
+                });
+            }
+
+            escaped = escaped
                 .replace(/\[quote(?:=([^\]]+))?\]([\s\S]*?)\[\/quote\]/gi, function (full, authorMeta, body) {
                     let hdr = '';
                     if (authorMeta) {
@@ -1073,6 +1153,12 @@
                 }
                 return line;
             }).join('<br>');
+
+            // Clean up excess <br> around block tags
+            escaped = escaped
+                .replace(/<br>\s*<(ul|ol|li|\/li|\/ul|\/ol|hr|div|\/div|pre|\/pre)/gi, '<$1')
+                .replace(/<\/(ul|ol|li|hr|div|pre)>\s*<br>/gi, '</$1>')
+                .replace(/<(hr class="[^"]+")>\s*<br>/gi, '<$1>');
 
             escaped = escaped.replace(/\u0000EMBED_(\d+)\u0000/g, function (full, idx) {
                 return embeds[Number(idx)] || '';

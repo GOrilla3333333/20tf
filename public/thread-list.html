@@ -311,13 +311,17 @@
                         <input type="text" id="threadTitle" placeholder="Thread title..." required>
                     </div>
                     <div class="bb-toolbar">
-                        <button type="button" class="bb-btn" onclick="insertTag('threadContent','[b]','[/b]')"><b>B</b></button>
-                        <button type="button" class="bb-btn" onclick="insertTag('threadContent','[i]','[/i]')"><i>I</i></button>
-                        <button type="button" class="bb-btn" onclick="insertTag('threadContent','[u]','[/u]')"><u>U</u></button>
-                        <button type="button" class="bb-btn" onclick="insertTag('threadContent','[s]','[/s]')"><s>S</s></button>
-                        <button type="button" class="bb-btn" onclick="insertTag('threadContent','[code]','[/code]')">Code</button>
-                        <button type="button" class="bb-btn" onclick="insertTag('threadContent','[quote]','[/quote]')">Quote</button>
-                        <button type="button" class="bb-btn" onclick="insertTag('threadContent','[spoiler=Spoiler]','[/spoiler]')">Spoiler</button>
+                        <button type="button" class="bb-btn" onclick="insertTag('threadContent','[b]','[/b]')" title="Bold"><b>B</b></button>
+                        <button type="button" class="bb-btn" onclick="insertTag('threadContent','[i]','[/i]')" title="Italic"><i>I</i></button>
+                        <button type="button" class="bb-btn" onclick="insertTag('threadContent','[u]','[/u]')" title="Underline"><u>U</u></button>
+                        <button type="button" class="bb-btn" onclick="insertTag('threadContent','[s]','[/s]')" title="Strikethrough"><s>S</s></button>
+                        <button type="button" class="bb-btn" onclick="insertTag('threadContent','[size=4]','[/size]')" title="Font Size">Size</button>
+                        <button type="button" class="bb-btn" onclick="insertTag('threadContent','[color=#e11d48]','[/color]')" title="Text Color">Color</button>
+                        <button type="button" class="bb-btn" onclick="insertTag('threadContent','[list]\n[*]','\n[/list]')" title="Bullet List">List</button>
+                        <button type="button" class="bb-btn" onclick="insertTag('threadContent','\n[hr]\n','')" title="Horizontal Rule">HR</button>
+                        <button type="button" class="bb-btn" onclick="insertTag('threadContent','[code]','[/code]')" title="Code block">Code</button>
+                        <button type="button" class="bb-btn" onclick="insertTag('threadContent','[quote]','[/quote]')" title="Quote">Quote</button>
+                        <button type="button" class="bb-btn" onclick="insertTag('threadContent','[spoiler=Spoiler]','[/spoiler]')" title="Spoiler">Spoiler</button>
                     </div>
                     <textarea id="threadContent" placeholder="Write your post... (paste image/video/YouTube links or upload below)" required></textarea>
                     <div class="media-preview-list" id="threadMediaPreviewList"></div>
