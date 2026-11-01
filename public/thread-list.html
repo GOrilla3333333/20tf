@@ -528,6 +528,23 @@
         }
 
         async function checkNewsPermission() {
+            if (forumId === "news") {
+                const prefixSelect = document.getElementById('threadPrefix');
+                const prefixFilter = document.getElementById('prefixFilter');
+                if (prefixSelect) {
+                    prefixSelect.innerHTML = `
+                        <option value="Announcement" selected>Announcement</option>
+                        <option value="News">News</option>
+                        <option value="">(No prefix)</option>
+                    `;
+                }
+                if (prefixFilter && !prefixFilter.querySelector('option[value="Announcement"]')) {
+                    const opt = document.createElement('option');
+                    opt.value = 'Announcement';
+                    opt.textContent = 'Announcement';
+                    prefixFilter.insertBefore(opt, prefixFilter.children[1]);
+                }
+            }
             if (forumId !== "news") return;
             const wrap = document.getElementById('postThreadBtnWrap');
             if (!username) {

@@ -988,13 +988,17 @@ app.post('/api/threads', async (req, res) => {
         }
 
         const isMod = await canMod(username);
+        let cleanPrefix = (prefix || "").trim().slice(0, 32);
+        if (cleanPrefix.toLowerCase() === "announcement" && String(forum_id) !== "news") {
+            cleanPrefix = "News";
+        }
         const threadId = Date.now().toString(36);
         const thread = new Thread({
             id: threadId,
             title: String(title).trim(),
             forum_id: String(forum_id),
             user_id: username,
-            prefix: (prefix || "").trim().slice(0, 32),
+            prefix: cleanPrefix,
             pinned: isMod ? !!pinned : false,
             locked: isMod ? !!locked : false,
             hasPoll: !!validPoll,
