@@ -63,6 +63,9 @@ const UserRank = require('./models/UserRank');
 const Warning = require('./models/Warning');
 const UserIgnore = require('./models/UserIgnore');
 const UserActivity = require('./models/UserActivity');
+const AiMember = require('./models/AiMember');
+const AiActivity = require('./models/AiActivity');
+const AiGlobalState = require('./models/AiGlobalState');
 
 const STAFF_TITLES = new Set(['owner', 'administrator', 'admin', 'moderator', 'mod', 'janitor']);
 
@@ -1391,7 +1394,8 @@ app.get('/api/profile/:username', async (req, res) => {
             created_at: user.created_at,
             banned: !!user.banned,
             banReason: user.banReason || '',
-            banType: user.banType || 'permanent'
+            banType: user.banType || 'permanent',
+            isAiMember: !!user.isAiMember
         });
     } catch (err) {
         res.json({ success: false, message: "Server error" });

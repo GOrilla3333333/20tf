@@ -184,7 +184,21 @@
             gap: 10px;
             margin-bottom: 6px;
         }
-    </style>
+    
+        .ai-member-badge {
+            display: inline-block;
+            font-size: 10px;
+            padding: 1px 5px;
+            background: #1e3a5f;
+            color: #55a6f8;
+            border: 1px solid #2d5a9e;
+            border-radius: 2px;
+            margin-left: 6px;
+            vertical-align: middle;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        </style>
 </head>
 <body>
     <header>
@@ -481,6 +495,15 @@
             if (badgeEl) {
                 badgeEl.textContent = roleTitle;
                 badgeEl.style.display = 'inline-block';
+            }
+
+            // AI member badge
+            if (data.isAiMember) {
+                const aiBadge = document.createElement('span');
+                aiBadge.className = 'ai-member-badge';
+                aiBadge.title = 'AI Community Member';
+                aiBadge.textContent = 'AI';
+                if (unameEl && unameEl.parentNode) unameEl.parentNode.appendChild(aiBadge);
             }
 
             currentCustomTitle = data.customTitle || '';

@@ -338,12 +338,30 @@
                         '<input type="text" id="deleteThreadId" placeholder="Thread ID">' +
                         '<button class="button danger" onclick="deleteThread()">Delete Thread</button>' +
                     '</div>' +
+                '</div>' +
+
+                '<div class="admin-section">' +
+                    '<div class="xf-block-header">AI Community Members</div>' +
+                    '<div class="admin-section-body">' +
+                        '<p class="hint">Manage AI community members. Changes take effect on the next scheduler cycle (every 15 min).</p>' +
+                        '<div id="aiStatusBar" style="display:flex;align-items:center;gap:12px;margin-bottom:14px;padding:10px 14px;background:#151c2e;border:1px solid #2d364d;border-radius:4px;">' +
+                            '<span id="aiStatusLabel" style="font-size:13px;color:#8c98b3;">Loading...</span>' +
+                            '<button id="aiPauseBtn" class="button-secondary" style="margin-left:auto;padding:4px 14px;font-size:12px;" onclick="toggleAiPause()">Pause All</button>' +
+                        '</div>' +
+                        '<div id="aiMemberList">Loading AI members...</div>' +
+                        '<div style="margin-top:16px;">' +
+                            '<div class="xf-block-header" style="font-size:12px;margin-bottom:8px;">Recent AI Activity</div>' +
+                            '<div id="aiActivityLog" style="font-size:12px;color:#8c98b3;">Loading...</div>' +
+                        '</div>' +
+                    '</div>' +
                 '</div>';
 
             bindMentionBox('bannerText');
             loadMembers();
             loadRanksAndThresholds();
             loadAdminWarnings();
+            loadAiSection();
+            loadAiSection();
         }
 
         async function loadMembers() {
@@ -612,6 +630,174 @@
             });
             const data = await res.json();
             alert(data.message);
+        }
+
+        // ══════════════════════════════════════════════════
+        // AI COMMUNITY MANAGEMENT
+        // ══════════════════════════════════════════════════
+        let _aiPaused = false;
+
+        async function loadAiSection() {
+            await Promise.all([loadAiStats(), loadAiMembers(), loadAiActivity()]);
+        }
+
+        async function loadAiStats() {
+            try {
+                const username = localStorage.getItem('username') || '';
+                const res  = await fetch('/api/ai/stats?admin=' + encodeURIComponent(username));
+                const data = await res.json();
+                if (!data.success) return;
+                const s = data.stats;
+                _aiPaused = s.paused;
+                const statusLabel = document.getElementById('aiStatusLabel');
+                const pauseBtn    = document.getElementById('aiPauseBtn');
+                if (statusLabel) {
+                    const enabledTxt = s.enabled ? '\u2713 Enabled' : '\u2717 Disabled (AI_COMMUNITY_ENABLED=false in .env)';
+                    statusLabel.innerHTML =
+                        '<span style="color:' + (s.enabled ? '#4ade80' : '#f87171') + '">' + enabledTxt + '</span>' +
+                        ' &nbsp;|&nbsp; Today: <strong>' + s.todayThreads + '</strong> threads, <strong>' + s.todayReplies + '</strong> replies' +
+                        ' &nbsp;|&nbsp; All-time: <strong>' + (s.totalThreads + s.totalReplies) + '</strong> posts' +
+                        (s.paused ? ' &nbsp;<span style="color:#fb923c;font-weight:600;">[PAUSED]</span>' : '');
+                }
+                if (pauseBtn) {
+                    pauseBtn.textContent = s.paused ? 'Resume All' : 'Pause All';
+                    pauseBtn.style.color = s.paused ? '#4ade80' : '';
+                }
+            } catch (e) {
+                const lbl = document.getElementById('aiStatusLabel');
+                if (lbl) lbl.textContent = 'Failed to load AI stats';
+            }
+        }
+
+        async function loadAiMembers() {
+            const container = document.getElementById('aiMemberList');
+            if (!container) return;
+            try {
+                const username = localStorage.getItem('username') || '';
+                const res  = await fetch('/api/ai/members?admin=' + encodeURIComponent(username));
+                const data = await res.json();
+                if (!data.success) {
+                    container.innerHTML = '<p style="color:#f87171;">' + (data.message || 'Failed') + '</p>';
+                    return;
+                }
+                if (!data.members.length) {
+                    container.innerHTML = '<p style="color:#8c98b3;">No AI members found. Run <code>node ai/seedAiMembers.js</code> to create them.</p>';
+                    return;
+                }
+                container.innerHTML = data.members.map(m => renderAiMemberRow(m)).join('');
+            } catch (e) {
+                container.innerHTML = '<p style="color:#f87171;">Failed to load AI members</p>';
+            }
+        }
+
+        function renderAiMemberRow(m) {
+            const lastActive = m.lastActiveAt
+                ? new Date(m.lastActiveAt).toLocaleString()
+                : 'Never';
+            const enabledColor = m.enabled ? '#4ade80' : '#f87171';
+            return '<div class="member-row" style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #1e2a3e;">' +
+                '<span style="font-weight:600;min-width:120px;">' +
+                    '<a href="/profile.html?user=' + encodeURIComponent(m.username) + '" style="color:#55a6f8;text-decoration:none;">' + escHtml(m.username) + '</a>' +
+                    ' <span style="font-size:10px;padding:1px 5px;background:#1e3a5f;color:#55a6f8;border:1px solid #2d5a9e;border-radius:2px;vertical-align:middle;">AI</span>' +
+                '</span>' +
+                '<span style="font-size:12px;color:#8c98b3;flex:1;">' +
+                    'Today: ' + (m.todayThreads || 0) + 'T / ' + (m.todayReplies || 0) + 'R' +
+                    ' &middot; Last: ' + escHtml(lastActive) +
+                '</span>' +
+                '<button class="button-secondary" style="font-size:11px;padding:3px 10px;" onclick="triggerAiMember(\'' + escHtml(m.username) + '\')" title="Manually trigger one post">Trigger</button>' +
+                ' <button class="button-secondary" style="font-size:11px;padding:3px 10px;color:' + enabledColor + '" ' +
+                    'onclick="toggleAiMember(\'' + escHtml(m.username) + '\',' + !m.enabled + ')">' +
+                    (m.enabled ? 'Disable' : 'Enable') +
+                '</button>' +
+            '</div>';
+        }
+
+        async function loadAiActivity() {
+            const container = document.getElementById('aiActivityLog');
+            if (!container) return;
+            try {
+                const username = localStorage.getItem('username') || '';
+                const res  = await fetch('/api/ai/activity?admin=' + encodeURIComponent(username) + '&limit=15');
+                const data = await res.json();
+                if (!data.success || !data.activity.length) {
+                    container.innerHTML = 'No AI activity recorded yet.';
+                    return;
+                }
+                container.innerHTML = data.activity.map(a => {
+                    const when = new Date(a.createdAt).toLocaleString();
+                    const link = a.threadId
+                        ? '<a href="/thread.html?id=' + encodeURIComponent(a.threadId) + '" style="color:#55a6f8;">#' + escHtml(a.threadId) + '</a>'
+                        : '&mdash;';
+                    return '<div style="padding:4px 0;border-bottom:1px solid #1e2a3e;">' +
+                        '<strong style="color:#c9d1e0;">' + escHtml(a.username) + '</strong>' +
+                        ' <span style="color:' + (a.action === 'thread' ? '#a78bfa' : '#34d399') + '">' + a.action + '</span>' +
+                        ' in ' + link +
+                        ' <span style="color:#586180;float:right;">' + when + '</span>' +
+                    '</div>';
+                }).join('');
+            } catch (e) {
+                container.innerHTML = 'Failed to load activity';
+            }
+        }
+
+        async function toggleAiPause() {
+            const username = localStorage.getItem('username') || '';
+            const newState = !_aiPaused;
+            try {
+                const res  = await fetch('/api/ai/pause', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ admin: username, paused: newState })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    _aiPaused = data.paused;
+                    await loadAiStats();
+                } else { alert(data.message || 'Failed'); }
+            } catch (e) { alert('Request failed'); }
+        }
+
+        async function toggleAiMember(memberUsername, enable) {
+            const admin = localStorage.getItem('username') || '';
+            try {
+                const res  = await fetch('/api/ai/members/' + encodeURIComponent(memberUsername), {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ admin, enabled: enable })
+                });
+                const data = await res.json();
+                if (data.success) { await loadAiMembers(); }
+                else { alert(data.message || 'Failed'); }
+            } catch (e) { alert('Request failed'); }
+        }
+
+        async function triggerAiMember(memberUsername) {
+            const admin = localStorage.getItem('username') || '';
+            const btn = event.target;
+            btn.disabled = true; btn.textContent = 'Working...';
+            try {
+                const res  = await fetch('/api/ai/members/' + encodeURIComponent(memberUsername) + '/trigger', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ admin })
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    btn.textContent = 'Done!';
+                    setTimeout(() => { btn.textContent = 'Trigger'; btn.disabled = false; }, 2500);
+                    setTimeout(() => loadAiSection(), 3500);
+                } else {
+                    alert(data.message || 'Trigger failed');
+                    btn.textContent = 'Trigger'; btn.disabled = false;
+                }
+            } catch (e) {
+                alert('Request failed');
+                btn.textContent = 'Trigger'; btn.disabled = false;
+            }
+        }
+
+        function escHtml(str) {
+            return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
         }
     </script>
 </body>
