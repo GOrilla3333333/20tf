@@ -7,6 +7,7 @@ const warningSchema = new mongoose.Schema({
     post_id: { type: String, default: null },
     thread_id: { type: String, default: null },
     law: { type: String, required: true },
+    rule: { type: String },
     points: { type: Number, default: 1 },
     reason: { type: String, default: "" },
     expires_at: { type: Date, default: null },
@@ -15,4 +16,3 @@ const warningSchema = new mongoose.Schema({
 });
 
 module.exports = mongoose.model('Warning', warningSchema);
-

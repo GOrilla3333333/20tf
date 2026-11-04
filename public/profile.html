@@ -442,11 +442,10 @@
 
         async function checkViewerModStatus() {
             if (!currentUser) return false;
-            if (currentUser === '20k') return true;
             try {
                 const res = await fetch(`/api/profile/${encodeURIComponent(currentUser)}`);
                 const d = await res.json();
-                const t = ((d && (d.roleTitle || d.title)) || '').toLowerCase();
+                const t = ((d && (d.roleTitle || d.title)) || '').toLowerCase().trim();
                 return t === 'owner' || t === 'administrator' || t === 'admin' || t === 'moderator' || t === 'mod';
             } catch (e) {
                 return false;

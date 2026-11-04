@@ -305,19 +305,43 @@
                 .replace(/\[s\]([\s\S]*?)\[\/s\]/gi, '<s>$1</s>')
                 .replace(/\[center\]([\s\S]*?)\[\/center\]/gi, '<div style="text-align:center;">$1</div>');
 
-            const innerListRegex = /\[list(=1)?\]((?:(?!\[list[\s=\]])[\s\S])*?)\[\/list\]/i;
-            for (let iter = 0; iter < 8; iter++) {
-                if (!innerListRegex.test(escaped)) break;
-                escaped = escaped.replace(innerListRegex, function (m, isOrd, body) {
-                    const tag = isOrd ? 'ol' : 'ul';
-                    const parts = body.split(/\[\*\]/);
-                    let html = '<' + tag + ' class="xf-list">';
+            // [list] & [list=1] & [list=a] etc. (innermost list first, global /g for full document pass per level)
+            const innerListRegex = /\[list(?:=([^\s\]]+))?\]((?:(?!\[list[\s=\]])[\s\S])*?)\[\/list\]/gi;
+            let listIterations = 0;
+            while (listIterations < 15 && innerListRegex.test(escaped)) {
+                listIterations++;
+                escaped = escaped.replace(innerListRegex, function (m, listParam, body) {
+                    let tag = 'ul';
+                    let extraAttr = '';
+                    if (listParam !== undefined && listParam !== null) {
+                        tag = 'ol';
+                        const p = String(listParam).trim();
+                        if (/^[aA]$/.test(p)) {
+                            extraAttr = ' type="' + p + '"';
+                        } else if (/^[iI]$/.test(p)) {
+                            extraAttr = ' type="' + p + '"';
+                        } else if (/^\d+$/.test(p)) {
+                            const num = parseInt(p, 10);
+                            if (num > 1) extraAttr = ' start="' + num + '"';
+                        }
+                    }
+                    const cleanedBody = body.replace(/\[\/\*\]/gi, '');
+                    const parts = cleanedBody.split(/\[\*\]/);
+                    let html = '<' + tag + ' class="xf-list"' + extraAttr + '>';
+                    let hasItems = false;
+                    if (parts[0] && parts[0].trim()) {
+                        html += '<li>' + parts[0].trim() + '</li>';
+                        hasItems = true;
+                    }
                     for (let i = 1; i < parts.length; i++) {
                         const item = parts[i].trim().replace(/^\n+|\n+$/g, '');
-                        if (item) html += '<li>' + item + '</li>';
+                        if (item) {
+                            html += '<li>' + item + '</li>';
+                            hasItems = true;
+                        }
                     }
-                    if (parts.length <= 1 && body.trim()) {
-                        html += '<li>' + body.trim() + '</li>';
+                    if (!hasItems && cleanedBody.trim()) {
+                        html += '<li>' + cleanedBody.trim() + '</li>';
                     }
                     html += '</' + tag + '>';
                     return html;

@@ -551,7 +551,7 @@
             const listEl = document.getElementById('adminWarningsList');
             if (!listEl) return;
             try {
-                const res = await fetch('/api/admin/warnings?moderator=20k');
+                const res = await fetch('/api/admin/warnings?moderator=' + encodeURIComponent(username || '20k'));
                 const data = await res.json();
                 if (!data.success || !Array.isArray(data.warnings) || !data.warnings.length) {
                     listEl.innerHTML = '<p style="color:#8c98b3;margin:0;">No warnings recorded yet.</p>';
@@ -580,7 +580,7 @@
             const res = await fetch('/api/warnings/' + encodeURIComponent(warnId), {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ moderator: '20k' })
+                body: JSON.stringify({ moderator: username || '20k' })
             });
             const data = await res.json();
             if (data.success) loadAdminWarnings();

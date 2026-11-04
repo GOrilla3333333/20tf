@@ -70,22 +70,41 @@ function isStaffTitle(title) {
     return STAFF_TITLES.has(String(title || '').toLowerCase());
 }
 
+function getEffectiveRole(user) {
+    if (!user) return '';
+    let raw = user.role || user.title;
+    if (!raw && Array.isArray(user.roles) && user.roles.length) {
+        raw = user.roles[0];
+    }
+    return String(raw || '').trim().toLowerCase();
+}
+
+function escapeRegex(s) {
+    return String(s || '').replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+}
+
 async function canMod(username) {
-    if (!username) return false;
-    if (username === "20k") return true;
-    const user = await User.findOne({ username });
-    if (!user) return false;
-    const t = (user.title || "").toLowerCase();
-    return t === "owner" || t === "administrator" || t === "admin" || t === "moderator" || t === "mod";
+    if (!username || typeof username !== 'string') return false;
+    const cleanUser = username.trim();
+    if (!cleanUser) return false;
+    const user = await User.findOne({
+        username: { $regex: new RegExp('^' + escapeRegex(cleanUser) + '$', 'i') }
+    });
+    if (!user || user.banned) return false;
+    const r = getEffectiveRole(user);
+    return r === "owner" || r === "administrator" || r === "admin" || r === "moderator" || r === "mod";
 }
 
 async function canStaff(username) {
-    if (!username) return false;
-    if (username === "20k") return true;
-    const user = await User.findOne({ username });
-    if (!user) return false;
-    const t = (user.title || "").toLowerCase();
-    return STAFF_TITLES.has(t);
+    if (!username || typeof username !== 'string') return false;
+    const cleanUser = username.trim();
+    if (!cleanUser) return false;
+    const user = await User.findOne({
+        username: { $regex: new RegExp('^' + escapeRegex(cleanUser) + '$', 'i') }
+    });
+    if (!user || user.banned) return false;
+    const r = getEffectiveRole(user);
+    return STAFF_TITLES.has(r);
 }
 
 let cachedRanksConfig = null;
@@ -1936,17 +1955,27 @@ app.get('/api/members', async (req, res) => {
 // Warning Points / Infractions System
 app.post('/api/warnings', async (req, res) => {
     try {
-        const { issuer, targetUsername, law, points, reason, expiresAt, postId, threadId } = req.body;
-        if (!(await canMod(issuer))) {
+        const issuer = String(req.body.moderator || req.body.issuer || req.body.username || '').trim();
+        const targetUsername = String(req.body.user_id || req.body.targetUsername || req.body.target || '').trim();
+        const law = String(req.body.rule || req.body.law || '').trim();
+        const points = req.body.points;
+        const reason = req.body.reason;
+        const expiresAt = req.body.expires_at || req.body.expiresAt;
+        const postId = req.body.post_id || req.body.postId || null;
+        const threadId = req.body.thread_id || req.body.threadId || null;
+
+        if (!issuer || !(await canMod(issuer))) {
             return res.status(403).json({ success: false, message: "Only Moderators and Owners can issue warnings" });
         }
         if (!targetUsername || !law) {
             return res.json({ success: false, message: "Target user and Law are required" });
         }
-        if (targetUsername === '20k') {
+        if (targetUsername.toLowerCase() === '20k') {
             return res.json({ success: false, message: "Cannot warn the site owner" });
         }
-        const target = await User.findOne({ username: targetUsername });
+        const target = await User.findOne({
+            username: { $regex: new RegExp('^' + escapeRegex(targetUsername) + '$', 'i') }
+        });
         if (!target) return res.json({ success: false, message: "Target user not found" });
 
         const pts = Math.min(50, Math.max(1, parseInt(points, 10) || 1));
@@ -1964,7 +1993,8 @@ app.post('/api/warnings', async (req, res) => {
             issued_by: issuer,
             post_id: postId || null,
             thread_id: threadId || null,
-            law: String(law).trim().slice(0, 120),
+            law: law.slice(0, 120),
+            rule: law.slice(0, 120),
             points: pts,
             reason: String(reason || '').trim().slice(0, 500),
             expires_at: expDate,
@@ -1976,9 +2006,9 @@ app.post('/api/warnings', async (req, res) => {
             to_user: target.username,
             from_user: issuer,
             type: 'warning',
-            message: `You received a warning (${pts} pt${pts === 1 ? '' : 's'}) for ${warningDoc.law}: ${warningDoc.reason || 'Rule violation'}`,
+            message: 'You received a warning (' + pts + ' pt' + (pts === 1 ? '' : 's') + ') for ' + warningDoc.law + ': ' + (warningDoc.reason || 'Rule violation'),
             threadTitle: warningDoc.law,
-            link: `/profile.html?user=${encodeURIComponent(target.username)}&tab=warnings`
+            link: '/profile.html?user=' + encodeURIComponent(target.username) + '&tab=warnings'
         });
 
         // Calculate active warning points and apply threshold restrictions if needed
@@ -1998,23 +2028,28 @@ app.post('/api/warnings', async (req, res) => {
         if (totalPoints >= permThresh) {
             target.banned = true;
             target.banType = 'permanent';
-            target.banReason = `Reached ${totalPoints} warning points (${warningDoc.law})`;
+            target.banReason = 'Reached ' + totalPoints + ' warning points (' + warningDoc.law + ')';
             await target.save();
             autoAction = 'Permanent ban applied automatically (threshold reached)';
         } else if (totalPoints >= tempThresh && !target.banned) {
             target.banned = true;
             target.banType = 'temporary';
             target.banExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-            target.banReason = `Reached ${totalPoints} warning points (${warningDoc.law})`;
+            target.banReason = 'Reached ' + totalPoints + ' warning points (' + warningDoc.law + ')';
             await target.save();
             autoAction = '7-day temporary restriction applied automatically (threshold reached)';
         }
 
+        const warnObj = warningDoc.toObject();
+        warnObj.rule = warnObj.rule || warnObj.law;
+        warnObj.law = warnObj.law || warnObj.rule;
+
         res.json({
             success: true,
-            message: autoAction ? `Warning issued (${totalPoints} active pts). ${autoAction}` : `Warning issued (${totalPoints} active pts).`,
+            message: autoAction ? ('Warning issued (' + totalPoints + ' active pts). ' + autoAction) : ('Warning issued (' + totalPoints + ' active pts).'),
             totalPoints,
-            warning: warningDoc
+            activePoints: totalPoints,
+            warning: warnObj
         });
     } catch (err) {
         res.json({ success: false, message: "Server error issuing warning" });
@@ -2024,21 +2059,28 @@ app.post('/api/warnings', async (req, res) => {
 app.get('/api/warnings/:username', async (req, res) => {
     try {
         const target = String(req.params.username || '').trim();
-        const viewer = String(req.query.viewer || '').trim();
+        const viewer = String(req.query.viewer || req.query.username || req.query.moderator || '').trim();
         if (!target || !viewer) return res.json({ success: false, warnings: [], activePoints: 0 });
 
         const isStaff = await canMod(viewer);
-        if (viewer !== target && !isStaff) {
+        if (viewer.toLowerCase() !== target.toLowerCase() && !isStaff) {
             return res.status(403).json({ success: false, message: "No permission", warnings: [], activePoints: 0 });
         }
 
         const now = new Date();
         await Warning.updateMany(
-            { user_id: target, active: true, expires_at: { $ne: null, $lte: now } },
+            { user_id: { $regex: new RegExp('^' + escapeRegex(target) + '$', 'i') }, active: true, expires_at: { $ne: null, $lte: now } },
             { $set: { active: false } }
         );
 
-        const list = await Warning.find({ user_id: target }).sort({ created_at: -1 }).lean();
+        const list = (await Warning.find({
+            user_id: { $regex: new RegExp('^' + escapeRegex(target) + '$', 'i') }
+        }).sort({ created_at: -1 }).lean()).map(w => ({
+            ...w,
+            rule: w.rule || w.law,
+            law: w.law || w.rule
+        }));
+
         const activePoints = list
             .filter(w => w.active && (!w.expires_at || new Date(w.expires_at) > now))
             .reduce((s, w) => s + (w.points || 0), 0);
@@ -2051,8 +2093,8 @@ app.get('/api/warnings/:username', async (req, res) => {
 
 app.get('/api/admin/warnings', async (req, res) => {
     try {
-        const viewer = String(req.query.username || '').trim();
-        if (!(await canMod(viewer))) {
+        const viewer = String(req.query.username || req.query.moderator || req.query.viewer || '').trim();
+        if (!viewer || !(await canMod(viewer))) {
             return res.status(403).json({ success: false, warnings: [] });
         }
         const now = new Date();
@@ -2060,7 +2102,11 @@ app.get('/api/admin/warnings', async (req, res) => {
             { active: true, expires_at: { $ne: null, $lte: now } },
             { $set: { active: false } }
         );
-        const list = await Warning.find({}).sort({ created_at: -1 }).limit(100).lean();
+        const list = (await Warning.find({}).sort({ created_at: -1 }).limit(100).lean()).map(w => ({
+            ...w,
+            rule: w.rule || w.law,
+            law: w.law || w.rule
+        }));
         res.json({ success: true, warnings: list });
     } catch (err) {
         res.json({ success: false, warnings: [] });
@@ -2069,8 +2115,8 @@ app.get('/api/admin/warnings', async (req, res) => {
 
 app.delete('/api/warnings/:id', async (req, res) => {
     try {
-        const { username } = req.body;
-        if (!(await canMod(username))) {
+        const actor = String(req.body.moderator || req.body.username || req.body.issuer || '').trim();
+        if (!actor || !(await canMod(actor))) {
             return res.status(403).json({ success: false, message: "No permission" });
         }
         const w = await Warning.findOne({ id: String(req.params.id) });
